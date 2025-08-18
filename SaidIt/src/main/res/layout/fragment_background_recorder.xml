@@ -20,7 +20,7 @@
         android:id="@+id/listening_group"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:constraint_referenced_ids="listening_title,history_size,save_clip_button,settings_button"
+        app:constraint_referenced_ids="listening_title,history_size,save_clip_button,bottom_buttons_layout"
         tools:visibility="gone" />
 
     <com.google.android.material.button.MaterialButtonToggleGroup
@@ -57,7 +57,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:text="@string/now_recording"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:textAppearance="?attr/textAppearanceTitleLarge"
         app:layout_constraintBottom_toTopOf="@id/recording_time"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -66,9 +66,7 @@
         android:id="@+id/recording_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-light"
         android:textAppearance="?attr/textAppearanceDisplayLarge"
-        android:textSize="80sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -96,7 +94,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:text="@string/memory_holds"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:textAppearance="?attr/textAppearanceTitleLarge"
         app:layout_constraintBottom_toTopOf="@id/history_size"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -105,10 +103,8 @@
         android:id="@+id/history_size"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-light"
         android:textAppearance="?attr/textAppearanceDisplayLarge"
         android:textColor="?attr/colorPrimary"
-        android:textSize="80sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -127,19 +123,34 @@
         android:paddingTop="16dp"
         android:paddingBottom="16dp"
         android:text="@string/save_clip"
-        app:layout_constraintBottom_toTopOf="@id/settings_button"
+        app:layout_constraintBottom_toTopOf="@id/bottom_buttons_layout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/settings_button"
-        style="@style/Widget.Material3.Button.TextButton"
+<LinearLayout
+        android:id="@+id/bottom_buttons_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:layout_marginBottom="16dp"
-        android:text="@string/settings"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/settings_button"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settings" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/recordings_button"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/saved_recordings" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -8,15 +8,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -28,7 +25,6 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.io.File;
@@ -87,15 +83,17 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
         historySize = rootView.findViewById(R.id.history_size);
         MaterialButton saveClipButton = rootView.findViewById(R.id.save_clip_button);
         MaterialButton settingsButton = rootView.findViewById(R.id.settings_button);
+        MaterialButton recordingsButton = rootView.findViewById(R.id.recordings_button);
         MaterialButton stopRecordingButton = rootView.findViewById(R.id.rec_stop_button);
         listeningToggleGroup = rootView.findViewById(R.id.listening_toggle_group);
 
         // Set listeners
         settingsButton.setOnClickListener(v -> startActivity(new Intent(activity, SettingsActivity.class)));
+        recordingsButton.setOnClickListener(v -> startActivity(new Intent(activity, RecordingsActivity.class)));
 
         stopRecordingButton.setOnClickListener(v -> {
             if (echo != null) {
-                echo.stopRecording(new PromptFileReceiver(activity), "");
+                echo.stopRecording(new PromptFileReceiver(activity));
             }
         });
 
@@ -151,7 +149,7 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
             }
 
             // Update listening toggle state without triggering listener
-            listeningToggleGroup.removeOnButtonCheckedListener(null);
+            listeningToggleGroup.clearOnButtonCheckedListeners();
             if (listeningEnabled) {
                 listeningToggleGroup.check(R.id.listening_button);
                 listeningGroup.setAlpha(1.0f);
@@ -182,9 +180,8 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
 
     // --- File Receiver and Notification Logic ---
 
-    static Notification buildNotificationForFile(Context context, File outFile) {
+    static Notification buildNotificationForFile(Context context, Uri fileUri, String fileName) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        Uri fileUri = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".provider", outFile);
         intent.setDataAndType(fileUri, "audio/wav");
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
@@ -192,9 +189,9 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, YOUR_NOTIFICATION_CHANNEL_ID)
                 .setContentTitle(context.getString(R.string.recording_saved))
-                .setContentText(outFile.getName())
+                .setContentText(fileName)
                 .setSmallIcon(R.drawable.ic_stat_notify_recorded)
-                .setTicker(outFile.getName())
+                .setTicker(fileName)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true);
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
@@ -209,12 +206,12 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
         }
 
         @Override
-        public void fileReady(final File file, float runtime) {
+        public void fileReady(final Uri fileUri, float runtime) {
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
-            notificationManager.notify(43, buildNotificationForFile(context, file));
+            notificationManager.notify(43, buildNotificationForFile(context, fileUri, "Recording Saved"));
         }
     }
 
@@ -233,15 +230,14 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
         }
 
         @Override
-        public void fileReady(final File file, float runtime) {
+        public void fileReady(final Uri fileUri, float runtime) {
             if (progressDialog != null && progressDialog.isShowing()) {
                 progressDialog.dismiss();
             }
             if (activity != null && !activity.isFinishing()) {
-                Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
                 new MaterialAlertDialogBuilder(activity)
                         .setTitle(R.string.recording_done_title)
-                        .setMessage(file.getName())
+                        .setMessage("Recording saved to your music folder.")
                         .setPositiveButton(R.string.open, (dialog, which) -> {
                             Intent intent = new Intent(Intent.ACTION_VIEW);
                             intent.setDataAndType(fileUri, "audio/wav");

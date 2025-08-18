@@ -35,7 +35,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="4dp"
                 android:text="@string/audio_memory_is_limited_at"
-                android:textAppearance="?attr/textAppearanceTitleMedium" />
+                android:textAppearance="?attr/textAppearanceTitleLarge" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/history_limit"
@@ -43,7 +43,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
                 android:textAppearance="?attr/textAppearanceBodyLarge"
-                android:textColor="?attr/colorPrimary"
                 tools:text="46 minutes and 40 seconds" />
 
 
@@ -63,7 +62,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/option_a_used_ram"
-                        android:textAppearance="?attr/textAppearanceTitleMedium" />
+                        android:textAppearance="?attr/textAppearanceTitleLarge" />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
@@ -71,14 +70,14 @@
                         android:layout_marginTop="4dp"
                         android:layout_marginBottom="16dp"
                         android:text="@string/used_ram_description"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
 
                     <com.google.android.material.button.MaterialButtonToggleGroup
                         android:id="@+id/memory_toggle_group"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         app:selectionRequired="true"
+                        app:singleLine="false"
                         app:singleSelection="true">
 
                         <Button
@@ -125,7 +124,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/auto_save_title"
-                        android:textAppearance="?attr/textAppearanceTitleMedium" />
+                        android:textAppearance="?attr/textAppearanceTitleLarge" />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
@@ -133,14 +132,14 @@
                         android:layout_marginTop="4dp"
                         android:layout_marginBottom="16dp"
                         android:text="@string/auto_save_description"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
 
                     <com.google.android.material.button.MaterialButtonToggleGroup
                         android:id="@+id/auto_save_duration_toggle_group"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         app:selectionRequired="true"
+                        app:singleLine="false"
                         app:singleSelection="true">
 
                         <Button
@@ -186,7 +185,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/option_b_audio_quality"
-                        android:textAppearance="?attr/textAppearanceTitleMedium" />
+                        android:textAppearance="?attr/textAppearanceTitleLarge" />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
@@ -194,8 +193,7 @@
                         android:layout_marginTop="4dp"
                         android:layout_marginBottom="16dp"
                         android:text="@string/audio_quality_description"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
 
 
                     <com.google.android.material.button.MaterialButtonToggleGroup
@@ -203,6 +201,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         app:selectionRequired="true"
+                        app:singleLine="false"
                         app:singleSelection="true">
 
                         <Button

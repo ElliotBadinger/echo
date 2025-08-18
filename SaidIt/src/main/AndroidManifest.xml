@@ -2,10 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Basic functionality -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
 
@@ -59,6 +60,14 @@
 
         <activity
             android:name=".SettingsActivity"
+            android:parentActivityName=".SaidItActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="SaidItActivity" />
+        </activity>
+
+        <activity
+            android:name=".RecordingsActivity"
             android:parentActivityName=".SaidItActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
