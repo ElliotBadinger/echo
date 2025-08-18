@@ -128,4 +128,25 @@
 <b>MP4</b> - oferuje wysoką jakość i dobrą kompresję ale podobnie jak 3GP, szybko zużywa energię.</string>
     -->
 
+    <string name="support_the_developer">Support the developer</string>
+    <string name="github">GitHub</string>
+    <string name="stop">Stop</string>
+    <string name="now_recording">Now Recording</string>
+    <string name="memory_holds">Memory Holds</string>
+    <string name="save_clip">Save Clip</string>
+    <string name="duration">Duration</string>
+    <string name="one_minute">1 minute</string>
+    <string name="five_minutes">5 minutes</string>
+    <string name="thirty_minutes">30 minutes</string>
+    <string name="all_memory">All memory</string>
+    <string name="auto_save_title">Auto-save</string>
+    <string name="auto_save_description">Automatically save recordings when the memory buffer is full.</string>
+    <string name="auto_save_duration_title">Auto-save duration</string>
+    <string name="listening">Listening</string>
+    <string name="disabled">Disabled</string>
+    <string name="settings">Settings</string>
+    <string name="audio_memory_is_limited_at">Audio memory is limited at</string>
+    <string name="share">Share</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="save">Save</string>
 </resources>
