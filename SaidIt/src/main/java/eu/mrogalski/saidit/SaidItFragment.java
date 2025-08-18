@@ -12,10 +12,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -25,6 +29,8 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.getkeepsafe.taptargetview.TapTarget;
+import com.getkeepsafe.taptargetview.TapTargetSequence;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.io.File;
@@ -47,27 +53,28 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
     private boolean isRecording = false;
     private float memorizedDuration = 0;
 
+    public void setService(SaidItService service) {
+        this.echo = service;
+        if (getView() != null) {
+            getView().postOnAnimation(updater);
+        }
+    }
+
+    private final MaterialButtonToggleGroup.OnButtonCheckedListener listeningToggleListener = (group, checkedId, isChecked) -> {
+        if (isChecked && echo != null) {
+            if (checkedId == R.id.listening_button) {
+                echo.enableListening();
+            } else if (checkedId == R.id.disabled_button) {
+                echo.disableListening();
+            }
+        }
+    };
+
     private final Runnable updater = new Runnable() {
         @Override
         public void run() {
             if (getView() == null || echo == null) return;
             echo.getState(serviceStateCallback);
-        }
-    };
-
-    private final ServiceConnection echoConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder binder) {
-            SaidItService.BackgroundRecorderBinder typedBinder = (SaidItService.BackgroundRecorderBinder) binder;
-            echo = typedBinder.getService();
-            if (getView() != null) {
-                getView().postOnAnimation(updater);
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            echo = null;
         }
     };
 
@@ -77,6 +84,7 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
         final Activity activity = requireActivity();
 
         // Find new UI elements
+        Toolbar toolbar = rootView.findViewById(R.id.toolbar);
         recordingGroup = rootView.findViewById(R.id.recording_group);
         listeningGroup = rootView.findViewById(R.id.listening_group);
         recordingTime = rootView.findViewById(R.id.recording_time);
@@ -86,8 +94,14 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
         MaterialButton recordingsButton = rootView.findViewById(R.id.recordings_button);
         MaterialButton stopRecordingButton = rootView.findViewById(R.id.rec_stop_button);
         listeningToggleGroup = rootView.findViewById(R.id.listening_toggle_group);
-
         // Set listeners
+        toolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_help) {
+                startActivity(new Intent(requireActivity(), HowToActivity.class));
+                return true;
+            }
+            return false;
+        });
         settingsButton.setOnClickListener(v -> startActivity(new Intent(activity, SettingsActivity.class)));
         recordingsButton.setOnClickListener(v -> startActivity(new Intent(activity, RecordingsActivity.class)));
 
@@ -103,15 +117,7 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
             bottomSheet.show(getParentFragmentManager(), "SaveClipBottomSheet");
         });
 
-        listeningToggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (isChecked && echo != null) {
-                if (checkedId == R.id.listening_button) {
-                    echo.enableListening();
-                } else if (checkedId == R.id.disabled_button) {
-                    echo.disableListening();
-                }
-            }
-        });
+        listeningToggleGroup.addOnButtonCheckedListener(listeningToggleListener);
 
         return rootView;
     }
@@ -148,8 +154,8 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
                 historySize.setText(TimeFormat.shortTimer(memorized));
             }
 
-            // Update listening toggle state without triggering listener
-            listeningToggleGroup.clearOnButtonCheckedListeners();
+        // Update listening toggle state without triggering listener
+            listeningToggleGroup.removeOnButtonCheckedListener(listeningToggleListener);
             if (listeningEnabled) {
                 listeningToggleGroup.check(R.id.listening_button);
                 listeningGroup.setAlpha(1.0f);
@@ -157,6 +163,7 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
                 listeningToggleGroup.check(R.id.disabled_button);
                 listeningGroup.setAlpha(0.5f);
             }
+            listeningToggleGroup.addOnButtonCheckedListener(listeningToggleListener);
 
             if (getView() != null) {
                 getView().postOnAnimationDelayed(updater, 100);
@@ -167,15 +174,38 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
     @Override
     public void onStart() {
         super.onStart();
-        final Activity activity = requireActivity();
-        activity.bindService(new Intent(activity, SaidItService.class), echoConnection, Context.BIND_AUTO_CREATE);
+        SaidItActivity activity = (SaidItActivity) getActivity();
+        if (activity != null) {
+            echo = activity.getEchoService();
+            if (echo != null && getView() != null) {
+                getView().postOnAnimation(updater);
+            }
+        }
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        requireActivity().unbindService(echoConnection);
-        echo = null;
+
+    public void startTour() {
+        // A small delay to ensure the UI is fully drawn before starting the tour.
+        if (getView() != null) {
+            getView().postDelayed(this::startInteractiveTour, 500);
+        }
+    }
+
+    private void startInteractiveTour() {
+        if (getActivity() == null || getView() == null) return;
+
+        final TapTargetSequence sequence = new TapTargetSequence(getActivity())
+                .targets(
+                        TapTarget.forView(getView().findViewById(R.id.listening_toggle_group), getString(R.string.tour_listening_toggle_title), getString(R.string.tour_listening_toggle_desc))
+                                .cancelable(false).tintTarget(false),
+                        TapTarget.forView(getView().findViewById(R.id.history_size), getString(R.string.tour_memory_holds_title), getString(R.string.tour_memory_holds_desc))
+                                .cancelable(false).tintTarget(false),
+                        TapTarget.forView(getView().findViewById(R.id.save_clip_button), getString(R.string.tour_save_clip_title), getString(R.string.tour_save_clip_desc))
+                                .cancelable(false).tintTarget(false),
+                        TapTarget.forView(getView().findViewById(R.id.bottom_buttons_layout), getString(R.string.tour_bottom_buttons_title), getString(R.string.tour_bottom_buttons_desc))
+                                .cancelable(false).tintTarget(false)
+                );
+        sequence.start();
     }
 
     // --- File Receiver and Notification Logic ---
@@ -231,28 +261,30 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
 
         @Override
         public void fileReady(final Uri fileUri, float runtime) {
-            if (progressDialog != null && progressDialog.isShowing()) {
-                progressDialog.dismiss();
-            }
             if (activity != null && !activity.isFinishing()) {
-                new MaterialAlertDialogBuilder(activity)
-                        .setTitle(R.string.recording_done_title)
-                        .setMessage("Recording saved to your music folder.")
-                        .setPositiveButton(R.string.open, (dialog, which) -> {
-                            Intent intent = new Intent(Intent.ACTION_VIEW);
-                            intent.setDataAndType(fileUri, "audio/wav");
-                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            activity.startActivity(intent);
-                        })
-                        .setNeutralButton(R.string.share, (dialog, which) -> {
-                            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                            shareIntent.setType("audio/wav");
-                            shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
-                            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            activity.startActivity(Intent.createChooser(shareIntent, "Send to"));
-                        })
-                        .setNegativeButton(R.string.dismiss, null)
-                        .show();
+                activity.runOnUiThread(() -> {
+                    if (progressDialog != null && progressDialog.isShowing()) {
+                        progressDialog.dismiss();
+                    }
+                    new MaterialAlertDialogBuilder(activity)
+                            .setTitle(R.string.recording_done_title)
+                            .setMessage("Recording saved to your music folder.")
+                            .setPositiveButton(R.string.open, (dialog, which) -> {
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                intent.setDataAndType(fileUri, "audio/wav");
+                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                activity.startActivity(intent);
+                            })
+                            .setNeutralButton(R.string.share, (dialog, which) -> {
+                                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                                shareIntent.setType("audio/wav");
+                                shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+                                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                activity.startActivity(Intent.createChooser(shareIntent, "Send to"));
+                            })
+                            .setNegativeButton(R.string.dismiss, null)
+                            .show();
+                });
             }
         }
     }

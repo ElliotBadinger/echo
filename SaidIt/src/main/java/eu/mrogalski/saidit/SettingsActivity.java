@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.slider.Slider;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import eu.mrogalski.StringFormat;
@@ -30,11 +31,39 @@ public class SettingsActivity extends AppCompatActivity {
     private Button memoryLowButton, memoryMediumButton, memoryHighButton;
     private Button quality8kHzButton, quality16kHzButton, quality48kHzButton;
     private SwitchMaterial autoSaveSwitch;
-    private MaterialButtonToggleGroup autoSaveDurationToggleGroup;
+    private Slider autoSaveDurationSlider;
+    private TextView autoSaveDurationLabel;
 
     private SharedPreferences sharedPreferences;
 
     private boolean isBound = false;
+
+    private final MaterialButtonToggleGroup.OnButtonCheckedListener memoryToggleListener = (group, checkedId, isChecked) -> {
+        if (isChecked && isBound) {
+            final long maxMemory = Runtime.getRuntime().maxMemory();
+            long memorySize = maxMemory / 4; // Default to low
+            if (checkedId == R.id.memory_medium) {
+                memorySize = maxMemory / 2;
+            } else if (checkedId == R.id.memory_high) {
+                memorySize = (long) (maxMemory * 0.90);
+            }
+            service.setMemorySize(memorySize);
+            updateHistoryLimit();
+        }
+    };
+
+    private final MaterialButtonToggleGroup.OnButtonCheckedListener qualityToggleListener = (group, checkedId, isChecked) -> {
+        if (isChecked && isBound) {
+            int sampleRate = 8000; // Default to 8kHz
+            if (checkedId == R.id.quality_16kHz) {
+                sampleRate = 16000;
+            } else if (checkedId == R.id.quality_48kHz) {
+                sampleRate = 48000;
+            }
+            service.setSampleRate(sampleRate);
+            updateHistoryLimit();
+        }
+    };
 
     private final ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -69,7 +98,10 @@ public class SettingsActivity extends AppCompatActivity {
         quality16kHzButton = findViewById(R.id.quality_16kHz);
         quality48kHzButton = findViewById(R.id.quality_48kHz);
         autoSaveSwitch = findViewById(R.id.auto_save_switch);
-        autoSaveDurationToggleGroup = findViewById(R.id.auto_save_duration_toggle_group);
+        autoSaveDurationSlider = findViewById(R.id.auto_save_duration_slider);
+        autoSaveDurationLabel = findViewById(R.id.auto_save_duration_label);
+        Button howToButton = findViewById(R.id.how_to_button);
+        Button showTourButton = findViewById(R.id.show_tour_button);
 
         sharedPreferences = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
 
@@ -77,52 +109,28 @@ public class SettingsActivity extends AppCompatActivity {
         // Setup Toolbar
         toolbar.setNavigationOnClickListener(v -> finish());
 
-        // Setup Listeners
-        memoryToggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (isChecked && isBound) {
-                final long maxMemory = Runtime.getRuntime().maxMemory();
-                long memorySize = maxMemory / 4; // Default to low
-                if (checkedId == R.id.memory_medium) {
-                    memorySize = maxMemory / 2;
-                } else if (checkedId == R.id.memory_high) {
-                    memorySize = (long) (maxMemory * 0.90);
-                }
-                service.setMemorySize(memorySize);
-                updateHistoryLimit();
-            }
+        // Setup How-To Button
+        howToButton.setOnClickListener(v -> startActivity(new Intent(this, HowToActivity.class)));
+        showTourButton.setOnClickListener(v -> {
+            sharedPreferences.edit().putBoolean("show_tour_on_next_launch", true).apply();
+            finish();
         });
 
-        qualityToggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (isChecked && isBound) {
-                int sampleRate = 8000; // Default to 8kHz
-                if (checkedId == R.id.quality_16kHz) {
-                    sampleRate = 16000;
-                } else if (checkedId == R.id.quality_48kHz) {
-                    sampleRate = 48000;
-                }
-                service.setSampleRate(sampleRate);
-                updateHistoryLimit();
-            }
-        });
+        // Setup Listeners
+        memoryToggleGroup.addOnButtonCheckedListener(memoryToggleListener);
+        qualityToggleGroup.addOnButtonCheckedListener(qualityToggleListener);
 
         autoSaveSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             sharedPreferences.edit().putBoolean("auto_save_enabled", isChecked).apply();
-            for (int i = 0; i < autoSaveDurationToggleGroup.getChildCount(); i++) {
-                autoSaveDurationToggleGroup.getChildAt(i).setEnabled(isChecked);
-            }
+            autoSaveDurationSlider.setEnabled(isChecked);
+            autoSaveDurationLabel.setEnabled(isChecked);
         });
 
-        autoSaveDurationToggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (isChecked) {
-                int duration = 0;
-                if (checkedId == R.id.auto_save_1m) {
-                    duration = 60;
-                } else if (checkedId == R.id.auto_save_5m) {
-                    duration = 300;
-                } else if (checkedId == R.id.auto_save_30m) {
-                    duration = 1800;
-                }
-                sharedPreferences.edit().putInt("auto_save_duration", duration).apply();
+        autoSaveDurationSlider.addOnChangeListener((slider, value, fromUser) -> {
+            int minutes = (int) value;
+            updateAutoSaveLabel(minutes);
+            if (fromUser) {
+                sharedPreferences.edit().putInt("auto_save_duration", minutes * 60).apply();
             }
         });
     }
@@ -145,6 +153,10 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void syncUI() {
         if (!isBound || service == null) return;
+
+        // Remove listeners to prevent programmatic changes from triggering them
+        memoryToggleGroup.removeOnButtonCheckedListener(memoryToggleListener);
+        qualityToggleGroup.removeOnButtonCheckedListener(qualityToggleListener);
 
         // Set memory button text
         final long maxMemory = Runtime.getRuntime().maxMemory();
@@ -175,20 +187,19 @@ public class SettingsActivity extends AppCompatActivity {
         // Load and apply auto-save settings
         boolean autoSaveEnabled = sharedPreferences.getBoolean("auto_save_enabled", false);
         autoSaveSwitch.setChecked(autoSaveEnabled);
-        for (int i = 0; i < autoSaveDurationToggleGroup.getChildCount(); i++) {
-            autoSaveDurationToggleGroup.getChildAt(i).setEnabled(autoSaveEnabled);
-        }
+        autoSaveDurationSlider.setEnabled(autoSaveEnabled);
+        autoSaveDurationLabel.setEnabled(autoSaveEnabled);
 
-        int autoSaveDuration = sharedPreferences.getInt("auto_save_duration", 60);
-        if (autoSaveDuration == 300) {
-            autoSaveDurationToggleGroup.check(R.id.auto_save_5m);
-        } else if (autoSaveDuration == 1800) {
-            autoSaveDurationToggleGroup.check(R.id.auto_save_30m);
-        } else {
-            autoSaveDurationToggleGroup.check(R.id.auto_save_1m);
-        }
+        int autoSaveDurationSeconds = sharedPreferences.getInt("auto_save_duration", 600); // Default to 10 minutes
+        int autoSaveDurationMinutes = autoSaveDurationSeconds / 60;
+        autoSaveDurationSlider.setValue(autoSaveDurationMinutes);
+        updateAutoSaveLabel(autoSaveDurationMinutes);
 
         updateHistoryLimit();
+
+        // Re-add listeners
+        memoryToggleGroup.addOnButtonCheckedListener(memoryToggleListener);
+        qualityToggleGroup.addOnButtonCheckedListener(qualityToggleListener);
     }
 
     private void updateHistoryLimit() {
@@ -197,6 +208,22 @@ public class SettingsActivity extends AppCompatActivity {
             float historyInSeconds = service.getBytesToSeconds() * service.getMemorySize();
             TimeFormat.naturalLanguage(getResources(), historyInSeconds, timeFormatResult);
             historyLimitTextView.setText(timeFormatResult.text);
+        }
+    }
+
+    private void updateAutoSaveLabel(int totalMinutes) {
+        if (totalMinutes < 60) {
+            autoSaveDurationLabel.setText(getResources().getQuantityString(R.plurals.minute_plural, totalMinutes, totalMinutes));
+        } else {
+            int hours = totalMinutes / 60;
+            int minutes = totalMinutes % 60;
+            String hourText = getResources().getQuantityString(R.plurals.hour_plural, hours, hours);
+            if (minutes == 0) {
+                autoSaveDurationLabel.setText(hourText);
+            } else {
+                String minuteText = getResources().getQuantityString(R.plurals.minute_plural, minutes, minutes);
+                autoSaveDurationLabel.setText(getString(R.string.time_join, hourText, minuteText));
+            }
         }
     }
 }

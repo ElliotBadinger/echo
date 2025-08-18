@@ -83,13 +83,12 @@ public class SaidItService extends Service {
             resolver.update(itemUri, values, null, null);
         }
 
+        final long fileLength = sourceFile.length();
         sourceFile.delete(); // Clean up the temp file
 
         if (receiver != null) {
             // We need to pass back the URI now instead of the file
-            // This requires changing the receiver interface. For now, let's assume it can handle a URI.
-            // This will be a breaking change I'll fix in the next steps.
-             // receiver.fileReady(itemUri, sourceFile.length() * getBytesToSeconds());
+            receiver.fileReady(itemUri, fileLength * getBytesToSeconds());
         }
     }
 
@@ -199,7 +198,7 @@ public class SaidItService extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        return true;
+        return false;
     }
 
     public void enableListening() {

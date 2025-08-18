@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -12,15 +13,51 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 
 public class SaidItActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 5465;
     private boolean isFragmentSet = false;
     private AlertDialog permissionDeniedDialog;
-    private AlertDialog storagePermissionDialog;
+    private SaidItService echoService;
+    private boolean isBound = false;
+
+    private final ServiceConnection echoConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            SaidItService.BackgroundRecorderBinder typedBinder = (SaidItService.BackgroundRecorderBinder) binder;
+            echoService = typedBinder.getService();
+            isBound = true;
+            if (mainFragment != null) {
+                mainFragment.setService(echoService);
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            echoService = null;
+            isBound = false;
+        }
+    };
+    private static final int HOW_TO_REQUEST_CODE = 123;
+    private SaidItFragment mainFragment;
+
+    private final ActivityResultLauncher<Intent> howToLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (mainFragment != null) {
+                    mainFragment.startTour();
+                }
+            });
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,6 +80,12 @@ public class SaidItActivity extends AppCompatActivity {
             permissionDeniedDialog.dismiss();
         }
         requestPermissions();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // Unbinding is now handled in onDestroy to keep service alive during navigation
     }
 
     private void requestPermissions() {
@@ -68,6 +111,12 @@ public class SaidItActivity extends AppCompatActivity {
             }
 
             if (allPermissionsGranted) {
+                if (!isBound) {
+                    // Start the service to ensure it's running
+                    Intent serviceIntent = new Intent(this, SaidItService.class);
+                    startService(serviceIntent);
+                    bindService(serviceIntent, echoConnection, Context.BIND_AUTO_CREATE);
+                }
                 showFragment();
             } else {
                 if (permissionDeniedDialog == null || !permissionDeniedDialog.isShowing()) {
@@ -80,9 +129,28 @@ public class SaidItActivity extends AppCompatActivity {
     private void showFragment() {
         if (!isFragmentSet) {
             isFragmentSet = true;
+
+            // Check for first run
+            SharedPreferences prefs = getSharedPreferences("eu.mrogalski.saidit", MODE_PRIVATE);
+            boolean isFirstRun = prefs.getBoolean("is_first_run", true);
+
+            mainFragment = new SaidItFragment();
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, new SaidItFragment(), "main-fragment")
+                    .replace(R.id.container, mainFragment, "main-fragment")
                     .commit();
+
+            if (isFirstRun) {
+                howToLauncher.launch(new Intent(this, HowToActivity.class));
+                prefs.edit().putBoolean("is_first_run", false).apply();
+            } else {
+                boolean showTour = prefs.getBoolean("show_tour_on_next_launch", false);
+                if (showTour) {
+                    if (mainFragment != null) {
+                        mainFragment.startTour();
+                    }
+                    prefs.edit().putBoolean("show_tour_on_next_launch", false).apply();
+                }
+            }
         }
     }
     private void showPermissionDeniedDialog() {
@@ -107,5 +175,18 @@ public class SaidItActivity extends AppCompatActivity {
                 })
                 .setCancelable(false)
                 .show();
+    }
+
+    public SaidItService getEchoService() {
+        return echoService;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (isBound) {
+            unbindService(echoConnection);
+            isBound = false;
+        }
     }
 }

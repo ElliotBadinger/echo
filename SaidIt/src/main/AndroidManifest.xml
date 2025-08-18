@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <supports-screens
         android:largeScreens="true"
@@ -68,6 +69,14 @@
 
         <activity
             android:name=".RecordingsActivity"
+            android:parentActivityName=".SaidItActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="SaidItActivity" />
+        </activity>
+
+        <activity
+            android:name=".HowToActivity"
             android:parentActivityName=".SaidItActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

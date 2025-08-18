@@ -1,37 +1,32 @@
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:fitsSystemWindows="true"
-    android:animateLayoutChanges="true"
     tools:context=".SaidItFragment">
 
-    <!-- This group is visible when the app is actively recording a file -->
-    <androidx.constraintlayout.widget.Group
-        android:id="@+id/recording_group"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:constraint_referenced_ids="recording_title,recording_time,rec_stop_button"
-        tools:visibility="visible" />
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:title="@string/app_name"
+        app:menu="@menu/main_menu" />
 
-    <!-- This group is visible when the app is passively listening -->
-    <androidx.constraintlayout.widget.Group
-        android:id="@+id/listening_group"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:constraint_referenced_ids="listening_title,history_size,save_clip_button,bottom_buttons_layout"
-        tools:visibility="gone" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="16dp">
 
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/listening_toggle_group"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         app:selectionRequired="true"
         app:singleSelection="true">
 
@@ -51,98 +46,105 @@
 
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
-    <!-- Recording State Title -->
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/recording_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="@string/now_recording"
-        android:textAppearance="?attr/textAppearanceTitleLarge"
-        app:layout_constraintBottom_toTopOf="@id/recording_time"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp">
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/recording_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?attr/textAppearanceDisplayLarge"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.4"
-        tools:text="01:23" />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/rec_stop_button"
-        style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="@string/stop"
-        app:icon="@drawable/ic_stop"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/recording_time" />
+            <!-- Recording State -->
+            <LinearLayout
+                android:id="@+id/recording_group"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp"
+                android:visibility="gone"
+                tools:visibility="visible">
 
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/recording_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/now_recording"
+                    android:textAppearance="?attr/textAppearanceTitleLarge" />
 
-    <!-- Listening State Title -->
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/listening_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="@string/memory_holds"
-        android:textAppearance="?attr/textAppearanceTitleLarge"
-        app:layout_constraintBottom_toTopOf="@id/history_size"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/recording_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?attr/textAppearanceDisplayLarge"
+                    tools:text="01:23" />
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/history_size"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?attr/textAppearanceDisplayLarge"
-        android:textColor="?attr/colorPrimary"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.4"
-        tools:text="05:12" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/rec_stop_button"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="32dp"
+                    android:text="@string/stop"
+                    app:icon="@drawable/ic_stop" />
+            </LinearLayout>
 
+            <!-- Listening State -->
+            <LinearLayout
+                android:id="@+id/listening_group"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp"
+                tools:visibility="gone">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/listening_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/memory_holds"
+                    android:textAppearance="?attr/textAppearanceTitleLarge" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/history_size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?attr/textAppearanceDisplayLarge"
+                    android:textColor="?attr/colorPrimary"
+                    tools:text="05:12" />
+            </LinearLayout>
+        </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/save_clip_button"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
-        android:layout_marginBottom="16dp"
         android:paddingTop="16dp"
         android:paddingBottom="16dp"
-        android:text="@string/save_clip"
-        app:layout_constraintBottom_toTopOf="@id/bottom_buttons_layout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:text="@string/save_clip" />
 
-<LinearLayout
+    <RelativeLayout
         android:id="@+id/bottom_buttons_layout"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/settings_button"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
             android:text="@string/settings" />
 
         <com.google.android.material.button.MaterialButton
@@ -150,8 +152,8 @@
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_alignParentEnd="true"
             android:text="@string/saved_recordings" />
-    </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </RelativeLayout>
+</LinearLayout>
+</LinearLayout>

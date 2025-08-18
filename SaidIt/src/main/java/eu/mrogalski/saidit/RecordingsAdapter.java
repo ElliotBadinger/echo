@@ -1,7 +1,10 @@
 package eu.mrogalski.saidit;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.media.MediaPlayer;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,12 +22,12 @@ import java.util.concurrent.TimeUnit;
 
 public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.RecordingViewHolder> {
 
-    private final List<File> recordings;
+    private final List<RecordingItem> recordings;
     private final Context context;
     private MediaPlayer mediaPlayer;
     private int playingPosition = -1;
 
-    public RecordingsAdapter(Context context, List<File> recordings) {
+    public RecordingsAdapter(Context context, List<RecordingItem> recordings) {
         this.context = context;
         this.recordings = recordings;
     }
@@ -48,7 +50,7 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
 
     @Override
     public void onBindViewHolder(@NonNull RecordingViewHolder holder, int position) {
-        File recording = recordings.get(position);
+        RecordingItem recording = recordings.get(position);
         holder.bind(recording);
 
         if (position == playingPosition) {
@@ -77,14 +79,14 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
             deleteButton = itemView.findViewById(R.id.delete_button);
         }
 
-        public void bind(File file) {
-            nameTextView.setText(file.getName());
+        public void bind(RecordingItem recording) {
+            nameTextView.setText(recording.getName());
 
-            Date lastModDate = new Date(file.lastModified());
+            Date date = new Date(recording.getDate() * 1000); // MediaStore date is in seconds
             SimpleDateFormat formatter = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
-            String dateString = formatter.format(lastModDate);
+            String dateString = formatter.format(date);
 
-            long durationMillis = getDuration(file);
+            long durationMillis = recording.getDuration();
             String durationString = String.format(Locale.getDefault(), "%02d:%02d",
                     TimeUnit.MILLISECONDS.toMinutes(durationMillis),
                     TimeUnit.MILLISECONDS.toSeconds(durationMillis) -
@@ -93,7 +95,7 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
 
             infoTextView.setText(String.format("%s | %s", durationString, dateString));
 
-            playButton.setOnClickListener(v -> handlePlayback(file, getAdapterPosition()));
+            playButton.setOnClickListener(v -> handlePlayback(recording, getAdapterPosition()));
 
             deleteButton.setOnClickListener(v -> {
                 new MaterialAlertDialogBuilder(context)
@@ -108,8 +110,11 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
                                     releasePlayer();
                                 }
 
-                                File fileToDelete = recordings.get(currentPosition);
-                                if (fileToDelete.delete()) {
+                                RecordingItem itemToDelete = recordings.get(currentPosition);
+                                ContentResolver contentResolver = context.getContentResolver();
+                                int deletedRows = contentResolver.delete(itemToDelete.getUri(), null, null);
+                                
+                                if (deletedRows > 0) {
                                     recordings.remove(currentPosition);
                                     notifyItemRemoved(currentPosition);
                                     notifyItemRangeChanged(currentPosition, recordings.size());
@@ -124,7 +129,7 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
             });
         }
 
-        private void handlePlayback(File file, int position) {
+        private void handlePlayback(RecordingItem recording, int position) {
             if (playingPosition == position) {
                 if (mediaPlayer.isPlaying()) {
                     mediaPlayer.pause();
@@ -147,7 +152,7 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
 
                 mediaPlayer = new MediaPlayer();
                 try {
-                    mediaPlayer.setDataSource(file.getAbsolutePath());
+                    mediaPlayer.setDataSource(context, recording.getUri());
                     mediaPlayer.prepare();
                     mediaPlayer.setOnCompletionListener(mp -> {
                         playingPosition = -1;
@@ -159,20 +164,6 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecordingsAdapter.Re
                     e.printStackTrace();
                     playingPosition = -1;
                 }
-            }
-        }
-
-        private long getDuration(File file) {
-            try {
-                MediaPlayer mp = new MediaPlayer();
-                mp.setDataSource(file.getAbsolutePath());
-                mp.prepare();
-                long duration = mp.getDuration();
-                mp.release();
-                return duration;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return 0;
             }
         }
     }
