@@ -3,6 +3,8 @@ package eu.mrogalski.saidit;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
+import android.view.View;
+import android.widget.TextView;
 import com.google.android.material.appbar.MaterialToolbar;
 import java.io.File;
 import java.util.ArrayList;
@@ -24,11 +26,20 @@ public class RecordingsActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         RecyclerView recyclerView = findViewById(R.id.recordings_recycler_view);
-        
+        TextView emptyView = findViewById(R.id.empty_view);
+
         // Load recordings and set up adapter
         List<File> recordings = getRecordings();
         adapter = new RecordingsAdapter(this, recordings);
         recyclerView.setAdapter(adapter);
+
+        if (recordings.isEmpty()) {
+            recyclerView.setVisibility(View.GONE);
+            emptyView.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            emptyView.setVisibility(View.GONE);
+        }
     }
 
     private List<File> getRecordings() {

@@ -439,12 +439,14 @@ public class SaidItService extends Service {
 
         audioHandler.post(() -> {
             flushAudioRecord();
-            try {
-                wavFileWriter.close();
-            } catch (IOException e) {
-                Log.e(TAG, "CLOSING ERROR", e);
+            if (wavFileWriter != null) {
+                try {
+                    wavFileWriter.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "CLOSING ERROR", e);
+                }
             }
-            if(wavFileReceiver != null) {
+            if(wavFileReceiver != null && wavFile != null) {
                 saveFileToMediaStore(wavFile, wavFile.getName(), wavFileReceiver);
             }
             wavFileWriter = null;

@@ -30,11 +30,8 @@ public class SaidItActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        if(permissionDeniedDialog != null) {
+        if (permissionDeniedDialog != null) {
             permissionDeniedDialog.dismiss();
-        }
-        if(storagePermissionDialog != null) {
-            storagePermissionDialog.dismiss();
         }
         requestPermissions();
     }
@@ -42,11 +39,8 @@ public class SaidItActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
-        if(permissionDeniedDialog != null) {
+        if (permissionDeniedDialog != null) {
             permissionDeniedDialog.dismiss();
-        }
-        if(storagePermissionDialog != null) {
-            storagePermissionDialog.dismiss();
         }
         requestPermissions();
     }
@@ -65,7 +59,6 @@ public class SaidItActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            // Check if all permissions are granted
             boolean allPermissionsGranted = true;
             for (int result : grantResults) {
                 if (result != PackageManager.PERMISSION_GRANTED) {
@@ -73,40 +66,11 @@ public class SaidItActivity extends AppCompatActivity {
                     break;
                 }
             }
+
             if (allPermissionsGranted) {
-                // All permissions are granted
-                if (Environment.isExternalStorageManager()) {
-                    // Permission already granted
-                    if(storagePermissionDialog != null) {
-                        storagePermissionDialog.dismiss();
-                    }
-                    showFragment();
-                } else {
-                    // Request MANAGE_EXTERNAL_STORAGE permission
-                    storagePermissionDialog = new AlertDialog.Builder(this)
-                            .setTitle(R.string.permission_required)
-                            .setMessage(R.string.permission_required_message)
-                            .setPositiveButton(R.string.allow, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // Open app settings
-                                    Intent intent = new Intent();
-                                    intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                                    intent.setData(Uri.fromParts("package", getPackageName(), null));
-                                    startActivity(intent);
-                                }
-                            })
-                            .setNegativeButton(R.string.exit, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    finish();
-                                }
-                            })
-                            .setCancelable(false)
-                            .show();
-                }
+                showFragment();
             } else {
-                if(permissionDeniedDialog == null || !permissionDeniedDialog.isShowing()) {
+                if (permissionDeniedDialog == null || !permissionDeniedDialog.isShowing()) {
                     showPermissionDeniedDialog();
                 }
             }
