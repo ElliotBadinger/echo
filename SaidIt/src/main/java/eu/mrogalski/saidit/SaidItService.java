@@ -180,6 +180,7 @@ public class SaidItService extends Service {
                 if(audioRecord != null)
                     audioRecord.release();
                 audioHandler.removeCallbacks(audioReader);
+                autoSaveTriggeredForThisBuffer = false;
                 audioMemory.allocate(0);
             }
         });
@@ -360,6 +361,7 @@ public class SaidItService extends Service {
                 @Override
                 public void run() {
                     audioMemory.allocate(memorySize);
+                    autoSaveTriggeredForThisBuffer = false;
                 }
             });
         }
@@ -469,11 +471,31 @@ public class SaidItService extends Service {
             return read;
         }
     };
+    private volatile boolean autoSaveTriggeredForThisBuffer = false;
     final Runnable audioReader = new Runnable() {
         @Override
         public void run() {
             try {
                 audioMemory.fill(filler);
+
+                // Auto-save logic
+                final SharedPreferences preferences = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
+                boolean autoSaveEnabled = preferences.getBoolean("auto_save_enabled", false);
+                if (autoSaveEnabled) {
+                    final AudioMemory.Stats stats = audioMemory.getStats(FILL_RATE);
+                    if (stats.overwriting) {
+                        if (!autoSaveTriggeredForThisBuffer) {
+                            autoSaveTriggeredForThisBuffer = true;
+                            int durationInSeconds = preferences.getInt("auto_save_duration", 60);
+                            Log.d(TAG, "Auto-saving clip of " + durationInSeconds + " seconds.");
+                            dumpRecording(durationInSeconds, new SaidItFragment.NotifyFileReceiver(SaidItService.this), "Auto-saved clip");
+                        }
+                    } else {
+                        // If we are no longer overwriting (e.g., memory size increased), reset the flag.
+                        autoSaveTriggeredForThisBuffer = false;
+                    }
+                }
+
             } catch (IOException e) {
                 final String errorMessage = getString(R.string.error_during_recording_into) + wavFile.getName();
                 Toast.makeText(SaidItService.this, errorMessage, Toast.LENGTH_LONG).show();
