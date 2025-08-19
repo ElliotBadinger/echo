@@ -19,7 +19,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/play_button"
-            tools:text="Recording-2024-01-01-12-00-00.wav" />
+            tools:text="Recording-2024-01-01-12-00-00.m4a" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/recording_info_text"

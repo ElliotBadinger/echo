@@ -212,7 +212,7 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
 
     static Notification buildNotificationForFile(Context context, Uri fileUri, String fileName) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(fileUri, "audio/wav");
+        intent.setDataAndType(fileUri, "audio/mp4");
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
@@ -236,12 +236,17 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
         }
 
         @Override
-        public void fileReady(final Uri fileUri, float runtime) {
+        public void onSuccess(final Uri fileUri, float runtime) {
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
             notificationManager.notify(43, buildNotificationForFile(context, fileUri, "Recording Saved"));
+        }
+
+        @Override
+        public void onFailure(Exception e) {
+            // Do nothing for background notifications
         }
     }
 
@@ -260,7 +265,7 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
         }
 
         @Override
-        public void fileReady(final Uri fileUri, float runtime) {
+        public void onSuccess(final Uri fileUri, float runtime) {
             if (activity != null && !activity.isFinishing()) {
                 activity.runOnUiThread(() -> {
                     if (progressDialog != null && progressDialog.isShowing()) {
@@ -271,18 +276,34 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
                             .setMessage("Recording saved to your music folder.")
                             .setPositiveButton(R.string.open, (dialog, which) -> {
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.setDataAndType(fileUri, "audio/wav");
+                                intent.setDataAndType(fileUri, "audio/mp4");
                                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                                 activity.startActivity(intent);
                             })
                             .setNeutralButton(R.string.share, (dialog, which) -> {
                                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                                shareIntent.setType("audio/wav");
+                                shareIntent.setType("audio/mp4");
                                 shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
                                 shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                                 activity.startActivity(Intent.createChooser(shareIntent, "Send to"));
                             })
                             .setNegativeButton(R.string.dismiss, null)
+                            .show();
+                });
+            }
+        }
+
+        @Override
+        public void onFailure(Exception e) {
+            if (activity != null && !activity.isFinishing()) {
+                activity.runOnUiThread(() -> {
+                    if (progressDialog != null && progressDialog.isShowing()) {
+                        progressDialog.dismiss();
+                    }
+                    new MaterialAlertDialogBuilder(activity)
+                            .setTitle(R.string.error_title)
+                            .setMessage(R.string.error_saving_failed)
+                            .setPositiveButton(android.R.string.ok, null)
                             .show();
                 });
             }

@@ -162,6 +162,9 @@
     <string name="save">Save</string>
     <string name="saved_recordings">Saved Recordings</string>
 
+    <string name="error_title">Error</string>
+    <string name="error_saving_failed">Failed to save the recording. Please try again.</string>
+
     <!-- How-To Guide -->
     <string name="how_to_guide">How-To Guide</string>
     <string name="how_to_title_1">How does Echo work?</string>
