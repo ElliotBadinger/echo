@@ -120,6 +120,41 @@ public class AudioMemory {
         }
     }
 
+    public synchronized void dump(Consumer consumer, int bytesToDump) throws IOException {
+        int remainingBytes = bytesToDump;
+        LinkedList<byte[]> tempQueue = new LinkedList<>(filled);
+        if (current != null) {
+            tempQueue.addLast(current);
+        }
+
+        // Calculate the starting point
+        long totalBytes = 0;
+        for (byte[] chunk : tempQueue) {
+            totalBytes += (chunk == current) ? offset : chunk.length;
+        }
+
+        long bytesToSkip = Math.max(0, totalBytes - bytesToDump);
+
+        for (byte[] chunk : tempQueue) {
+            if (remainingBytes <= 0) break;
+
+            int chunkSize = (chunk == current) ? offset : chunk.length;
+            if (bytesToSkip >= chunkSize) {
+                bytesToSkip -= chunkSize;
+                continue;
+            }
+
+            int startOffset = (int) bytesToSkip;
+            int bytesToWrite = Math.min(remainingBytes, chunkSize - startOffset);
+
+            if (bytesToWrite > 0) {
+                consumer.consume(chunk, startOffset, bytesToWrite);
+                remainingBytes -= bytesToWrite;
+            }
+            bytesToSkip = 0; // Only skip from the first relevant chunk
+        }
+    }
+
     public static class Stats {
         public int filled; // taken
         public int total;

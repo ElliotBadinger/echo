@@ -124,6 +124,13 @@ public class SettingsActivity extends AppCompatActivity {
             sharedPreferences.edit().putBoolean("auto_save_enabled", isChecked).apply();
             autoSaveDurationSlider.setEnabled(isChecked);
             autoSaveDurationLabel.setEnabled(isChecked);
+            if (isBound) {
+                if (isChecked) {
+                    service.scheduleAutoSave();
+                } else {
+                    service.cancelAutoSave();
+                }
+            }
         });
 
         autoSaveDurationSlider.addOnChangeListener((slider, value, fromUser) -> {
@@ -131,6 +138,9 @@ public class SettingsActivity extends AppCompatActivity {
             updateAutoSaveLabel(minutes);
             if (fromUser) {
                 sharedPreferences.edit().putInt("auto_save_duration", minutes * 60).apply();
+                if (isBound) {
+                    service.scheduleAutoSave();
+                }
             }
         });
     }
