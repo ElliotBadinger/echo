@@ -147,7 +147,9 @@ public class SaidItService extends Service {
             SharedPreferences preferences = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
             if (preferences.getBoolean("auto_save_enabled", false)) {
                 Log.d(TAG, "Executing auto-save...");
-                dumpRecording(300, new SaidItFragment.NotifyFileReceiver(this), "Auto-saved clip");
+                String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", java.util.Locale.US).format(new java.util.Date());
+                String autoName = "Auto-save_" + timestamp;
+                dumpRecording(300, new SaidItFragment.NotifyFileReceiver(this), autoName);
             }
             return START_STICKY;
         }
