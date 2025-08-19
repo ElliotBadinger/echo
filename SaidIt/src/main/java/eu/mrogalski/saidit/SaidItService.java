@@ -16,6 +16,7 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.media.MediaMetadataRetriever;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
@@ -39,8 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import simplesound.pcm.WavAudioFormat;
-import simplesound.pcm.WavFileWriter;
+ 
 
 import static eu.mrogalski.saidit.SaidIt.AUDIO_MEMORY_ENABLED_KEY;
 import static eu.mrogalski.saidit.SaidIt.AUDIO_MEMORY_SIZE_KEY;
@@ -56,15 +56,16 @@ public class SaidItService extends Service {
     volatile int SAMPLE_RATE;
     volatile int FILL_RATE;
 
-    File wavFile;
+    File mediaFile;
     AudioRecord audioRecord; // used only in the audio thread
-    WavFileWriter wavFileWriter; // used only in the audio thread
+    AacMp4Writer aacWriter; // used only in the audio thread
     final AudioMemory audioMemory = new AudioMemory(); // used only in the audio thread
 
     HandlerThread audioThread;
     Handler audioHandler; // used to post messages to audio thread
     AudioMemory.Consumer filler;
     Runnable audioReader;
+    AudioRecord.OnRecordPositionUpdateListener positionListener;
 
     int state;
     static final int STATE_READY = 0;
@@ -92,26 +93,20 @@ public class SaidItService extends Service {
                 Log.e(TAG, "AUDIO RECORD ERROR: " + read);
                 return 0;
             }
-            if (wavFileWriter != null && read > 0) {
-                wavFileWriter.write(array, offset, read);
-            }
-            if (read == count) {
-                audioHandler.post(audioReader);
-            } else {
-                float bufferSizeInSeconds = audioRecord.getBufferSizeInFrames() / (float) SAMPLE_RATE;
-                float delaySeconds = bufferSizeInSeconds - 1;
-                delaySeconds = Math.max(delaySeconds, bufferSizeInSeconds * 0.5f);
-                delaySeconds = Math.min(delaySeconds, bufferSizeInSeconds * 0.9f);
-                audioHandler.postDelayed(audioReader, (long) (delaySeconds * 1000));
+            if (aacWriter != null && read > 0) {
+                aacWriter.write(array, offset, read);
             }
             return read;
         };
 
         audioReader = () -> {
             try {
-                audioMemory.fill(filler);
+                int n;
+                do {
+                    n = audioMemory.fill(filler);
+                } while (n > 0);
             } catch (IOException e) {
-                final String errorMessage = getString(R.string.error_during_recording_into) + (wavFile != null ? wavFile.getName() : "");
+                final String errorMessage = getString(R.string.error_during_recording_into) + (mediaFile != null ? mediaFile.getName() : "");
                 showToast(errorMessage);
                 Log.e(TAG, errorMessage, e);
                 stopRecording(new SaidItFragment.NotifyFileReceiver(SaidItService.this));
@@ -153,7 +148,11 @@ public class SaidItService extends Service {
             }
             return START_STICKY;
         }
-        startForeground(FOREGROUND_NOTIFICATION_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(FOREGROUND_NOTIFICATION_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+        } else {
+            startForeground(FOREGROUND_NOTIFICATION_ID, buildNotification());
+        }
         return START_STICKY;
     }
 
@@ -183,7 +182,20 @@ public class SaidItService extends Service {
             }
             audioRecord = newAudioRecord;
             audioMemory.allocate(memorySize);
+            // Set up event-driven periodic callbacks (~50ms)
+            final int periodFrames = Math.max(128, SAMPLE_RATE / 20);
+            positionListener = new AudioRecord.OnRecordPositionUpdateListener() {
+                @Override
+                public void onPeriodicNotification(AudioRecord recorder) {
+                    audioHandler.post(audioReader);
+                }
+                @Override
+                public void onMarkerReached(AudioRecord recorder) { }
+            };
+            audioRecord.setRecordPositionUpdateListener(positionListener, audioHandler);
+            audioRecord.setPositionNotificationPeriod(periodFrames);
             audioRecord.startRecording();
+            // Kickstart a first read to reduce latency
             audioHandler.post(audioReader);
         });
 
@@ -202,6 +214,7 @@ public class SaidItService extends Service {
         audioHandler.post(() -> {
             Log.d(TAG, "Executing: STOP LISTENING");
             if (audioRecord != null) {
+                try { audioRecord.setRecordPositionUpdateListener(null); } catch (Exception ignored) {}
                 audioRecord.release();
                 audioRecord = null;
             }
@@ -230,18 +243,19 @@ public class SaidItService extends Service {
         audioHandler.post(() -> {
             flushAudioRecord();
             try {
-                wavFile = File.createTempFile("saidit", ".wav", getCacheDir());
-                wavFileWriter = new WavFileWriter(WavAudioFormat.mono16Bit(SAMPLE_RATE), wavFile);
-                Log.d(TAG, "Recording to: " + wavFile.getAbsolutePath());
+                mediaFile = File.createTempFile("saidit", ".m4a", getCacheDir());
+                // 96 kbps for mono voice
+                aacWriter = new AacMp4Writer(SAMPLE_RATE, 1, 96_000, mediaFile);
+                Log.d(TAG, "Recording to: " + mediaFile.getAbsolutePath());
 
                 // Write prepended memory
                 if (prependedMemorySeconds > 0) {
-                    final int bytesToSeconds = (int) (1f / getBytesToSeconds());
-                    final int bytesToDump = (int) (prependedMemorySeconds * bytesToSeconds);
-                    audioMemory.dump((array, offset, count) -> { wavFileWriter.write(array, offset, count); return count; }, bytesToDump);
+                    final int bytesPerSecond = (int) (1f / getBytesToSeconds());
+                    final int bytesToDump = (int) (prependedMemorySeconds * bytesPerSecond);
+                    audioMemory.dump((array, offset, count) -> { aacWriter.write(array, offset, count); return count; }, bytesToDump);
                 }
             } catch (IOException e) {
-                Log.e(TAG, "ERROR creating WAV file", e);
+                Log.e(TAG, "ERROR creating AAC/MP4 file", e);
                 showToast(getString(R.string.error_creating_recording_file));
                 state = STATE_LISTENING; // Revert state
             }
@@ -254,17 +268,17 @@ public class SaidItService extends Service {
 
         audioHandler.post(() -> {
             flushAudioRecord();
-            if (wavFileWriter != null) {
+            if (aacWriter != null) {
                 try {
-                    wavFileWriter.close();
+                    aacWriter.close();
                 } catch (IOException e) {
                     Log.e(TAG, "CLOSING ERROR", e);
                 }
             }
-            if (wavFileReceiver != null && wavFile != null) {
-                saveFileToMediaStore(wavFile, wavFile.getName(), wavFileReceiver);
+            if (wavFileReceiver != null && mediaFile != null) {
+                saveFileToMediaStore(mediaFile, mediaFile.getName(), wavFileReceiver);
             }
-            wavFileWriter = null;
+            aacWriter = null;
         });
     }
 
@@ -276,23 +290,26 @@ public class SaidItService extends Service {
             File dumpFile = null;
             try {
                 String fileName = newFileName != null ? newFileName.replaceAll("[^a-zA-Z0-9.-]", "_") : "SaidIt_dump";
-                dumpFile = new File(getCacheDir(), fileName + ".wav");
-                WavFileWriter dumper = new WavFileWriter(WavAudioFormat.mono16Bit(SAMPLE_RATE), dumpFile);
+                dumpFile = new File(getCacheDir(), fileName + ".m4a");
+                AacMp4Writer dumper = new AacMp4Writer(SAMPLE_RATE, 1, 96_000, dumpFile);
                 Log.d(TAG, "Dumping to: " + dumpFile.getAbsolutePath());
-                final int bytesToSeconds = (int) (1f / getBytesToSeconds());
-                final int bytesToDump = (int) (memorySeconds * bytesToSeconds);
+                final int bytesPerSecond = (int) (1f / getBytesToSeconds());
+                final int bytesToDump = (int) (memorySeconds * bytesPerSecond);
                 audioMemory.dump((array, offset, count) -> { dumper.write(array, offset, count); return count; }, bytesToDump);
                 dumper.close();
 
                 if (wavFileReceiver != null) {
                     final File finalDumpFile = dumpFile;
-                    saveFileToMediaStore(finalDumpFile, (newFileName != null ? newFileName : "SaidIt Recording") + ".wav", wavFileReceiver);
+                    saveFileToMediaStore(finalDumpFile, (newFileName != null ? newFileName : "SaidIt Recording") + ".m4a", wavFileReceiver);
                 }
             } catch (IOException e) {
-                Log.e(TAG, "ERROR dumping WAV file", e);
+                Log.e(TAG, "ERROR dumping AAC/MP4 file", e);
                 showToast(getString(R.string.error_saving_recording));
                 if (dumpFile != null) {
                     dumpFile.delete();
+                }
+                if (wavFileReceiver != null) {
+                    wavFileReceiver.onFailure(e);
                 }
             }
         });
@@ -380,8 +397,8 @@ public class SaidItService extends Service {
             final AudioMemory.Stats stats = audioMemory.getStats(FILL_RATE);
 
             int recorded = 0;
-            if(wavFileWriter != null) {
-                recorded += wavFileWriter.getTotalSampleBytesWritten();
+            if(aacWriter != null) {
+                recorded += aacWriter.getTotalSampleBytesWritten();
                 recorded += stats.estimation;
             }
             final float bytesToSeconds = getBytesToSeconds();
@@ -401,13 +418,15 @@ public class SaidItService extends Service {
         ContentResolver resolver = getContentResolver();
         ContentValues values = new ContentValues();
         values.put(MediaStore.Audio.Media.DISPLAY_NAME, displayName);
-        values.put(MediaStore.Audio.Media.MIME_TYPE, "audio/wav");
+        values.put(MediaStore.Audio.Media.MIME_TYPE, "audio/mp4");
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             values.put(MediaStore.Audio.Media.IS_PENDING, 1);
         }
 
-        Uri collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+        Uri collection = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                ? MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                : MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         Uri itemUri = resolver.insert(collection, values);
 
         try (InputStream in = new FileInputStream(sourceFile);
@@ -433,7 +452,7 @@ public class SaidItService extends Service {
             }
 
             if (itemUri != null) {
-                final long duration = getWavDuration(sourceFile);
+                final long duration = getMediaDuration(sourceFile);
                 values.clear();
                 values.put(MediaStore.Audio.Media.DURATION, duration);
                 resolver.update(itemUri, values, null, null);
@@ -441,25 +460,29 @@ public class SaidItService extends Service {
                 final Uri finalUri = itemUri;
                 new Handler(Looper.getMainLooper()).post(() -> {
                     if (receiver != null) {
-                        receiver.fileReady(finalUri, duration / 1000f);
+                        receiver.onSuccess(finalUri, duration / 1000f);
                     }
                 });
+            }
+            if (itemUri == null && receiver != null) {
+                new Handler(Looper.getMainLooper()).post(() -> receiver.onFailure(new IOException("Failed to write to MediaStore")));
             }
             sourceFile.delete();
         }
     }
 
-    private long getWavDuration(File wavFile) {
-        try (FileInputStream fis = new FileInputStream(wavFile)) {
-            byte[] header = new byte[44];
-            if (fis.read(header) != 44) return 0;
-            long byteRate = ((header[31] & 0xff) << 24) | ((header[30] & 0xff) << 16) | ((header[29] & 0xff) << 8) | (header[28] & 0xff);
-            long subchunk2Size = ((header[43] & 0xff) << 24) | ((header[42] & 0xff) << 16) | ((header[41] & 0xff) << 8) | (header[40] & 0xff);
-            if (byteRate > 0) {
-                return (subchunk2Size * 1000) / byteRate;
+    private long getMediaDuration(File file) {
+        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+        try {
+            mmr.setDataSource(file.getAbsolutePath());
+            String dur = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            if (dur != null) {
+                return Long.parseLong(dur);
             }
-        } catch (IOException e) {
-            Log.e(TAG, "Could not read wav duration", e);
+        } catch (Exception e) {
+            Log.e(TAG, "Could not read media duration", e);
+        } finally {
+            try { mmr.release(); } catch (Exception ignored) {}
         }
         return 0;
     }
@@ -482,7 +505,8 @@ public class SaidItService extends Service {
     }
 
     public interface WavFileReceiver {
-        void fileReady(Uri fileUri, float runtime);
+        void onSuccess(Uri fileUri, float runtime);
+        void onFailure(Exception e);
     }
 
     public interface StateCallback {
