@@ -9,20 +9,20 @@ import static org.junit.Assert.*;
 public class AudioMemoryTest {
 
     private AudioMemory audioMemory;
-    private final int CHUNK_SIZE = AudioMemory.CHUNK_SIZE;
+    private FakeClock clock;
 
     @Before
     public void setUp() {
-        audioMemory = new AudioMemory();
-        // Allocate a smaller buffer for easier testing
-        audioMemory.allocate(CHUNK_SIZE / 10);
+        clock = new FakeClock();
+        audioMemory = new AudioMemory(clock);
+        audioMemory.allocate(1024 * 4);
     }
 
-    private static class TestConsumer implements AudioMemory.Consumer {
+    private static class TestFiller implements AudioMemory.Consumer {
         private final byte[] dataToProvide;
         private int readOffset = 0;
 
-        TestConsumer(byte[] data) {
+        TestFiller(byte[] data) {
             this.dataToProvide = data;
         }
 
@@ -36,12 +36,12 @@ public class AudioMemoryTest {
             return toRead;
         }
     }
-    
+
     private static class CapturingConsumer implements AudioMemory.Consumer {
         private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         @Override
-        public int consume(byte[] array, int offset, int count) throws IOException {
+        public int consume(byte[] array, int offset, int count) {
             baos.write(array, offset, count);
             return count;
         }
@@ -57,7 +57,7 @@ public class AudioMemoryTest {
         byte[] data = new byte[100];
         for (int i = 0; i < data.length; i++) data[i] = (byte) i;
 
-        audioMemory.fill(new TestConsumer(data));
+        audioMemory.fill(new TestFiller(data));
 
         AudioMemory.Stats stats = audioMemory.getStats(0);
         assertEquals(100, stats.filled);
@@ -69,8 +69,8 @@ public class AudioMemoryTest {
         int bufferSize = (int) audioMemory.getAllocatedMemorySize();
         byte[] data = new byte[bufferSize + 50];
         for (int i = 0; i < data.length; i++) data[i] = (byte) i;
-        
-        audioMemory.fill(new TestConsumer(data));
+
+        audioMemory.fill(new TestFiller(data));
 
         AudioMemory.Stats stats = audioMemory.getStats(0);
         assertEquals(bufferSize, stats.filled);
@@ -83,7 +83,7 @@ public class AudioMemoryTest {
         for (int i = 0; i < 200; i++) {
             data[i] = (byte) i;
         }
-        audioMemory.fill(new TestConsumer(data));
+        audioMemory.fill(new TestFiller(data));
 
         CapturingConsumer consumer = new CapturingConsumer();
         audioMemory.dump(consumer, 100);
@@ -104,11 +104,11 @@ public class AudioMemoryTest {
         }
 
         // This will wrap around
-        audioMemory.fill(new TestConsumer(data));
-        
+        audioMemory.fill(new TestFiller(data));
+
         CapturingConsumer consumer = new CapturingConsumer();
         audioMemory.dump(consumer, 100);
-        
+
         byte[] dumped = consumer.getCapturedData();
         assertEquals(100, dumped.length);
 
@@ -124,43 +124,43 @@ public class AudioMemoryTest {
         byte[] data = new byte[bufferSize];
         for (int i = 0; i < data.length; i++) data[i] = (byte) i;
 
-        audioMemory.fill(new TestConsumer(data));
+        audioMemory.fill(new TestFiller(data));
 
         CapturingConsumer consumer = new CapturingConsumer();
         audioMemory.dump(consumer, bufferSize);
-        
+
         byte[] dumped = consumer.getCapturedData();
         assertEquals(bufferSize, dumped.length);
         assertArrayEquals(data, dumped);
     }
-    
+
     @Test
     public void testDumpZeroBytes() throws IOException {
         byte[] data = new byte[100];
-        audioMemory.fill(new TestConsumer(data));
+        audioMemory.fill(new TestFiller(data));
 
         CapturingConsumer consumer = new CapturingConsumer();
         audioMemory.dump(consumer, 0);
 
         assertEquals(0, consumer.getCapturedData().length);
     }
-    
+
     @Test
     public void testStats() throws IOException {
         audioMemory.allocate(1000);
         AudioMemory.Stats stats = audioMemory.getStats(0);
         assertEquals(0, stats.filled);
-        assertEquals(1000, stats.total);
+        assertEquals(AudioMemory.CHUNK_SIZE, stats.total);
         assertFalse(stats.overwriting);
 
-        audioMemory.fill(new TestConsumer(new byte[500]));
+        audioMemory.fill(new TestFiller(new byte[500]));
         stats = audioMemory.getStats(0);
         assertEquals(500, stats.filled);
         assertFalse(stats.overwriting);
 
-        audioMemory.fill(new TestConsumer(new byte[600])); // This will overwrite
+        audioMemory.fill(new TestFiller(new byte[AudioMemory.CHUNK_SIZE])); // This will overwrite
         stats = audioMemory.getStats(0);
-        assertEquals(1000, stats.filled);
+        assertEquals(AudioMemory.CHUNK_SIZE, stats.filled);
         assertTrue(stats.overwriting);
     }
 }

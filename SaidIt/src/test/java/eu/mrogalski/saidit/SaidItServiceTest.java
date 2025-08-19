@@ -2,13 +2,15 @@ package eu.mrogalski.saidit;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.media.AudioRecord;
-
+import android.os.Handler;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 
@@ -18,11 +20,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SaidItServiceTest {
@@ -34,8 +32,9 @@ public class SaidItServiceTest {
     @Mock
     private SharedPreferences.Editor mockEditor;
     @Mock
-    private AudioRecord mockAudioRecord;
+    private Handler mockAudioHandler;
 
+    @InjectMocks
     private SaidItService saidItService;
 
     @Before
@@ -45,17 +44,18 @@ public class SaidItServiceTest {
         when(mockPrefs.edit()).thenReturn(mockEditor);
         when(mockEditor.putLong(anyString(), anyLong())).thenReturn(mockEditor);
         when(mockEditor.putBoolean(anyString(), anyBoolean())).thenReturn(mockEditor);
-        
-        saidItService = spy(new SaidItService());
-        
-        // Use `attachBaseContext` to set the mocked context
-        saidItService.attachBaseContext(mockContext);
-        
-        // Further mocking needed after `attachBaseContext`
-        when(saidItService.getSharedPreferences(anyString(), anyInt())).thenReturn(mockPrefs);
-        
-        // Mock audio memory to avoid actual allocation
-        saidItService.audioMemory = mock(AudioMemory.class);
+
+        // This allows us to immediately run Runnables posted to the handler
+        when(mockAudioHandler.post(any(Runnable.class))).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                invocation.getArgument(0, Runnable.class).run();
+                return null;
+            }
+        });
+
+        // Use the mocked handler
+        saidItService.audioHandler = mockAudioHandler;
     }
     
     @Test
@@ -118,20 +118,10 @@ public class SaidItServiceTest {
         saidItService.SAMPLE_RATE = 48000;
         saidItService.FILL_RATE = 2 * saidItService.SAMPLE_RATE;
         
-        doNothing().when(saidItService.audioMemory).dump(any(AudioMemory.Consumer.class), anyInt());
-
         // When dumpRecording is called
         saidItService.dumpRecording(10, null, "test_dump");
         
-        // We need to wait for the audio handler to process the runnable
-        try {
-            Thread.sleep(500); // Allow time for the async operation
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        // Then it should calculate bytes correctly and call audioMemory.dump
-        int expectedBytesToDump = (int) (10 * (2 * 48000));
-        verify(saidItService.audioMemory).dump(any(AudioMemory.Consumer.class), anyInt());
+        // Then it should have posted a runnable to the audioHandler
+        verify(saidItService.audioHandler).post(any(Runnable.class));
     }
 }

@@ -59,7 +59,7 @@ public class SaidItService extends Service {
     File mediaFile;
     AudioRecord audioRecord; // used only in the audio thread
     AacMp4Writer aacWriter; // used only in the audio thread
-    final AudioMemory audioMemory = new AudioMemory(); // used only in the audio thread
+    final AudioMemory audioMemory = new AudioMemory(new SystemClockWrapper()); // used only in the audio thread
 
     HandlerThread audioThread;
     Handler audioHandler; // used to post messages to audio thread

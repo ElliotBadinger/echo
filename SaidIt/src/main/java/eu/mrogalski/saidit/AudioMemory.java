@@ -1,7 +1,5 @@
 package eu.mrogalski.saidit;
 
-import android.os.SystemClock;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -9,6 +7,8 @@ public class AudioMemory {
 
     // Keep chunk size as allocation granularity (20s @ 48kHz mono 16-bit)
     static final int CHUNK_SIZE = 1920000; // bytes
+
+    private final Clock clock;
 
     // Ring buffer
     private ByteBuffer ring; // direct buffer
@@ -23,6 +23,10 @@ public class AudioMemory {
 
     // Reusable IO buffer to reduce allocations when interacting with AudioRecord/consumers
     private byte[] ioBuffer = new byte[32 * 1024];
+
+    public AudioMemory(Clock clock) {
+        this.clock = clock;
+    }
 
     public interface Consumer {
         int consume(byte[] array, int offset, int count) throws IOException;
@@ -62,45 +66,55 @@ public class AudioMemory {
 
     // Fill ring buffer with newly recorded data. Returns number of bytes read from the consumer.
     public int fill(Consumer filler) throws IOException {
+        int totalRead = 0;
         int read;
         synchronized (this) {
             if (capacity == 0 || ring == null) return 0;
             filling = true;
-            fillingStartUptimeMillis = SystemClock.uptimeMillis();
+            fillingStartUptimeMillis = clock.uptimeMillis();
         }
 
-        // Read up to ioBuffer.length each call to keep latencies bounded
         ensureIoBuffer(32 * 1024);
-        read = filler.consume(ioBuffer, 0, ioBuffer.length);
 
-        synchronized (this) {
-            if (read > 0 && capacity > 0) {
-                // Write into ring with wrap-around
-                int first = Math.min(read, capacity - writePos);
-                if (first > 0) {
-                    ByteBuffer dup = ring.duplicate();
-                    dup.position(writePos);
-                    dup.put(ioBuffer, 0, first);
-                }
-                int remaining = read - first;
-                if (remaining > 0) {
-                    ByteBuffer dup = ring.duplicate();
-                    dup.position(0);
-                    dup.put(ioBuffer, first, remaining);
-                }
-                writePos = (writePos + read) % capacity;
-                int newSize = size + read;
-                if (newSize > capacity) {
-                    overwriting = true;
-                    size = capacity;
+        // The filler might provide data in multiple chunks.
+        while ((read = filler.consume(ioBuffer, 0, ioBuffer.length)) > 0) {
+            synchronized (this) {
+                if (read > 0 && capacity > 0) { // check capacity again inside sync block
+                    // Write into ring with wrap-around
+                    int first = Math.min(read, capacity - writePos);
+                    if (first > 0) {
+                        ByteBuffer dup = ring.duplicate();
+                        dup.position(writePos);
+                        dup.put(ioBuffer, 0, first);
+                    }
+                    int remaining = read - first;
+                    if (remaining > 0) {
+                        ByteBuffer dup = ring.duplicate();
+                        dup.position(0);
+                        dup.put(ioBuffer, first, remaining);
+                    }
+                    writePos = (writePos + read) % capacity;
+                    int newSize = size + read;
+                    if (newSize > capacity) {
+                        overwriting = true;
+                        size = capacity;
+                    } else {
+                        size = newSize;
+                    }
+                    totalRead += read;
                 } else {
-                    size = newSize;
+                    // capacity became 0, stop filling
+                    break;
                 }
             }
+        }
+
+        synchronized (this) {
             filling = false;
         }
-        return read;
+        return totalRead;
     }
+
 
     public synchronized void dump(Consumer consumer, int bytesToDump) throws IOException {
         if (capacity == 0 || ring == null || size == 0 || bytesToDump <= 0) return;
@@ -136,7 +150,7 @@ public class AudioMemory {
         final Stats stats = new Stats();
         stats.filled = size;
         stats.total = capacity;
-        stats.estimation = (int) (filling ? (SystemClock.uptimeMillis() - fillingStartUptimeMillis) * fillRate / 1000 : 0);
+        stats.estimation = (int) (filling ? (clock.uptimeMillis() - fillingStartUptimeMillis) * fillRate / 1000 : 0);
         stats.overwriting = overwriting;
         return stats;
     }
