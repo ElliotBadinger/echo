@@ -3,172 +3,141 @@ package eu.mrogalski.saidit;
 import android.os.SystemClock;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.nio.ByteBuffer;
 
 public class AudioMemory {
 
-    private final LinkedList<byte[]> filled = new LinkedList<byte[]>();
-    private final LinkedList<byte[]> free = new LinkedList<byte[]>();
+    // Keep chunk size as allocation granularity (20s @ 48kHz mono 16-bit)
+    static final int CHUNK_SIZE = 1920000; // bytes
 
+    // Ring buffer
+    private ByteBuffer ring; // direct buffer
+    private int capacity = 0; // bytes
+    private int writePos = 0; // next write index [0..capacity)
+    private int size = 0;     // number of valid bytes stored (<= capacity)
+
+    // Fill estimation
     private long fillingStartUptimeMillis;
     private boolean filling = false;
-    private boolean currentWasFilled = false;
-    private byte[] current = null;
-    private int offset = 0;
-    static final int CHUNK_SIZE = 1920000; // 20 seconds of 48kHz wav (single channel, 16-bit samples) (1875 kB)
+    private boolean overwriting = false;
+
+    // Reusable IO buffer to reduce allocations when interacting with AudioRecord/consumers
+    private byte[] ioBuffer = new byte[32 * 1024];
+
+    public interface Consumer {
+        int consume(byte[] array, int offset, int count) throws IOException;
+    }
 
     synchronized public void allocate(long sizeToEnsure) {
-        long currentSize = getAllocatedMemorySize();
-        while(currentSize < sizeToEnsure) {
-            currentSize += CHUNK_SIZE;
-            free.addLast(new byte[CHUNK_SIZE]);
-        }
-        while(!free.isEmpty() && (currentSize - CHUNK_SIZE >= sizeToEnsure)) {
-            currentSize -= CHUNK_SIZE;
-            free.removeLast();
-        }
-        while(!filled.isEmpty() && (currentSize - CHUNK_SIZE >= sizeToEnsure)) {
-            currentSize -= CHUNK_SIZE;
-            filled.removeFirst();
-        }
-        if((current != null) && (currentSize - CHUNK_SIZE >= sizeToEnsure)) {
-            //currentSize -= CHUNK_SIZE;
-            current = null;
-            offset = 0;
-            currentWasFilled = false;
-        }
-        System.gc();
+        int required = 0;
+        while (required < sizeToEnsure) required += CHUNK_SIZE;
+        if (required == capacity) return; // no change
+
+        // Allocate new ring; drop previous content to free memory pressure.
+        ring = (required > 0) ? ByteBuffer.allocateDirect(required) : null;
+        capacity = required;
+        writePos = 0;
+        size = 0;
+        overwriting = false;
     }
 
     synchronized public long getAllocatedMemorySize() {
-        return (free.size() + filled.size() + (current == null ? 0 : 1)) * CHUNK_SIZE;
-    }
-
-    public interface Consumer {
-        public int consume(byte[] array, int offset, int count) throws IOException;
-    }
-
-    private int skipAndFeed(int bytesToSkip, byte[] arr, int offset, int length, Consumer consumer)  throws IOException {
-        if(bytesToSkip >= length) {
-            return length;
-        } else if(bytesToSkip > 0) {
-            consumer.consume(arr, offset + bytesToSkip, length - bytesToSkip);
-            return bytesToSkip;
-        }
-        consumer.consume(arr, offset, length);
-        return 0;
-    }
-
-    public void read(int skipBytes, Consumer reader)  throws IOException {
-        synchronized (this) {
-            if(!filling && current != null && currentWasFilled) {
-                skipBytes -= skipAndFeed(skipBytes, current, offset, current.length - offset, reader);
-            }
-            for(byte[] arr : filled) {
-                skipBytes -= skipAndFeed(skipBytes, arr, 0, arr.length, reader);
-            }
-            if(current != null && offset > 0) {
-                skipAndFeed(skipBytes, current, 0, offset, reader);
-            }
-        }
+        return capacity;
     }
 
     public int countFilled() {
-        int sum = 0;
         synchronized (this) {
-            if(!filling && current != null && currentWasFilled) {
-                sum += current.length - offset;
-            }
-            for(byte[] arr : filled) {
-                sum += arr.length;
-            }
-            if(current != null && offset > 0) {
-                sum += offset;
-            }
+            return size;
         }
-        return sum;
     }
 
-    public void fill(Consumer filler) throws IOException {
+    // Ensure ioBuffer is at least min bytes
+    private void ensureIoBuffer(int min) {
+        if (ioBuffer.length < min) {
+            int newLen = ioBuffer.length;
+            while (newLen < min) newLen = Math.min(Math.max(newLen * 2, 4096), 256 * 1024);
+            ioBuffer = new byte[newLen];
+        }
+    }
+
+    // Fill ring buffer with newly recorded data. Returns number of bytes read from the consumer.
+    public int fill(Consumer filler) throws IOException {
+        int read;
         synchronized (this) {
-            if(current == null) {
-                if(free.isEmpty()) {
-                    if(filled.isEmpty()) return;
-                    currentWasFilled = true;
-                    current = filled.removeFirst();
-                } else {
-                    currentWasFilled = false;
-                    current = free.removeFirst();
-                }
-                offset = 0;
-            }
+            if (capacity == 0 || ring == null) return 0;
             filling = true;
             fillingStartUptimeMillis = SystemClock.uptimeMillis();
         }
 
-        final int read = filler.consume(current, offset, current.length - offset);
+        // Read up to ioBuffer.length each call to keep latencies bounded
+        ensureIoBuffer(32 * 1024);
+        read = filler.consume(ioBuffer, 0, ioBuffer.length);
 
         synchronized (this) {
-            if(offset + read >= current.length) {
-                filled.addLast(current);
-                current = null;
-                offset = 0;
-            } else {
-                offset += read;
+            if (read > 0 && capacity > 0) {
+                // Write into ring with wrap-around
+                int first = Math.min(read, capacity - writePos);
+                if (first > 0) {
+                    ByteBuffer dup = ring.duplicate();
+                    dup.position(writePos);
+                    dup.put(ioBuffer, 0, first);
+                }
+                int remaining = read - first;
+                if (remaining > 0) {
+                    ByteBuffer dup = ring.duplicate();
+                    dup.position(0);
+                    dup.put(ioBuffer, first, remaining);
+                }
+                writePos = (writePos + read) % capacity;
+                int newSize = size + read;
+                if (newSize > capacity) {
+                    overwriting = true;
+                    size = capacity;
+                } else {
+                    size = newSize;
+                }
             }
             filling = false;
         }
+        return read;
     }
 
     public synchronized void dump(Consumer consumer, int bytesToDump) throws IOException {
-        int remainingBytes = bytesToDump;
-        LinkedList<byte[]> tempQueue = new LinkedList<>(filled);
-        if (current != null) {
-            tempQueue.addLast(current);
-        }
+        if (capacity == 0 || ring == null || size == 0 || bytesToDump <= 0) return;
 
-        // Calculate the starting point
-        long totalBytes = 0;
-        for (byte[] chunk : tempQueue) {
-            totalBytes += (chunk == current) ? offset : chunk.length;
-        }
+        int toCopy = Math.min(bytesToDump, size);
+        int skip = size - toCopy; // skip older bytes beyond window
 
-        long bytesToSkip = Math.max(0, totalBytes - bytesToDump);
+        int start = (writePos - size + capacity) % capacity; // oldest
+        int readPos = (start + skip) % capacity;             // first byte to output
 
-        for (byte[] chunk : tempQueue) {
-            if (remainingBytes <= 0) break;
-
-            int chunkSize = (chunk == current) ? offset : chunk.length;
-            if (bytesToSkip >= chunkSize) {
-                bytesToSkip -= chunkSize;
-                continue;
-            }
-
-            int startOffset = (int) bytesToSkip;
-            int bytesToWrite = Math.min(remainingBytes, chunkSize - startOffset);
-
-            if (bytesToWrite > 0) {
-                consumer.consume(chunk, startOffset, bytesToWrite);
-                remainingBytes -= bytesToWrite;
-            }
-            bytesToSkip = 0; // Only skip from the first relevant chunk
+        int remaining = toCopy;
+        while (remaining > 0) {
+            int chunk = Math.min(remaining, capacity - readPos);
+            // Copy out chunk into consumer via temporary array
+            ensureIoBuffer(chunk);
+            ByteBuffer dup = ring.duplicate();
+            dup.position(readPos);
+            dup.get(ioBuffer, 0, chunk);
+            consumer.consume(ioBuffer, 0, chunk);
+            remaining -= chunk;
+            readPos = (readPos + chunk) % capacity;
         }
     }
 
     public static class Stats {
-        public int filled; // taken
-        public int total;
-        public int estimation;
-        public boolean overwriting; // currentWasFilled;
+        public int filled; // bytes stored
+        public int total;  // capacity
+        public int estimation; // bytes assumed in flight since last fill started
+        public boolean overwriting; // whether we've wrapped at least once
     }
 
     public synchronized Stats getStats(int fillRate) {
         final Stats stats = new Stats();
-        stats.filled = filled.size() * CHUNK_SIZE + (current == null ? 0 : currentWasFilled ? CHUNK_SIZE : offset);
-        stats.total = (filled.size() + free.size() + (current == null ? 0 : 1)) * CHUNK_SIZE;
+        stats.filled = size;
+        stats.total = capacity;
         stats.estimation = (int) (filling ? (SystemClock.uptimeMillis() - fillingStartUptimeMillis) * fillRate / 1000 : 0);
-        stats.overwriting = currentWasFilled;
+        stats.overwriting = overwriting;
         return stats;
     }
-
 }
