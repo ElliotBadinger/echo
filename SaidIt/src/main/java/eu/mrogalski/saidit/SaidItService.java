@@ -101,10 +101,7 @@ public class SaidItService extends Service {
 
         audioReader = () -> {
             try {
-                int n;
-                do {
-                    n = audioMemory.fill(filler);
-                } while (n > 0);
+                audioMemory.fill(filler);
             } catch (IOException e) {
                 final String errorMessage = getString(R.string.error_during_recording_into) + (mediaFile != null ? mediaFile.getName() : "");
                 showToast(errorMessage);
