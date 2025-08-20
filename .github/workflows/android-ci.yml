@@ -1,0 +1,47 @@
+name: Android CI - Unit Tests
+
+# This workflow runs on pushes to the main/master branch and any pull request
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  # This job will run the unit tests
+  unit-tests:
+    # Use the latest version of Ubuntu to run the job
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the code from your repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up the Java Development Kit (JDK)
+      # Your project uses Java 8, but we'll use JDK 11, which is compatible.
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      # Step 3: Make the Gradle wrapper executable
+      # This is the same step I had to perform.
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      # Step 4: Run the unit tests
+      # This command executes all tests in the `test` source set (your unit tests).
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
+      # Step 5 (Optional): Upload the test results
+      # This step will save your test results as an artifact, so you can view them later.
+      - name: Upload test reports
+        if: always() # This ensures that reports are uploaded even if tests fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: SaidIt/build/reports/tests/testDebugUnitTest
+          itTest/
