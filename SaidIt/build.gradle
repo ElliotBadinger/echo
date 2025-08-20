@@ -6,6 +6,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.12.1'
+        classpath 'com.google.gms:google-services:4.4.1'
     }
 }
 apply plugin: 'com.android.application'
@@ -74,3 +75,5 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.5.2'
     androidTestImplementation 'androidx.test:rules:1.5.0'
 }
+
+apply plugin: 'com.google.gms.google-services'
