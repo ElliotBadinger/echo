@@ -115,10 +115,14 @@ public class AacMp4Writer implements Closeable {
 
     @Override
     public void close() throws IOException {
-        try {
-            drainEncoder(true);
-        } catch (Exception e) {
-            Log.e(TAG, "Error finishing encoder", e);
+        if (totalPcmBytesWritten == 0) {
+            Log.w(TAG, "close() called without any data written. Muxer will not be finalized.");
+        } else {
+            try {
+                drainEncoder(true);
+            } catch (Exception e) {
+                Log.e(TAG, "Error finishing encoder", e);
+            }
         }
         try {
             encoder.stop();

@@ -23,6 +23,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.Process;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.format.DateUtils;
@@ -40,7 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
- 
+
 
 import static eu.mrogalski.saidit.SaidIt.AUDIO_MEMORY_ENABLED_KEY;
 import static eu.mrogalski.saidit.SaidIt.AUDIO_MEMORY_SIZE_KEY;
@@ -82,7 +83,7 @@ public class SaidItService extends Service {
         Log.d(TAG, "Sample rate: " + SAMPLE_RATE);
         FILL_RATE = 2 * SAMPLE_RATE;
 
-        audioThread = new HandlerThread("audioThread", Thread.MAX_PRIORITY);
+        audioThread = new HandlerThread("audioThread", Process.THREAD_PRIORITY_AUDIO);
         audioThread.start();
         audioHandler = new Handler(audioThread.getLooper());
 
@@ -141,7 +142,8 @@ public class SaidItService extends Service {
                 Log.d(TAG, "Executing auto-save...");
                 String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", java.util.Locale.US).format(new java.util.Date());
                 String autoName = "Auto-save_" + timestamp;
-                dumpRecording(300, new SaidItFragment.NotifyFileReceiver(this), autoName);
+                int autoSaveDurationSeconds = preferences.getInt("auto_save_duration", 300);
+                dumpRecording(autoSaveDurationSeconds, new SaidItFragment.NotifyFileReceiver(this), autoName);
             }
             return START_STICKY;
         }
@@ -334,14 +336,14 @@ public class SaidItService extends Service {
         PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         alarmManager.cancel(pendingIntent);
     }
-    
+
     private void flushAudioRecord() {
         // Only allowed on the audio thread
         assert audioHandler.getLooper() == Looper.myLooper();
         audioHandler.removeCallbacks(audioReader); // remove any delayed callbacks
         audioReader.run();
     }
-    
+
     private void showToast(String message) {
         Toast.makeText(SaidItService.this, message, Toast.LENGTH_LONG).show();
     }
@@ -364,7 +366,7 @@ public class SaidItService extends Service {
     public int getSamplingRate() {
         return SAMPLE_RATE;
     }
-    
+
     public void setSampleRate(int sampleRate) {
         if (state == STATE_RECORDING) return;
         if (state == STATE_READY) {
@@ -410,7 +412,7 @@ public class SaidItService extends Service {
     public float getBytesToSeconds() {
         return 1f / FILL_RATE;
     }
-    
+
     private void saveFileToMediaStore(File sourceFile, String displayName, WavFileReceiver receiver) {
         ContentResolver resolver = getContentResolver();
         ContentValues values = new ContentValues();
@@ -472,7 +474,7 @@ public class SaidItService extends Service {
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         try {
             mmr.setDataSource(file.getAbsolutePath());
-            String dur = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            String dur = mmr.extractMetadata(MediaMetadataR.METADATA_KEY_DURATION);
             if (dur != null) {
                 return Long.parseLong(dur);
             }
