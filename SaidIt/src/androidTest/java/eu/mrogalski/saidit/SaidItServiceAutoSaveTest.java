@@ -38,6 +38,9 @@ public class SaidItServiceAutoSaveTest {
 
     @After
     public void tearDown() {
+        // Stop the service to prevent lingering processes
+        context.stopService(new Intent(context, SaidItService.class));
+
         // Clean up preferences and any created files after each test
         sharedPreferences.edit().clear().apply();
         ContentResolver contentResolver = context.getContentResolver();

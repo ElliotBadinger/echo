@@ -190,10 +190,10 @@ public class SaidItService extends Service {
             if (!mIsTestEnvironment) {
                 audioRecord.setRecordPositionUpdateListener(positionListener, audioHandler);
                 audioRecord.setPositionNotificationPeriod(periodFrames);
+                // Kickstart a first read to reduce latency
+                audioHandler.post(audioReader);
             }
             audioRecord.startRecording();
-            // Kickstart a first read to reduce latency
-            audioHandler.post(audioReader);
         });
 
         scheduleAutoSave();

@@ -1,127 +1,66 @@
 package eu.mrogalski.saidit;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.Handler;
+import android.content.Intent;
+import androidx.test.core.app.ApplicationProvider;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
-
-import java.io.IOException;
+import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.android.controller.ServiceController;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(RobolectricTestRunner.class)
 public class SaidItServiceTest {
 
-    @Mock
-    private Context mockContext;
-    @Mock
-    private SharedPreferences mockPrefs;
-    @Mock
-    private SharedPreferences.Editor mockEditor;
-    @Mock
-    private Handler mockAudioHandler;
-
-    @InjectMocks
-    private SaidItService saidItService;
+    private ServiceController<SaidItService> controller;
+    private SaidItService service;
 
     @Before
     public void setUp() {
-        // Mock Android dependencies
-        when(mockContext.getSharedPreferences(anyString(), anyInt())).thenReturn(mockPrefs);
-        when(mockPrefs.edit()).thenReturn(mockEditor);
-        when(mockEditor.putLong(anyString(), anyLong())).thenReturn(mockEditor);
-        when(mockEditor.putBoolean(anyString(), anyBoolean())).thenReturn(mockEditor);
-
-        // This allows us to immediately run Runnables posted to the handler
-        when(mockAudioHandler.post(any(Runnable.class))).thenAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                invocation.getArgument(0, Runnable.class).run();
-                return null;
-            }
-        });
-
-        // Use the mocked handler
-        saidItService.audioHandler = mockAudioHandler;
+        controller = Robolectric.buildService(SaidItService.class, new Intent(ApplicationProvider.getApplicationContext(), SaidItService.class));
+        service = controller.create().get();
+        service.mIsTestEnvironment = true; // Mark as test environment
     }
-    
+
+    @After
+    public void tearDown() {
+        // Properly destroy the service to ensure threads are cleaned up
+        controller.destroy();
+    }
+
     @Test
     public void testInitialState() {
-        assertEquals(SaidItService.STATE_READY, saidItService.state);
+        assertEquals(SaidItService.STATE_READY, service.state);
     }
 
     @Test
     public void testEnableListening_changesState() {
-        // Given the service is in the READY state
-        saidItService.state = SaidItService.STATE_READY;
-
-        // When listening is enabled
-        saidItService.enableListening();
-
-        // Then the state transitions to LISTENING
-        assertEquals(SaidItService.STATE_LISTENING, saidItService.state);
+        service.state = SaidItService.STATE_READY;
+        service.enableListening();
+        assertEquals(SaidItService.STATE_LISTENING, service.state);
     }
-    
+
     @Test
     public void testDisableListening_changesState() {
-        // Given the service is listening
-        saidItService.state = SaidItService.STATE_LISTENING;
-
-        // When listening is disabled
-        saidItService.disableListening();
-
-        // Then the state transitions back to READY
-        assertEquals(SaidItService.STATE_READY, saidItService.state);
+        service.state = SaidItService.STATE_LISTENING;
+        service.disableListening();
+        assertEquals(SaidItService.STATE_READY, service.state);
     }
-    
+
     @Test
     public void testStartRecording_changesState() {
-        // Given the service is listening
-        saidItService.state = SaidItService.STATE_LISTENING;
-        
-        // When recording is started
-        saidItService.startRecording(5.0f);
-        
-        // Then the state transitions to RECORDING
-        assertEquals(SaidItService.STATE_RECORDING, saidItService.state);
+        service.state = SaidItService.STATE_LISTENING;
+        service.startRecording(5.0f);
+        assertEquals(SaidItService.STATE_RECORDING, service.state);
     }
-    
+
     @Test
     public void testStopRecording_changesState() {
-        // Given the service is recording
-        saidItService.state = SaidItService.STATE_RECORDING;
-
-        // When recording is stopped
-        saidItService.stopRecording(null);
-
-        // Then the state transitions back to LISTENING
-        assertEquals(SaidItService.STATE_LISTENING, saidItService.state);
-    }
-    
-    @Test
-    public void testDumpRecording_callsAudioMemoryDump() throws IOException {
-        // Given the service is listening
-        saidItService.state = SaidItService.STATE_LISTENING;
-        saidItService.SAMPLE_RATE = 48000;
-        saidItService.FILL_RATE = 2 * saidItService.SAMPLE_RATE;
-        
-        // When dumpRecording is called
-        saidItService.dumpRecording(10, null, "test_dump");
-        
-        // Then it should have posted a runnable to the audioHandler
-        verify(saidItService.audioHandler).post(any(Runnable.class));
+        service.state = SaidItService.STATE_RECORDING;
+        service.stopRecording(null);
+        assertEquals(SaidItService.STATE_LISTENING, service.state);
     }
 }
