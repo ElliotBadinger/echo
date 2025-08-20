@@ -59,7 +59,7 @@ public class AudioMemory {
     private void ensureIoBuffer(int min) {
         if (ioBuffer.length < min) {
             int newLen = ioBuffer.length;
-            while (newLen < min) newLen = Math.min(Math.max(newLen * 2, 4096), 256 * 1024);
+            while (newLen < min) newLen = Math.max(newLen * 2, 4096);
             ioBuffer = new byte[newLen];
         }
     }

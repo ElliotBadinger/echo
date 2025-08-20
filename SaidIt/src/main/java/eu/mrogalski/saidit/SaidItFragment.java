@@ -236,7 +236,7 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
         }
 
         @Override
-        public void onSuccess(final Uri fileUri, float runtime) {
+        public void onSuccess(final Uri fileUri) {
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 return;
@@ -265,7 +265,7 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
         }
 
         @Override
-        public void onSuccess(final Uri fileUri, float runtime) {
+        public void onSuccess(final Uri fileUri) {
             if (activity != null && !activity.isFinishing()) {
                 activity.runOnUiThread(() -> {
                     if (progressDialog != null && progressDialog.isShowing()) {
