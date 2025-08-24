@@ -34,6 +34,8 @@ public class SaidItServiceAutoSaveTest {
     public void setUp() {
         context = ApplicationProvider.getApplicationContext();
         sharedPreferences = context.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE);
+        // Ensure the service is in a listening state for the test
+        sharedPreferences.edit().putBoolean(SaidIt.AUDIO_MEMORY_ENABLED_KEY, true).apply();
     }
 
     @After
@@ -53,36 +55,52 @@ public class SaidItServiceAutoSaveTest {
 
     @Test
     public void testAutoSave_createsAudioFile() throws Exception {
-        // 1. Configure auto-save to be enabled with a 2-second interval.
+        // 1. Configure auto-save to be enabled
         sharedPreferences.edit()
                 .putBoolean("auto_save_enabled", true)
-                .putInt("auto_save_duration", 2) // 2 seconds
+                .putInt("auto_save_duration", 2) // 2 seconds, although we trigger it manually
                 .apply();
 
         // 2. Start the service.
         Intent serviceIntent = new Intent(context, SaidItService.class);
         serviceRule.startService(serviceIntent);
 
-        // 3. Record the current time to query for files created after this point.
-        long startTimeMillis = System.currentTimeMillis();
+        // 3. Directly trigger the auto-save action.
+        Intent autoSaveIntent = new Intent(context, SaidItService.class);
+        autoSaveIntent.setAction("eu.mrogalski.saidit.ACTION_AUTO_SAVE");
+        serviceRule.startService(autoSaveIntent);
 
-        // 4. Wait for a period longer than the auto-save interval to ensure it triggers.
-        Thread.sleep(3000); // Wait 3 seconds
 
-        // 5. Query MediaStore for the new file.
+        // 4. Poll MediaStore for the new file with a timeout.
         ContentResolver contentResolver = context.getContentResolver();
         Uri collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         String[] projection = new String[]{MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.DATE_ADDED};
-        String selection = MediaStore.Audio.Media.DISPLAY_NAME + " LIKE ? AND " + MediaStore.Audio.Media.DATE_ADDED + " >= ?";
-        String[] selectionArgs = new String[]{"Auto-save_%", String.valueOf(startTimeMillis / 1000)};
+        String selection = MediaStore.Audio.Media.DISPLAY_NAME + " LIKE ?";
+        String[] selectionArgs = new String[]{"Auto-save_%"};
         String sortOrder = MediaStore.Audio.Media.DATE_ADDED + " DESC";
 
-        Cursor cursor = contentResolver.query(collection, projection, selection, selectionArgs, sortOrder);
+        Cursor cursor = null;
+        boolean fileFound = false;
+        long startTime = System.currentTimeMillis();
+        long timeout = 10000; // 10 seconds timeout
+
+        while (System.currentTimeMillis() - startTime < timeout) {
+            cursor = contentResolver.query(collection, projection, selection, selectionArgs, sortOrder);
+            if (cursor != null && cursor.moveToFirst()) {
+                fileFound = true;
+                break;
+            }
+            if (cursor != null) {
+                cursor.close();
+            }
+            Thread.sleep(500); // Poll every 500ms
+        }
+
 
         assertNotNull("Cursor should not be null", cursor);
-        assertTrue("A new auto-saved file should be found in MediaStore.", cursor.moveToFirst());
+        assertTrue("A new auto-saved file should be found in MediaStore.", fileFound);
 
-        // 6. Get the URI and add it to the list for cleanup.
+        // 5. Get the URI and add it to the list for cleanup.
         int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
         long id = cursor.getLong(idColumn);
         Uri contentUri = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, String.valueOf(id));

@@ -1,8 +1,11 @@
 package eu.mrogalski.saidit;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.os.IBinder;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.ServiceTestRule;
@@ -11,7 +14,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
@@ -21,6 +27,10 @@ public class AutoSaveTest {
     public final ServiceTestRule serviceRule = new ServiceTestRule();
 
     private Context context;
+    private SaidItService mService;
+    private boolean mBound = false;
+    private final CountDownLatch latch = new CountDownLatch(1);
+
 
     @Before
     public void setUp() {
@@ -29,12 +39,32 @@ public class AutoSaveTest {
 
     @After
     public void tearDown() {
+        if (mBound) {
+            context.unbindService(mConnection);
+            mBound = false;
+        }
         // Stop the service
-        serviceRule.stopService(new Intent(context, SaidItService.class));
+        context.stopService(new Intent(context, SaidItService.class));
     }
 
+    private final ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            SaidItService.BackgroundRecorderBinder binder = (SaidItService.BackgroundRecorderBinder) service;
+            mService = binder.getService();
+            mBound = true;
+            latch.countDown();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
+
+
     @Test
-    public void testAutoSaveDoesNotCrashService() throws TimeoutException {
+    public void testAutoSaveDoesNotCrashService() throws TimeoutException, InterruptedException {
         // 1. Configure auto-save
         SharedPreferences preferences = context.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE);
         preferences.edit()
@@ -42,34 +72,26 @@ public class AutoSaveTest {
                 .putInt("auto_save_duration", 5) // 5 seconds
                 .apply();
 
-        // 2. Start the service
+        // 2. Start and bind to the service
         Intent intent = new Intent(context, SaidItService.class);
-        serviceRule.startService(intent);
+        context.startService(intent);
+        context.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
-        // 3. Bind to the service to ensure it's running
-        try {
-            serviceRule.bindService(intent);
-        } catch (TimeoutException e) {
-            // This is expected if the service is running
-        }
+        // Wait for the service to be connected
+        assertTrue("Failed to bind to service", latch.await(5, TimeUnit.SECONDS));
+        assertNotNull("Service should be bound", mService);
 
 
-        // 4. Wait for auto-save to trigger
-        try {
-            Thread.sleep(10000); // Wait for 10 seconds
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        // 3. Directly trigger the auto-save action.
+        Intent autoSaveIntent = new Intent(context, SaidItService.class);
+        autoSaveIntent.setAction("eu.mrogalski.saidit.ACTION_AUTO_SAVE");
+        context.startService(autoSaveIntent);
 
-        // 5. Check if the service is still running
-        // A simple way to do this is to try to bind again. If it succeeds, the service is running.
-        boolean isRunning = false;
-        try {
-            serviceRule.bindService(intent);
-            isRunning = true;
-        } catch (TimeoutException e) {
-            // Service crashed
-        }
-        assertTrue("Service should still be running after auto-save", isRunning);
+
+        // 4. Give the service some time to process the auto-save
+        Thread.sleep(2000);
+
+        // 5. Check if the service is still bound
+        assertTrue("Service should still be bound after auto-save", mBound);
     }
 }

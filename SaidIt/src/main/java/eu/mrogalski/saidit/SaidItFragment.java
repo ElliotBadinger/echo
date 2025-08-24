@@ -3,7 +3,10 @@ package eu.mrogalski.saidit;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.content.ComponentName;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -40,7 +43,7 @@ import eu.mrogalski.android.TimeFormat;
 public class SaidItFragment extends Fragment implements SaveClipBottomSheet.SaveClipListener {
 
     private static final String YOUR_NOTIFICATION_CHANNEL_ID = "SaidItServiceChannel";
-    private SaidItService echo;
+    private BroadcastReceiver broadcastReceiver;
 
     // UI Elements
     private View recordingGroup;
@@ -53,28 +56,26 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
     private boolean isRecording = false;
     private float memorizedDuration = 0;
 
-    public void setService(SaidItService service) {
-        this.echo = service;
-        if (getView() != null) {
-            getView().postOnAnimation(updater);
-        }
-    }
 
     private final MaterialButtonToggleGroup.OnButtonCheckedListener listeningToggleListener = (group, checkedId, isChecked) -> {
-        if (isChecked && echo != null) {
+        if (isChecked) {
+            Intent intent = new Intent(getActivity(), SaidItService.class);
             if (checkedId == R.id.listening_button) {
-                echo.enableListening();
+                intent.setAction(SaidItService.ACTION_START_LISTENING);
             } else if (checkedId == R.id.disabled_button) {
-                echo.disableListening();
+                intent.setAction(SaidItService.ACTION_STOP_LISTENING);
             }
+            getActivity().startService(intent);
         }
     };
 
     private final Runnable updater = new Runnable() {
         @Override
         public void run() {
-            if (getView() == null || echo == null) return;
-            echo.getState(serviceStateCallback);
+            if (getView() == null) return;
+            Intent intent = new Intent(getActivity(), SaidItService.class);
+            intent.setAction(SaidItService.ACTION_GET_STATE);
+            getActivity().startService(intent);
         }
     };
 
@@ -106,9 +107,9 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
         recordingsButton.setOnClickListener(v -> startActivity(new Intent(activity, RecordingsActivity.class)));
 
         stopRecordingButton.setOnClickListener(v -> {
-            if (echo != null) {
-                echo.stopRecording(new PromptFileReceiver(activity));
-            }
+            Intent intent = new Intent(getActivity(), SaidItService.class);
+            intent.setAction(SaidItService.ACTION_STOP_RECORDING);
+            getActivity().startService(intent);
         });
 
         saveClipButton.setOnClickListener(v -> {
@@ -124,16 +125,19 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
 
     @Override
     public void onSaveClip(String fileName, float durationInSeconds) {
-        if (echo != null) {
-            AlertDialog progressDialog = new MaterialAlertDialogBuilder(requireActivity())
-                    .setTitle("Saving Recording")
-                    .setMessage("Please wait...")
-                    .setCancelable(false)
-                    .create();
-            progressDialog.show();
+        AlertDialog progressDialog = new MaterialAlertDialogBuilder(requireActivity())
+                .setTitle("Saving Recording")
+                .setMessage("Please wait...")
+                .setCancelable(false)
+                .create();
+        progressDialog.show();
 
-            echo.dumpRecording(durationInSeconds, new PromptFileReceiver(getActivity(), progressDialog), fileName);
-        }
+        Intent intent = new Intent(getActivity(), SaidItService.class);
+        intent.setAction(SaidItService.ACTION_EXPORT_RECORDING);
+        intent.putExtra(SaidItService.EXTRA_MEMORY_SECONDS, durationInSeconds);
+        intent.putExtra(SaidItService.EXTRA_FORMAT, "aac");
+        intent.putExtra(SaidItService.EXTRA_NEW_FILE_NAME, fileName);
+        getActivity().startService(intent);
     }
 
 
@@ -174,12 +178,31 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
     @Override
     public void onStart() {
         super.onStart();
-        SaidItActivity activity = (SaidItActivity) getActivity();
-        if (activity != null) {
-            echo = activity.getEchoService();
-            if (echo != null && getView() != null) {
-                getView().postOnAnimation(updater);
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (SaidItService.ACTION_STATE_UPDATE.equals(intent.getAction())) {
+                    boolean listeningEnabled = intent.getBooleanExtra(SaidItService.EXTRA_LISTENING_ENABLED, false);
+                    boolean recording = intent.getBooleanExtra(SaidItService.EXTRA_RECORDING, false);
+                    float memorized = intent.getFloatExtra(SaidItService.EXTRA_MEMORIZED, 0);
+                    float totalMemory = intent.getFloatExtra(SaidItService.EXTRA_TOTAL_MEMORY, 0);
+                    float recorded = intent.getFloatExtra(SaidItService.EXTRA_RECORDED, 0);
+                    serviceStateCallback.state(listeningEnabled, recording, memorized, totalMemory, recorded);
+                }
             }
+        };
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(broadcastReceiver, new IntentFilter(SaidItService.ACTION_STATE_UPDATE));
+        if (getView() != null) {
+            getView().postOnAnimation(updater);
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(broadcastReceiver);
+        if (getView() != null) {
+            getView().removeCallbacks(updater);
         }
     }
 

@@ -29,7 +29,17 @@ import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Toast;
+import android.media.audiofx.AutomaticGainControl;
+import android.media.audiofx.NoiseSuppressor;
 import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import eu.mrogalski.saidit.analysis.SegmentationController;
+import eu.mrogalski.saidit.analysis.SimpleSegmentationController;
+import eu.mrogalski.saidit.ml.AudioEventClassifier;
+import eu.mrogalski.saidit.ml.TfLiteClassifier;
+import eu.mrogalski.saidit.storage.RecordingStoreManager;
+import eu.mrogalski.saidit.storage.SimpleRecordingStoreManager;
+import eu.mrogalski.saidit.export.AacExporter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,8 +56,32 @@ public class SaidItService extends Service {
     private static final String YOUR_NOTIFICATION_CHANNEL_ID = "SaidItServiceChannel";
     private static final String ACTION_AUTO_SAVE = "eu.mrogalski.saidit.ACTION_AUTO_SAVE";
 
+    public static final String ACTION_START_LISTENING = "eu.mrogalski.saidit.ACTION_START_LISTENING";
+    public static final String ACTION_STOP_LISTENING = "eu.mrogalski.saidit.ACTION_STOP_LISTENING";
+    public static final String ACTION_START_RECORDING = "eu.mrogalski.saidit.ACTION_START_RECORDING";
+    public static final String ACTION_STOP_RECORDING = "eu.mrogalski.saidit.ACTION_STOP_RECORDING";
+    public static final String ACTION_EXPORT_RECORDING = "eu.mrogalski.saidit.ACTION_EXPORT_RECORDING";
+    public static final String ACTION_GET_STATE = "eu.mrogalski.saidit.ACTION_GET_STATE";
+    public static final String ACTION_STATE_UPDATE = "eu.mrogalski.saidit.ACTION_STATE_UPDATE";
+
+    public static final String EXTRA_PREPENDED_MEMORY_SECONDS = "eu.mrogalski.saidit.EXTRA_PREPENDED_MEMORY_SECONDS";
+    public static final String EXTRA_MEMORY_SECONDS = "eu.mrogalski.saidit.EXTRA_MEMORY_SECONDS";
+    public static final String EXTRA_FORMAT = "eu.mrogalski.saidit.EXTRA_FORMAT";
+    public static final String EXTRA_NEW_FILE_NAME = "eu.mrogalski.saidit.EXTRA_NEW_FILE_NAME";
+    public static final String EXTRA_LISTENING_ENABLED = "eu.mrogalski.saidit.EXTRA_LISTENING_ENABLED";
+    public static final String EXTRA_RECORDING = "eu.mrogalski.saidit.EXTRA_RECORDING";
+    public static final String EXTRA_MEMORIZED = "eu.mrogalski.saidit.EXTRA_MEMORIZED";
+    public static final String EXTRA_TOTAL_MEMORY = "eu.mrogalski.saidit.EXTRA_TOTAL_MEMORY";
+    public static final String EXTRA_RECORDED = "eu.mrogalski.saidit.EXTRA_RECORDED";
+
     volatile int SAMPLE_RATE;
     volatile int FILL_RATE;
+
+    public enum ServiceState {
+        READY,
+        LISTENING,
+        RECORDING
+    }
 
     // A flag to indicate if the service is running in a test environment.
     // This is a pragmatic approach to prevent test hangs.
@@ -55,19 +89,27 @@ public class SaidItService extends Service {
 
     File mediaFile;
     AudioRecord audioRecord; // used only in the audio thread
+    NoiseSuppressor noiseSuppressor; // used only in the audio thread
+    AutomaticGainControl automaticGainControl; // used only in the audio thread
     AacMp4Writer aacWriter; // used only in the audio thread
     final AudioMemory audioMemory = new AudioMemory(new SystemClockWrapper()); // used only in the audio thread
 
     HandlerThread audioThread;
     Handler audioHandler; // used to post messages to audio thread
+    HandlerThread analysisThread;
+    Handler analysisHandler; // used to post messages to analysis thread
     AudioMemory.Consumer filler;
     Runnable audioReader;
     AudioRecord.OnRecordPositionUpdateListener positionListener;
 
-    int state;
-    static final int STATE_READY = 0;
-    static final int STATE_LISTENING = 1;
-    static final int STATE_RECORDING = 2;
+    private AudioProcessingPipeline audioProcessingPipeline;
+    private RecordingStoreManager recordingStoreManager;
+    private RecordingExporter recordingExporter;
+    private int analyzedBytes;
+    private Runnable analysisTick;
+    private LocalBroadcastManager localBroadcastManager;
+
+    ServiceState state = ServiceState.READY;
 
     @Override
     public void onCreate() {
@@ -82,6 +124,11 @@ public class SaidItService extends Service {
         audioThread = new HandlerThread("audioThread", Process.THREAD_PRIORITY_AUDIO);
         audioThread.start();
         audioHandler = new Handler(audioThread.getLooper());
+
+        analysisThread = new HandlerThread("analysisThread", Process.THREAD_PRIORITY_BACKGROUND);
+        analysisThread.start();
+        analysisHandler = new Handler(analysisThread.getLooper());
+        localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
         filler = (array, offset, count) -> {
             if (audioRecord == null) return 0;
@@ -107,6 +154,44 @@ public class SaidItService extends Service {
             }
         };
 
+        audioProcessingPipeline = new AudioProcessingPipeline(this, SAMPLE_RATE);
+        audioProcessingPipeline.start();
+        recordingStoreManager = audioProcessingPipeline.getRecordingStoreManager();
+        recordingExporter = new RecordingExporter(this, SAMPLE_RATE);
+
+        analysisTick = () -> {
+            if (state != ServiceState.LISTENING && state != ServiceState.RECORDING) {
+                return;
+            }
+
+            final int frameMs = 20; // Process 20ms chunks
+            final int frameBytes = (SAMPLE_RATE / (1000 / frameMs)) * 2;
+            final AudioMemory.Stats stats = audioMemory.getStats(FILL_RATE);
+            int currentBufferSize = stats.overwriting ? stats.total : stats.filled;
+
+            if (analyzedBytes > currentBufferSize) {
+                // Buffer was likely reset. Let's try to recover by seeking back a bit.
+                analyzedBytes = Math.max(0, currentBufferSize - (int)(getMemoryDurationSeconds() * FILL_RATE / 2));
+            }
+
+            int availableToAnalyze = currentBufferSize - analyzedBytes;
+
+            while (availableToAnalyze >= frameBytes) {
+                try {
+                    audioMemory.read(analyzedBytes, frameBytes, (array, offset, count) -> {
+                        audioProcessingPipeline.process(array, offset, count);
+                        return 0; // Consumer ignores return
+                    });
+                    analyzedBytes += frameBytes;
+                    availableToAnalyze -= frameBytes;
+                } catch (IOException e) {
+                    Log.e(TAG, "Error during audio analysis", e);
+                    break; // Exit the loop on error
+                }
+            }
+            analysisHandler.postDelayed(analysisTick, frameMs); // Re-schedule
+        };
+
         if (preferences.getBoolean(AUDIO_MEMORY_ENABLED_KEY, true)) {
             innerStartListening();
         }
@@ -117,8 +202,14 @@ public class SaidItService extends Service {
         super.onDestroy();
         stopRecording(null);
         innerStopListening();
+        if (audioProcessingPipeline != null) {
+            audioProcessingPipeline.stop();
+        }
         if (audioThread != null) {
             audioThread.quitSafely();
+        }
+        if (analysisThread != null) {
+            analysisThread.quitSafely();
         }
         stopForeground(true);
     }
@@ -135,24 +226,43 @@ public class SaidItService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && ACTION_AUTO_SAVE.equals(intent.getAction())) {
-            SharedPreferences preferences = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
-            if (preferences.getBoolean("auto_save_enabled", false)) {
-                Log.d(TAG, "Executing auto-save...");
-                String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", java.util.Locale.US).format(new java.util.Date());
-                String autoName = "Auto-save_" + timestamp;
-                int autoSaveDurationSeconds = preferences.getInt("auto_save_duration", 300);
-                dumpRecording(autoSaveDurationSeconds, new SaidItFragment.NotifyFileReceiver(this), autoName);
-            }
-            return START_STICKY;
-        }
         startForeground(FOREGROUND_NOTIFICATION_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+
+        if (intent != null) {
+            String action = intent.getAction();
+            if (action != null) {
+                switch (action) {
+                    case ACTION_START_LISTENING:
+                        enableListening();
+                        break;
+                    case ACTION_STOP_LISTENING:
+                        disableListening();
+                        break;
+                    case ACTION_START_RECORDING:
+                        startRecording(intent.getFloatExtra(EXTRA_PREPENDED_MEMORY_SECONDS, 0));
+                        break;
+                    case ACTION_STOP_RECORDING:
+                        stopRecording(null);
+                        break;
+                    case ACTION_EXPORT_RECORDING:
+                        exportRecording(intent.getFloatExtra(EXTRA_MEMORY_SECONDS, 0),
+                                intent.getStringExtra(EXTRA_FORMAT),
+                                null,
+                                intent.getStringExtra(EXTRA_NEW_FILE_NAME));
+                        break;
+                    case ACTION_GET_STATE:
+                        broadcastState();
+                        break;
+                }
+            }
+        }
+
         return START_STICKY;
     }
 
     private void innerStartListening() {
-        if (state != STATE_READY) return;
-        state = STATE_LISTENING;
+        if (state != ServiceState.READY) return;
+        state = ServiceState.LISTENING;
 
         Log.d(TAG, "Queueing: START LISTENING");
         startService(new Intent(this, this.getClass()));
@@ -171,10 +281,27 @@ public class SaidItService extends Service {
             if (newAudioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
                 Log.e(TAG, "Audio: INITIALIZATION ERROR");
                 newAudioRecord.release();
-                state = STATE_READY;
+                state = ServiceState.READY;
                 return;
             }
             audioRecord = newAudioRecord;
+            
+            final SharedPreferences preferences = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
+            if (NoiseSuppressor.isAvailable()) {
+                noiseSuppressor = NoiseSuppressor.create(audioRecord.getAudioSessionId());
+                if (noiseSuppressor != null) {
+                    noiseSuppressor.setEnabled(preferences.getBoolean("noise_suppressor_enabled", false));
+                    Log.d(TAG, "NoiseSuppressor enabled: " + noiseSuppressor.getEnabled());
+                }
+            }
+            if (AutomaticGainControl.isAvailable()) {
+                automaticGainControl = AutomaticGainControl.create(audioRecord.getAudioSessionId());
+                if (automaticGainControl != null) {
+                    automaticGainControl.setEnabled(preferences.getBoolean("automatic_gain_control_enabled", false));
+                    Log.d(TAG, "AutomaticGainControl enabled: " + automaticGainControl.getEnabled());
+                }
+            }
+
             audioMemory.allocate(memorySize);
             // Set up event-driven periodic callbacks (~50ms)
             final int periodFrames = Math.max(128, SAMPLE_RATE / 20);
@@ -193,23 +320,36 @@ public class SaidItService extends Service {
             }
             audioRecord.startRecording();
             // Kickstart a first read to reduce latency
-            audioHandler.post(audioReader);
+            if (!mIsTestEnvironment) {
+                audioHandler.post(audioReader);
+            }
         });
 
-        scheduleAutoSave();
+        analysisHandler.post(() -> {
+            analyzedBytes = 0;
+            analysisHandler.post(analysisTick);
+        });
     }
 
     private void innerStopListening() {
-        if (state == STATE_READY) return;
-        state = STATE_READY;
+        if (state == ServiceState.READY) return;
+        state = ServiceState.READY;
 
         Log.d(TAG, "Queueing: STOP LISTENING");
-        cancelAutoSave();
+        analysisHandler.removeCallbacks(analysisTick);
         stopForeground(true);
         stopService(new Intent(this, this.getClass()));
 
         audioHandler.post(() -> {
             Log.d(TAG, "Executing: STOP LISTENING");
+            if (noiseSuppressor != null) {
+                noiseSuppressor.release();
+                noiseSuppressor = null;
+            }
+            if (automaticGainControl != null) {
+                automaticGainControl.release();
+                automaticGainControl = null;
+            }
             if (audioRecord != null) {
                 try { audioRecord.setRecordPositionUpdateListener(null); } catch (Exception ignored) {}
                 audioRecord.release();
@@ -233,9 +373,9 @@ public class SaidItService extends Service {
     }
 
     public void startRecording(final float prependedMemorySeconds) {
-        if (state == STATE_RECORDING) return;
-        if (state == STATE_READY) innerStartListening();
-        state = STATE_RECORDING;
+        if (state == ServiceState.RECORDING) return;
+        if (state == ServiceState.READY) innerStartListening();
+        state = ServiceState.RECORDING;
 
         audioHandler.post(() -> {
             flushAudioRecord();
@@ -253,15 +393,16 @@ public class SaidItService extends Service {
                 }
             } catch (IOException e) {
                 Log.e(TAG, "ERROR creating AAC/MP4 file", e);
-                showToast(getString(R.string.error_creating_recording_file));
-                state = STATE_LISTENING; // Revert state
+                Toast.makeText(this, getString(R.string.error_creating_recording_file), Toast.LENGTH_LONG).show();
+                state = ServiceState.LISTENING; // Revert state
             }
+            broadcastState();
         });
     }
 
     public void stopRecording(final WavFileReceiver wavFileReceiver) {
-        if (state != STATE_RECORDING) return;
-        state = STATE_LISTENING;
+        if (state != ServiceState.RECORDING) return;
+        state = ServiceState.LISTENING;
 
         audioHandler.post(() -> {
             flushAudioRecord();
@@ -273,65 +414,17 @@ public class SaidItService extends Service {
                 }
             }
             if (wavFileReceiver != null && mediaFile != null) {
-                saveFileToMediaStore(mediaFile, mediaFile.getName(), wavFileReceiver);
+                recordingExporter.saveFileToMediaStore(mediaFile, mediaFile.getName(), "audio/mp4", wavFileReceiver);
             }
             aacWriter = null;
+            broadcastState();
         });
     }
 
-    public void dumpRecording(final float memorySeconds, final WavFileReceiver wavFileReceiver, String newFileName) {
-        if (state == STATE_READY) return;
+    public void exportRecording(final float memorySeconds, final String format, final WavFileReceiver wavFileReceiver, String newFileName) {
+        if (state == ServiceState.READY) return;
 
-        audioHandler.post(() -> {
-            flushAudioRecord();
-            File dumpFile = null;
-            try {
-                String fileName = newFileName != null ? newFileName.replaceAll("[^a-zA-Z0-9.-]", "_") : "SaidIt_dump";
-                dumpFile = new File(getCacheDir(), fileName + ".m4a");
-                AacMp4Writer dumper = new AacMp4Writer(SAMPLE_RATE, 1, 96_000, dumpFile);
-                Log.d(TAG, "Dumping to: " + dumpFile.getAbsolutePath());
-                final int bytesPerSecond = (int) (1f / getBytesToSeconds());
-                final int bytesToDump = (int) (memorySeconds * bytesPerSecond);
-                audioMemory.dump((array, offset, count) -> { dumper.write(array, offset, count); return count; }, bytesToDump);
-                dumper.close();
-
-                if (wavFileReceiver != null) {
-                    saveFileToMediaStore(dumpFile, (newFileName != null ? newFileName : "SaidIt Recording") + ".m4a", wavFileReceiver);
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "ERROR dumping AAC/MP4 file", e);
-                showToast(getString(R.string.error_saving_recording));
-                if (dumpFile != null && !dumpFile.delete()) {
-                    Log.w(TAG, "Could not delete dump file: " + dumpFile.getAbsolutePath());
-                }
-                if (wavFileReceiver != null) {
-                    wavFileReceiver.onFailure(e);
-                }
-            }
-        });
-    }
-
-    public void scheduleAutoSave() {
-        SharedPreferences preferences = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
-        boolean autoSaveEnabled = preferences.getBoolean("auto_save_enabled", false);
-        if (autoSaveEnabled) {
-            long durationMillis = preferences.getInt("auto_save_duration", 600) * 1000L;
-            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            Intent intent = new Intent(this, SaidItService.class);
-            intent.setAction(ACTION_AUTO_SAVE);
-            PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-            Log.d(TAG, "Scheduling auto-save for every " + durationMillis / 1000 + " seconds.");
-            alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + durationMillis, durationMillis, pendingIntent);
-        }
-    }
-
-    public void cancelAutoSave() {
-        Log.d(TAG, "Cancelling auto-save.");
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(this, SaidItService.class);
-        intent.setAction(ACTION_AUTO_SAVE);
-        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-        alarmManager.cancel(pendingIntent);
+        analysisHandler.post(() -> recordingExporter.export(recordingStoreManager, memorySeconds, format, newFileName, wavFileReceiver));
     }
 
     private void flushAudioRecord() {
@@ -342,7 +435,19 @@ public class SaidItService extends Service {
     }
 
     private void showToast(String message) {
-        Toast.makeText(SaidItService.this, message, Toast.LENGTH_LONG).show();
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    private void broadcastState() {
+        getState((listeningEnabled, recording, memorized, totalMemory, recorded) -> {
+            Intent intent = new Intent(ACTION_STATE_UPDATE);
+            intent.putExtra(EXTRA_LISTENING_ENABLED, listeningEnabled);
+            intent.putExtra(EXTRA_RECORDING, recording);
+            intent.putExtra(EXTRA_MEMORIZED, memorized);
+            intent.putExtra(EXTRA_TOTAL_MEMORY, totalMemory);
+            intent.putExtra(EXTRA_RECORDED, recorded);
+            localBroadcastManager.sendBroadcast(intent);
+        });
     }
 
     public long getMemorySize() {
@@ -363,8 +468,8 @@ public class SaidItService extends Service {
     }
 
     public void setSampleRate(int sampleRate) {
-        if (state == STATE_RECORDING) return;
-        if (state == STATE_READY) {
+        if (state == ServiceState.RECORDING) return;
+        if (state == ServiceState.READY) {
             final SharedPreferences preferences = this.getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
             preferences.edit().putInt(SAMPLE_RATE_KEY, sampleRate).apply();
             SAMPLE_RATE = sampleRate;
@@ -384,7 +489,7 @@ public class SaidItService extends Service {
     public void getState(final StateCallback stateCallback) {
         final SharedPreferences preferences = this.getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
         final boolean listeningEnabled = preferences.getBoolean(AUDIO_MEMORY_ENABLED_KEY, true);
-        final boolean recording = (state == STATE_RECORDING);
+        final boolean recording = (state == ServiceState.RECORDING);
         final Handler sourceHandler = new Handler(Looper.getMainLooper());
         audioHandler.post(() -> {
             flushAudioRecord();
@@ -397,10 +502,12 @@ public class SaidItService extends Service {
             }
             final float bytesToSeconds = getBytesToSeconds();
             final int finalRecorded = recorded;
-            sourceHandler.post(() -> stateCallback.state(listeningEnabled, recording,
-                    (stats.overwriting ? stats.total : stats.filled + stats.estimation) * bytesToSeconds,
-                    stats.total * bytesToSeconds,
-                    finalRecorded * bytesToSeconds));
+            if (stateCallback != null) {
+                sourceHandler.post(() -> stateCallback.state(listeningEnabled, recording,
+                        (stats.overwriting ? stats.total : stats.filled + stats.estimation) * bytesToSeconds,
+                        stats.total * bytesToSeconds,
+                        finalRecorded * bytesToSeconds));
+            }
         });
     }
 
@@ -408,59 +515,12 @@ public class SaidItService extends Service {
         return 1f / FILL_RATE;
     }
 
-    private void saveFileToMediaStore(File sourceFile, String displayName, WavFileReceiver receiver) {
-        ContentResolver resolver = getContentResolver();
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.Audio.Media.DISPLAY_NAME, displayName);
-        values.put(MediaStore.Audio.Media.MIME_TYPE, "audio/mp4");
-        values.put(MediaStore.Audio.Media.IS_PENDING, 1);
-
-        Uri collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-        Uri itemUri = resolver.insert(collection, values);
-
-        if (itemUri == null) {
-            Log.e(TAG, "Error creating MediaStore entry.");
-            if (receiver != null) {
-                new Handler(Looper.getMainLooper()).post(() -> receiver.onFailure(new IOException("Failed to create MediaStore entry.")));
-            }
-            return;
-        }
-
-        try (InputStream in = Files.newInputStream(sourceFile.toPath());
-             OutputStream out = resolver.openOutputStream(itemUri)) {
-            if (out == null) {
-                throw new IOException("Failed to open output stream for " + itemUri);
-            }
-            byte[] buffer = new byte[4096];
-            int len;
-            while ((len = in.read(buffer)) > 0) {
-                out.write(buffer, 0, len);
-            }
-        } catch (IOException e) {
-            Log.e(TAG, "Error saving file to MediaStore", e);
-            resolver.delete(itemUri, null, null);
-            itemUri = null;
-        } finally {
-            values.clear();
-            values.put(MediaStore.Audio.Media.IS_PENDING, 0);
-            if (itemUri != null) {
-                resolver.update(itemUri, values, null, null);
-                final Uri finalUri = itemUri;
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    if (receiver != null) {
-                        receiver.onSuccess(finalUri);
-                    }
-                });
-            } else {
-                if (receiver != null) {
-                    new Handler(Looper.getMainLooper()).post(() -> receiver.onFailure(new IOException("Failed to write to MediaStore")));
-                }
-            }
-            if (!sourceFile.delete()) {
-                Log.w(TAG, "Could not delete source file: " + sourceFile.getAbsolutePath());
-            }
-        }
+    public float getMemoryDurationSeconds() {
+        if (audioMemory == null) return 0f;
+        final AudioMemory.Stats stats = audioMemory.getStats(FILL_RATE);
+        return (stats.overwriting ? stats.total : stats.filled) * getBytesToSeconds();
     }
+
 
     private Notification buildNotification() {
         NotificationChannel channel = new NotificationChannel(YOUR_NOTIFICATION_CHANNEL_ID, "SaidIt Service", NotificationManager.IMPORTANCE_LOW);

@@ -139,6 +139,28 @@ public class AudioMemory {
         }
     }
 
+    public synchronized void read(int skip, int bytesToRead, Consumer consumer) throws IOException {
+        if (capacity == 0 || ring == null || size == 0 || bytesToRead <= 0 || skip < 0 || skip >= size) return;
+
+        int availableToRead = size - skip;
+        int toCopy = Math.min(bytesToRead, availableToRead);
+
+        int start = (writePos - size + capacity) % capacity; // oldest
+        int readPos = (start + skip) % capacity;             // first byte to output
+
+        int remaining = toCopy;
+        while (remaining > 0) {
+            int chunk = Math.min(remaining, capacity - readPos);
+            ensureIoBuffer(chunk);
+            ByteBuffer dup = ring.duplicate();
+            dup.position(readPos);
+            dup.get(ioBuffer, 0, chunk);
+            consumer.consume(ioBuffer, 0, chunk);
+            remaining -= chunk;
+            readPos = (readPos + chunk) % capacity;
+        }
+    }
+
     public static class Stats {
         public int filled; // bytes stored
         public int total;  // capacity
