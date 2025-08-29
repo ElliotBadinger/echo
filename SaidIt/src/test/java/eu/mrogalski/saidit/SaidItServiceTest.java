@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SaidItServiceTest {
 
     @Mock
@@ -56,6 +56,7 @@ public class SaidItServiceTest {
 
         // Use the mocked handler
         saidItService.audioHandler = mockAudioHandler;
+        saidItService.mIsTestEnvironment = true;
     }
     
     @Test
