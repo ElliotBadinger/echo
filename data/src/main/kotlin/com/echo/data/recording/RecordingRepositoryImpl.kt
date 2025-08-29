@@ -8,7 +8,9 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * Minimal stub implementation that will later delegate to the audio pipeline / Android service.
  */
-class RecordingRepositoryImpl : RecordingRepository {
+import javax.inject.Inject
+
+class RecordingRepositoryImpl @Inject constructor() : RecordingRepository {
     private val _isListening = MutableStateFlow(false)
     override val isListening: Flow<Boolean> = _isListening.asStateFlow()
 
