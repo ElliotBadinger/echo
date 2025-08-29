@@ -1,0 +1,32 @@
+image: eclipse-temurin:17-jdk
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .gradle/
+    - ~/.gradle/
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs='-Xmx2g' -Dorg.gradle.workers.max=2"
+  ANDROID_SDK_ROOT: "/opt/android-sdk"
+  JAVA_TOOL_OPTIONS: "-Xmx2g"
+
+stages: [build]
+
+before_script:
+  - export GRADLE_USER_HOME=$(pwd)/.gradle
+  - chmod +x ./gradlew || true
+
+build-and-test:
+  stage: build
+  script:
+    - ./gradlew --version
+    - ./gradlew help --no-daemon --stacktrace
+    - ./gradlew :core:assemble :domain:assemble :data:assemble --no-daemon --stacktrace
+    - ./gradlew test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+  artifacts:
+    when: always
+    paths:
+      - build/reports/tests/
+      - */build/reports/tests/
+      - */*/build/reports/tests/
