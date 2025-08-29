@@ -31,4 +31,5 @@ dependencies {
 
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
+    annotationProcessor(libs.hilt.compiler)
 }

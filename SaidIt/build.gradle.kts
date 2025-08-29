@@ -60,6 +60,7 @@ dependencies {
     implementation(project(":data"))
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
+    annotationProcessor(libs.hilt.compiler)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
