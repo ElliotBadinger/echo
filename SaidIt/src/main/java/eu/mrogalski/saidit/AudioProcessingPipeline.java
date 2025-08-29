@@ -1,113 +1,215 @@
 package eu.mrogalski.saidit;
 
+import eu.mrogalski.saidit.vad.Vad;
+import eu.mrogalski.saidit.analysis.SegmentationController;
+import eu.mrogalski.saidit.storage.RecordingStoreManager;
+import eu.mrogalski.saidit.ml.TfLiteClassifier;
+import eu.mrogalski.saidit.vad.EnergyVad;
+import eu.mrogalski.saidit.storage.SimpleRecordingStoreManager;
+import eu.mrogalski.saidit.analysis.SimpleSegmentationController;
+import eu.mrogalski.saidit.ml.AudioEventClassifier;
+import eu.mrogalski.saidit.storage.AudioTag;
+
 import android.content.Context;
 import android.util.Log;
-
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
-
-import eu.mrogalski.saidit.analysis.SegmentationController;
-import eu.mrogalski.saidit.analysis.SimpleSegmentationController;
-import eu.mrogalski.saidit.ml.AudioEventClassifier;
-import eu.mrogalski.saidit.ml.TfLiteClassifier;
-import eu.mrogalski.saidit.storage.AudioTag;
-import eu.mrogalski.saidit.storage.RecordingStoreManager;
-import eu.mrogalski.saidit.storage.SimpleRecordingStoreManager;
-import eu.mrogalski.saidit.vad.EnergyVad;
-import eu.mrogalski.saidit.vad.Vad;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AudioProcessingPipeline {
     private static final String TAG = "AudioProcessingPipeline";
-
-    private final Context mContext;
+    
+    private final WeakReference<Context> mContextRef;
     private final int mSampleRate;
-
-    private Vad vad;
-    private SegmentationController segmentationController;
-    private RecordingStoreManager recordingStoreManager;
-    private TfLiteClassifier audioClassifier;
-
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
+    
+    private volatile Vad vad;
+    private volatile SegmentationController segmentationController;
+    private volatile RecordingStoreManager recordingStoreManager;
+    private volatile TfLiteClassifier audioClassifier;
+    
+    // Reusable buffers to reduce allocations
+    private final ThreadLocal<short[]> shortArrayBuffer = new ThreadLocal<>();
+    private final ThreadLocal<ByteBuffer> byteBufferCache = new ThreadLocal<>();
+    
     public AudioProcessingPipeline(Context context, int sampleRate) {
-        mContext = context;
+        // Use weak reference to prevent context leak
+        mContextRef = new WeakReference<>(context.getApplicationContext());
         mSampleRate = sampleRate;
     }
-
-    public void start() {
-        vad = new EnergyVad();
-        vad.init(mSampleRate);
-        vad.setMode(2); // TODO: Make VAD sensitivity configurable
-
-        recordingStoreManager = new SimpleRecordingStoreManager(mContext, mSampleRate);
-        segmentationController = new SimpleSegmentationController(mSampleRate, 16);
-        segmentationController.setListener(new SegmentationController.SegmentListener() {
-            @Override
-            public void onSegmentStart(long timestamp) {
-                try {
-                    if (recordingStoreManager != null) {
-                        recordingStoreManager.onSegmentStart(timestamp);
-                    }
-                } catch (IOException e) {
-                    Log.e(TAG, "Failed to start new segment", e);
-                }
-            }
-
-            @Override
-            public void onSegmentEnd(long timestamp) {
-                if (recordingStoreManager != null) {
-                    recordingStoreManager.onSegmentEnd(timestamp);
-                }
-            }
-
-            @Override
-            public void onSegmentData(byte[] data, int offset, int length) {
-                if (recordingStoreManager != null) {
-                    recordingStoreManager.onSegmentData(data, offset, length);
-                }
-            }
-        });
-
-        audioClassifier = new AudioEventClassifier();
+    
+    public synchronized void start() {
+        if (isRunning.get()) {
+            Log.w(TAG, "Pipeline already running");
+            return;
+        }
+        
+        Context context = mContextRef.get();
+        if (context == null) {
+            Log.e(TAG, "Context is null, cannot start pipeline");
+            return;
+        }
+        
         try {
-            audioClassifier.load(mContext, "yamnet_tiny.tfile", "yamnet_tiny_labels.txt");
-        } catch (IOException e) {
-            Log.e(TAG, "Failed to load audio classifier model.", e);
+            vad = new EnergyVad();
+            vad.init(mSampleRate);
+            vad.setMode(2);
+            
+            recordingStoreManager = new SimpleRecordingStoreManager(context, mSampleRate);
+            segmentationController = new SimpleSegmentationController(mSampleRate, 16);
+            
+            // Use weak reference in listener to prevent leak
+            final WeakReference<RecordingStoreManager> storeRef = 
+                new WeakReference<>(recordingStoreManager);
+            
+            segmentationController.setListener(new SegmentationController.SegmentListener() {
+                @Override
+                public void onSegmentStart(long timestamp) {
+                    RecordingStoreManager store = storeRef.get();
+                    if (store != null) {
+                        try {
+                            store.onSegmentStart(timestamp);
+                        } catch (IOException e) {
+                            Log.e(TAG, "Failed to start segment", e);
+                        }
+                    }
+                }
+                
+                @Override
+                public void onSegmentEnd(long timestamp) {
+                    RecordingStoreManager store = storeRef.get();
+                    if (store != null) {
+                        store.onSegmentEnd(timestamp);
+                    }
+                }
+                
+                @Override
+                public void onSegmentData(byte[] data, int offset, int length) {
+                    RecordingStoreManager store = storeRef.get();
+                    if (store != null) {
+                        store.onSegmentData(data, offset, length);
+                    }
+                }
+            });
+            
+            audioClassifier = new AudioEventClassifier();
+            audioClassifier.load(context, "yamnet_tiny.tfile", "yamnet_tiny_labels.txt");
+            
+            isRunning.set(true);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to start pipeline", e);
+            stop(); // Clean up partial initialization
         }
     }
-
+    
     public void process(byte[] audioData, int offset, int length) {
-        boolean isSpeech = vad.process(audioData, offset, length);
-        segmentationController.process(audioData, offset, length, isSpeech);
-
-        if (audioClassifier != null) {
-            short[] shortArray = new short[length / 2];
-            ByteBuffer.wrap(audioData, offset, length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortArray);
-            List<TfLiteClassifier.Recognition> results = audioClassifier.recognize(shortArray);
-            for (TfLiteClassifier.Recognition result : results) {
-                if (result.getConfidence() > 0.3) {
-                    Log.d(TAG, "Audio event: " + result.getTitle() + " (" + result.getConfidence() + ")");
-                    recordingStoreManager.onTag(new AudioTag(result.getTitle(), result.getConfidence(), System.currentTimeMillis()));
+        if (!isRunning.get()) {
+            return;
+        }
+        
+        try {
+            boolean isSpeech = vad != null && vad.process(audioData, offset, length);
+            
+            if (segmentationController != null) {
+                segmentationController.process(audioData, offset, length, isSpeech);
+            }
+            
+            if (audioClassifier != null && length > 0) {
+                // Reuse buffers
+                short[] shortArray = getShortArray(length / 2);
+                ByteBuffer buffer = getByteBuffer(length);
+                
+                buffer.clear();
+                buffer.put(audioData, offset, length);
+                buffer.rewind();
+                buffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortArray);
+                
+                List<TfLiteClassifier.Recognition> results = audioClassifier.recognize(shortArray);
+                
+                if (recordingStoreManager != null) {
+                    for (TfLiteClassifier.Recognition result : results) {
+                        if (result.getConfidence() > 0.3) {
+                            recordingStoreManager.onTag(
+                                new AudioTag(result.getTitle(), 
+                                           result.getConfidence(), 
+                                           System.currentTimeMillis())
+                            );
+                        }
+                    }
                 }
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error processing audio", e);
         }
     }
-
-    public void stop() {
+    
+    private short[] getShortArray(int size) {
+        short[] array = shortArrayBuffer.get();
+        if (array == null || array.length < size) {
+            array = new short[size];
+            shortArrayBuffer.set(array);
+        }
+        return array;
+    }
+    
+    private ByteBuffer getByteBuffer(int size) {
+        ByteBuffer buffer = byteBufferCache.get();
+        if (buffer == null || buffer.capacity() < size) {
+            buffer = ByteBuffer.allocate(size);
+            byteBufferCache.set(buffer);
+        }
+        return buffer;
+    }
+    
+    public synchronized void stop() {
+        isRunning.set(false);
+        
+        // Clean up in reverse order of initialization
         if (audioClassifier != null) {
-            audioClassifier.close();
+            try {
+                audioClassifier.close();
+            } catch (Exception e) {
+                Log.e(TAG, "Error closing classifier", e);
+            }
+            audioClassifier = null;
         }
-        if (recordingStoreManager != null) {
-            recordingStoreManager.close();
-        }
+        
         if (segmentationController != null) {
-            segmentationController.close();
+            try {
+                segmentationController.setListener(null); // Remove listener
+                segmentationController.close();
+            } catch (Exception e) {
+                Log.e(TAG, "Error closing segmentation controller", e);
+            }
+            segmentationController = null;
         }
+        
+        if (recordingStoreManager != null) {
+            try {
+                recordingStoreManager.close();
+            } catch (Exception e) {
+                Log.e(TAG, "Error closing recording store", e);
+            }
+            recordingStoreManager = null;
+        }
+        
         if (vad != null) {
-            vad.close();
+            try {
+                vad.close();
+            } catch (Exception e) {
+                Log.e(TAG, "Error closing VAD", e);
+            }
+            vad = null;
         }
+        
+        // Clear thread local buffers
+        shortArrayBuffer.remove();
+        byteBufferCache.remove();
     }
-
+    
     public RecordingStoreManager getRecordingStoreManager() {
         return recordingStoreManager;
     }

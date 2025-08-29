@@ -94,10 +94,10 @@ public class SaidItService extends Service {
     AacMp4Writer aacWriter; // used only in the audio thread
     final AudioMemory audioMemory = new AudioMemory(new SystemClockWrapper()); // used only in the audio thread
 
-    HandlerThread audioThread;
-    Handler audioHandler; // used to post messages to audio thread
-    HandlerThread analysisThread;
-    Handler analysisHandler; // used to post messages to analysis thread
+    volatile HandlerThread audioThread;
+    volatile Handler audioHandler; // used to post messages to audio thread
+    volatile HandlerThread analysisThread;
+    volatile Handler analysisHandler; // used to post messages to analysis thread
     AudioMemory.Consumer filler;
     Runnable audioReader;
     AudioRecord.OnRecordPositionUpdateListener positionListener;
@@ -109,7 +109,7 @@ public class SaidItService extends Service {
     private Runnable analysisTick;
     private LocalBroadcastManager localBroadcastManager;
 
-    ServiceState state = ServiceState.READY;
+    volatile ServiceState state = ServiceState.READY;
 
     @Override
     public void onCreate() {
@@ -121,13 +121,17 @@ public class SaidItService extends Service {
         Log.d(TAG, "Sample rate: " + SAMPLE_RATE);
         FILL_RATE = 2 * SAMPLE_RATE;
 
-        audioThread = new HandlerThread("audioThread", Process.THREAD_PRIORITY_AUDIO);
-        audioThread.start();
-        audioHandler = new Handler(audioThread.getLooper());
+        if (audioThread == null) {
+            audioThread = new HandlerThread("audioThread", Process.THREAD_PRIORITY_AUDIO);
+            audioThread.start();
+            audioHandler = new Handler(audioThread.getLooper());
+        }
 
-        analysisThread = new HandlerThread("analysisThread", Process.THREAD_PRIORITY_BACKGROUND);
-        analysisThread.start();
-        analysisHandler = new Handler(analysisThread.getLooper());
+        if (analysisThread == null) {
+            analysisThread = new HandlerThread("analysisThread", Process.THREAD_PRIORITY_BACKGROUND);
+            analysisThread.start();
+            analysisHandler = new Handler(analysisThread.getLooper());
+        }
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
         filler = (array, offset, count) -> {
@@ -205,12 +209,12 @@ public class SaidItService extends Service {
         if (audioProcessingPipeline != null) {
             audioProcessingPipeline.stop();
         }
-        if (audioThread != null) {
-            audioThread.quitSafely();
-        }
-        if (analysisThread != null) {
-            analysisThread.quitSafely();
-        }
+        cleanupHandlerThread(audioThread);
+        audioThread = null;
+        audioHandler = null;
+        cleanupHandlerThread(analysisThread);
+        analysisThread = null;
+        analysisHandler = null;
         stopForeground(true);
     }
 
@@ -352,6 +356,9 @@ public class SaidItService extends Service {
             }
             if (audioRecord != null) {
                 try { audioRecord.setRecordPositionUpdateListener(null); } catch (Exception ignored) {}
+                if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED && audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+                    audioRecord.stop();
+                }
                 audioRecord.release();
                 audioRecord = null;
             }
@@ -407,11 +414,7 @@ public class SaidItService extends Service {
         audioHandler.post(() -> {
             flushAudioRecord();
             if (aacWriter != null) {
-                try {
-                    aacWriter.close();
-                } catch (IOException e) {
-                    Log.e(TAG, "CLOSING ERROR", e);
-                }
+                aacWriter.close();
             }
             if (wavFileReceiver != null && mediaFile != null) {
                 recordingExporter.saveFileToMediaStore(mediaFile, mediaFile.getName(), "audio/mp4", wavFileReceiver);
@@ -549,6 +552,22 @@ public class SaidItService extends Service {
     class BackgroundRecorderBinder extends Binder {
         public SaidItService getService() {
             return SaidItService.this;
+        }
+    }
+
+    private void cleanupHandlerThread(HandlerThread thread) {
+        if (thread == null) return;
+        thread.quitSafely();
+        // In a test environment, especially with a paused looper, blocking on join()
+        // will cause a deadlock. The test is responsible for cleaning up the looper.
+        if (mIsTestEnvironment) {
+            return;
+        }
+        try {
+            thread.join(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            Log.e(TAG, "Failed to join thread", e);
         }
     }
 }
