@@ -1,6 +1,16 @@
 plugins {
     id 'com.android.application'
-    id 'com.google.gms.google-services' version '4.4.1'
+    id 'com.google.gms.google-services' version '4.4.1' apply false
+}
+
+// Apply Google Services plugin only if google-services.json is present
+def hasGoogleServicesJson = file('google-services.json').exists() ||
+        file('src/debug/google-services.json').exists() ||
+        file('src/release/google-services.json').exists()
+if (hasGoogleServicesJson) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
+    logger.lifecycle("google-services.json missing; skipping Google Services plugin")
 }
 
 android {
