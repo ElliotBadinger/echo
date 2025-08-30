@@ -1,32 +1,41 @@
-image: eclipse-temurin:17-jdk
+image: ghcr.io/cirruslabs/android-sdk:34-jdk17
 
 cache:
   key: "$CI_COMMIT_REF_SLUG"
   paths:
     - .gradle/
-    - ~/.gradle/
 
 variables:
-  GRADLE_OPTS: "-Dorg.gradle.jvmargs='-Xmx2g' -Dorg.gradle.workers.max=2"
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2g -Dorg.gradle.workers.max=2"
   ANDROID_SDK_ROOT: "/opt/android-sdk"
+  ANDROID_HOME: "/opt/android-sdk"
   JAVA_TOOL_OPTIONS: "-Xmx2g"
 
-stages: [build]
+stages: [verify, build, test]
 
 before_script:
-  - export GRADLE_USER_HOME=$(pwd)/.gradle
+  - export GRADLE_USER_HOME="$CI_PROJECT_DIR/.gradle"
   - chmod +x ./gradlew || true
 
-build-and-test:
-  stage: build
+verify-gradle:
+  stage: verify
   script:
     - ./gradlew --version
     - ./gradlew help --no-daemon --stacktrace
-    - ./gradlew :core:assemble :domain:assemble :data:assemble --no-daemon --stacktrace
-    - ./gradlew test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+
+assemble-modules:
+  stage: build
+  script:
+    - ./gradlew :core:assemble :domain:assemble :data:assemble :features:recorder:assemble --no-daemon --stacktrace
+
+unit-tests:
+  stage: test
+  script:
+    - ./gradlew :domain:test :features:recorder:test :core:test :data:test :SaidIt:test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
   artifacts:
     when: always
     paths:
-      - build/reports/tests/
-      - */build/reports/tests/
-      - */*/build/reports/tests/
+      - "build/reports/tests/"
+      - "*/build/reports/tests/"
+      - "*/*/build/reports/tests/"
+      - "SaidIt/build/reports/tests/"
