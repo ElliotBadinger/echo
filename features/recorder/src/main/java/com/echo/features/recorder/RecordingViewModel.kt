@@ -17,8 +17,12 @@ class RecordingViewModel(
 
     fun toggleListening(enable: Boolean) {
         viewModelScope.launch {
-            val result = if (enable) repository.enableListening() else repository.disableListening()
-            result.onSuccess { _isListening.value = enable }
+            if (enable) {
+                repository.enableListening()
+            } else {
+                repository.disableListening()
+            }
+            _isListening.value = enable
         }
     }
 }

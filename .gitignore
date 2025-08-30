@@ -34,3 +34,9 @@ proguard/
 
 # Ignore Claude agent files
 .claude/
+
+# Firebase configuration
+**/google-services.json
+
+# Ignore nul files
+nul
