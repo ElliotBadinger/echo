@@ -22,6 +22,7 @@ dependencies {
     implementation(project(":domain"))
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.coroutines.android)
 
     implementation(libs.hilt.android)

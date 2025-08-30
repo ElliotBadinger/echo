@@ -1,10 +1,11 @@
 [versions]
 agp = "8.7.0"
-kotlin = "2.0.21"
+kotlin = "1.9.25"
 coroutines = "1.8.1"
 hilt = "2.51.1"
 androidx-core = "1.12.0"
 androidx-appcompat = "1.6.1"
+androidx-lifecycle = "2.8.6"
 material = "1.11.0"
 junit = "4.13.2"
 mockito = "5.11.0"
@@ -14,6 +15,7 @@ tap-target-view = "1.13.3"
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx-appcompat" }
+androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "androidx-lifecycle" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 junit = { module = "junit:junit", version.ref = "junit" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
