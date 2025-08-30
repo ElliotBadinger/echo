@@ -1,8 +1,6 @@
-stages:
-  - sync
-
+# This will run BEFORE all other jobs
 sync_to_github:
-  stage: sync
+  stage: verify  # Use the first stage so it runs immediately
   image: alpine/git:latest
   before_script:
     - git config --global user.email "ci@gitlab.com"
@@ -16,8 +14,9 @@ sync_to_github:
     - git fetch --all
     # Push the current branch to GitHub
     - git push github HEAD:refactor/phase1-modularization-kts-hilt --force-with-lease
-  only:
-    - refactor/phase1-modularization-kts-hilt
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == "refactor/phase1-modularization-kts-hilt"
+    - if: $CI_PIPELINE_SOURCE == "web"  # Manual trigger
   variables:
     GIT_STRATEGY: clone
     GIT_DEPTH: 0
