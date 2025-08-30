@@ -23,6 +23,7 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.coroutines.android)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
