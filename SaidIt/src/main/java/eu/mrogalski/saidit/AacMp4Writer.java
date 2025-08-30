@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import com.siya.epistemophile.R;
+
+
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
@@ -145,3 +148,4 @@ public class AacMp4Writer implements Closeable {
         return (int)Math.min(Integer.MAX_VALUE, totalPcmBytesWritten);
     }
 }
+

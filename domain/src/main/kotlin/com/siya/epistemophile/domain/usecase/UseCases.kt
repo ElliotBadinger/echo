@@ -1,7 +1,6 @@
+package com.siya.epistemophile.domain.usecase
 
-package com.echo.domain.usecase
-
-import com.echo.domain.repository.RecordingRepository
+import com.siya.epistemophile.domain.repository.RecordingRepository
 
 class StartListeningUseCase(private val repo: RecordingRepository) {
     suspend operator fun invoke() = repo.enableListening()

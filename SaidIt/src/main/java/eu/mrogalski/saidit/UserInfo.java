@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import com.siya.epistemophile.R;
+
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.Context;
@@ -65,3 +68,4 @@ public class UserInfo {
         return "";
     }
 }
+

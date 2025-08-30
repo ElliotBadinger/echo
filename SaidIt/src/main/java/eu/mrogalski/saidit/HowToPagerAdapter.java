@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import com.siya.epistemophile.R;
+
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -24,3 +27,4 @@ public class HowToPagerAdapter extends FragmentStateAdapter {
         return NUM_PAGES;
     }
 }
+

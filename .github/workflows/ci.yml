@@ -139,6 +139,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/refactor/phase1-modularization-kts-hilt' && github.event_name == 'push'
     needs: [validate, android-build, test]
+    env:
+      GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -152,7 +154,7 @@ jobs:
 
       - name: Add GitLab Remote
         run: |
-          git remote add gitlab https://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.com/ElliotBadinger/echo.git
+          git remote add gitlab "https://oauth2:$GITLAB_ACCESS_TOKEN@gitlab.com/ElliotBadinger/echo.git"
 
       - name: Push to GitLab
         run: |

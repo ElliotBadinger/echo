@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.echo.data"
+    namespace = "com.siya.epistemophile.data"
     compileSdk = 34
 
     defaultConfig {

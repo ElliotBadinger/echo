@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import com.siya.epistemophile.R;
+
+
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -511,3 +514,4 @@ public class SaidItService extends Service {
         }
     }
 }
+

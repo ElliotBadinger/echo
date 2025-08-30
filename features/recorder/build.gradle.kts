@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.echo.features.recorder"
+    namespace = "com.siya.epistemophile.features.recorder"
     compileSdk = 34
 
     defaultConfig { minSdk = 30 }

@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import com.siya.epistemophile.R;
+
+
 import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -310,3 +313,4 @@ public class SaidItFragment extends Fragment implements SaveClipBottomSheet.Save
         }
     }
 }
+

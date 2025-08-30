@@ -126,3 +126,4 @@ class RiffHeaderData {
         return "[ Format: " + format.toString() + " , totalSamplesInByte:" + totalSamplesInByte + "]";
     }
 }
+

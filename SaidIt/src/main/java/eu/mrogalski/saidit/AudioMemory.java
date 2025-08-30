@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import com.siya.epistemophile.R;
+
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -155,3 +158,4 @@ public class AudioMemory {
         return stats;
     }
 }
+

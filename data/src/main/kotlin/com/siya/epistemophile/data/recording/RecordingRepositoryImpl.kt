@@ -1,6 +1,6 @@
-package com.echo.data.recording
+package com.siya.epistemophile.data.recording
 
-import com.echo.domain.repository.RecordingRepository
+import com.siya.epistemophile.domain.repository.RecordingRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

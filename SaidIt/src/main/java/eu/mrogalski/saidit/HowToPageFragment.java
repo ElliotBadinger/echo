@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import com.siya.epistemophile.R;
+
+
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,3 +49,4 @@ public class HowToPageFragment extends Fragment {
         }
     }
 }
+

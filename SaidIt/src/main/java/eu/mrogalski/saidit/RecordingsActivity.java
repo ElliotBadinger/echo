@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import com.siya.epistemophile.R;
+
+
 import android.content.ContentUris;
 import android.database.Cursor;
 import android.net.Uri;
@@ -91,3 +94,4 @@ public class RecordingsActivity extends AppCompatActivity {
         }
     }
 }
+

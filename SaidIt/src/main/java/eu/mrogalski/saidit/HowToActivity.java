@@ -2,6 +2,7 @@ package eu.mrogalski.saidit;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import com.siya.epistemophile.R;
 import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.tabs.TabLayout;

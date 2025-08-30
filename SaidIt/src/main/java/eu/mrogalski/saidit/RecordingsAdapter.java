@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import com.siya.epistemophile.R;
+
+
 import android.content.ContentResolver;
 import android.content.Context;
 import android.media.MediaPlayer;
@@ -252,3 +255,4 @@ public class RecordingsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         }
     }
 }
+

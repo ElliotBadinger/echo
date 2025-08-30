@@ -1,4 +1,4 @@
-package com.echo.domain.repository
+package com.siya.epistemophile.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 

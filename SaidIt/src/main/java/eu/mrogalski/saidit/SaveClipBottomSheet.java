@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import com.siya.epistemophile.R;
+
+
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -96,3 +99,4 @@ public class SaveClipBottomSheet extends BottomSheetDialogFragment {
         });
     }
 }
+

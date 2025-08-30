@@ -1,7 +1,7 @@
-package com.echo.data.di
+package com.siya.epistemophile.data.di
 
-import com.echo.data.recording.RecordingRepositoryImpl
-import com.echo.domain.repository.RecordingRepository
+import com.siya.epistemophile.data.recording.RecordingRepositoryImpl
+import com.siya.epistemophile.domain.repository.RecordingRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

@@ -17,7 +17,7 @@ if (hasGoogleServicesJson) {
 }
 
 android {
-    namespace = "eu.mrogalski.saidit"
+    namespace = "com.siya.epistemophile"
     compileSdk = 34
 
     defaultConfig {

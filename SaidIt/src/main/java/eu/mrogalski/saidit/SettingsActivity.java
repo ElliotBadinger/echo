@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import com.siya.epistemophile.R;
+
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -237,3 +240,4 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 }
+

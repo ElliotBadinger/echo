@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import com.siya.epistemophile.R;
+
+
 import android.Manifest;
 import androidx.appcompat.app.AppCompatActivity;
 import android.app.AlertDialog;
