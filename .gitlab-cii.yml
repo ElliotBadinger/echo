@@ -1,0 +1,12 @@
+stages:
+  - sync
+
+sync_to_github:
+  stage: sync
+  script:
+    - git remote add github https://$GITHUB_TOKEN@github.com/ElliotBadinger/echo.git
+    - git push github HEAD:refactor/phase1-modularization-kts-hilt
+  only:
+    - refactor/phase1-modularization-kts-hilt
+  variables:
+    GIT_STRATEGY: clone
