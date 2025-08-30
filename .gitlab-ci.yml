@@ -157,7 +157,7 @@ sync_to_github:
   script:
     - git config --global user.email "ci@gitlab.com"
     - git config --global user.name "GitLab CI"
-    - git remote add github https://$GITHUB_TOKEN@github.com/ElliotBadinger/echo.git
+    - git remote add github https://ElliotBadinger:$GITHUB_TOKEN@github.com/ElliotBadinger/echo.git
     - git push github HEAD:refactor/phase1-modularization-kts-hilt
   only:
     - refactor/phase1-modularization-kts-hilt
