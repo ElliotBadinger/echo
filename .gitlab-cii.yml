@@ -1,22 +1,24 @@
-# This will run in the first stage
 sync_to_github:
-  stage: sync  # Dedicated sync stage that runs first
+  stage: sync
   image: alpine/git:latest
   before_script:
+    - apk add --no-cache git
     - git config --global user.email "ci@gitlab.com"
     - git config --global user.name "GitLab CI"
   script:
-    # Remove any existing github remote
-    - git remote remove github || true
-    # Add the correct GitHub repository URL
+    - echo "Starting GitHub sync..."
+    - git remote -v
+    - git remote remove github 2>/dev/null || echo "No existing github remote"
     - git remote add github https://$GITHUB_TOKEN@github.com/ElliotBadinger/echo.git
-    # Fetch all remotes to ensure we have the latest
-    - git fetch --all
-    # Push the current branch to GitHub
+    - git remote -v
+    - echo "Fetching from origin..."
+    - git fetch origin
+    - echo "Pushing to GitHub..."
     - git push github HEAD:refactor/phase1-modularization-kts-hilt --force-with-lease
+    - echo "Sync completed successfully!"
   rules:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == "refactor/phase1-modularization-kts-hilt"
-    - if: $CI_PIPELINE_SOURCE == "web"  # Manual trigger
+    - if: $CI_PIPELINE_SOURCE == "web"
   variables:
     GIT_STRATEGY: clone
     GIT_DEPTH: 0
