@@ -1,5 +1,5 @@
-include:
-  - local: '.gitlab-cii.yml'
+# include:
+#   - local: '.gitlab-cii.yml'
 
 image: gradle:8.7.0-jdk17
 
@@ -146,3 +146,18 @@ coverage:
       - "**/reports/jacoco/"
       - "**/jacoco/*.exec"
   retry: 1
+
+# Temporary sync job moved here to test
+sync_to_github:
+  stage: sync
+  image: debian:bullseye-slim
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq git curl
+  script:
+    - git config --global user.email "ci@gitlab.com"
+    - git config --global user.name "GitLab CI"
+    - git remote add github https://$GITHUB_TOKEN@github.com/ElliotBadinger/echo.git
+    - git push github HEAD:refactor/phase1-modularization-kts-hilt
+  only:
+    - refactor/phase1-modularization-kts-hilt
