@@ -1,14 +1,14 @@
-image: ghcr.io/cirruslabs/android-sdk:34-jdk17
+image: gradle:8.7.0-jdk17
 
 cache:
   key: "$CI_COMMIT_REF_SLUG"
   paths:
     - .gradle/
+    - android-sdk/
 
 variables:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2g -Dorg.gradle.workers.max=2"
-  ANDROID_SDK_ROOT: "/opt/android-sdk"
-  ANDROID_HOME: "/opt/android-sdk"
+  ANDROID_SDK_URL: "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
   JAVA_TOOL_OPTIONS: "-Xmx2g"
 
 stages: [verify, build, test]
@@ -19,43 +19,117 @@ workflow:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "refactor/phase1-modularization-kts-hilt"'
 
-before_script:
+.before_android: &before_android
   - export GRADLE_USER_HOME="$CI_PROJECT_DIR/.gradle"
+  - export ANDROID_SDK_ROOT="$CI_PROJECT_DIR/android-sdk"
+  - export ANDROID_HOME="$ANDROID_SDK_ROOT"
+  - export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
   - chmod +x ./gradlew || true
+  - |
+    if [ ! -f "$ANDROID_SDK_ROOT/platforms/android-34/android.jar" ]; then
+      echo "Installing Android SDK (cmdline-tools, platform-tools, platforms;android-34, build-tools;34.0.0)"
+      apt-get update -y && apt-get install -y --no-install-recommends unzip wget ca-certificates && rm -rf /var/lib/apt/lists/*
+      mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+      wget -q "$ANDROID_SDK_URL" -O /tmp/cmdline-tools.zip
+      unzip -q /tmp/cmdline-tools.zip -d "$ANDROID_SDK_ROOT/cmdline-tools"
+      mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+      yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" "platform-tools" "platforms;android-34" "build-tools;34.0.0" >/dev/null
+      yes | sdkmanager --licenses >/dev/null
+    else
+      echo "Android SDK already present in cache"
+    fi
 
 verify-gradle:
   stage: verify
+  before_script:
+    - *before_android
   script:
     - ./gradlew --version
     - ./gradlew help --no-daemon --stacktrace
+  retry: 1
 
 assemble-modules:
   stage: build
+  before_script:
+    - *before_android
   script:
     - ./gradlew :core:assemble :domain:assemble :data:assemble :features:recorder:assemble :SaidIt:assembleDebug --no-daemon --stacktrace
+  retry: 1
 
 android-lint:
   stage: test
+  before_script:
+    - *before_android
   script:
     - ./gradlew :SaidIt:lint :core:lint :data:lint :features:recorder:lint --no-daemon --stacktrace
   allow_failure: true
+  retry: 1
 
-unit-tests:
+# Per-module unit test jobs for clearer isolation
+unit-test-domain:
   stage: test
+  before_script:
+    - *before_android
   script:
-    - ./gradlew :domain:test :features:recorder:test :core:test :data:test :SaidIt:test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+    - ./gradlew :domain:test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
   artifacts:
     when: always
     paths:
-      - "build/reports/tests/"
-      - "*/build/reports/tests/"
-      - "*/*/build/reports/tests/"
+      - "domain/build/reports/tests/"
+  retry: 1
+
+unit-test-core:
+  stage: test
+  before_script:
+    - *before_android
+  script:
+    - ./gradlew :core:test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+  artifacts:
+    when: always
+    paths:
+      - "core/build/reports/tests/"
+  retry: 1
+
+unit-test-data:
+  stage: test
+  before_script:
+    - *before_android
+  script:
+    - ./gradlew :data:test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+  artifacts:
+    when: always
+    paths:
+      - "data/build/reports/tests/"
+  retry: 1
+
+unit-test-recorder:
+  stage: test
+  before_script:
+    - *before_android
+  script:
+    - ./gradlew :features:recorder:test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+  artifacts:
+    when: always
+    paths:
+      - "features/recorder/build/reports/tests/"
+  retry: 1
+
+unit-test-saidit:
+  stage: test
+  before_script:
+    - *before_android
+  script:
+    - ./gradlew :SaidIt:test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+  artifacts:
+    when: always
+    paths:
       - "SaidIt/build/reports/tests/"
-      - "**/reports/jacoco/"
-      - "**/jacoco/*.exec"
+  retry: 1
 
 coverage:
   stage: test
+  before_script:
+    - *before_android
   script:
     - ./gradlew jacocoTestReport --no-daemon --stacktrace -Dorg.gradle.workers.max=2
   artifacts:
@@ -63,3 +137,4 @@ coverage:
     paths:
       - "**/reports/jacoco/"
       - "**/jacoco/*.exec"
+  retry: 1
