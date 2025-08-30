@@ -1,6 +1,6 @@
-# This will run BEFORE all other jobs
+# This will run in the first stage
 sync_to_github:
-  stage: verify  # Use the first stage so it runs immediately
+  stage: sync  # Dedicated sync stage that runs first
   image: alpine/git:latest
   before_script:
     - git config --global user.email "ci@gitlab.com"
