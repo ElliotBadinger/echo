@@ -14,7 +14,7 @@ variables:
   ANDROID_SDK_URL: "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
   JAVA_TOOL_OPTIONS: "-Xmx2g"
 
-stages: [verify, build, test, sync]
+stages: [sync, verify, build, test]
 
 workflow:
   rules:
