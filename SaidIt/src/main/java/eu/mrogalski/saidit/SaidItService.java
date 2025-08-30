@@ -369,7 +369,7 @@ public class SaidItService extends Service {
 
     public void enableListening() {
         if (mIsTestEnvironment) {
-            state = STATE_LISTENING;
+            state = ServiceState.LISTENING;
             return;
         }
         getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE)
@@ -379,7 +379,7 @@ public class SaidItService extends Service {
 
     public void disableListening() {
         if (mIsTestEnvironment) {
-            state = STATE_READY;
+            state = ServiceState.READY;
             return;
         }
         getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE)
