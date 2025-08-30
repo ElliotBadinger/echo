@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.hilt.android) apply false
-    id("jacoco") apply false
 }
 
 subprojects {
@@ -30,5 +29,11 @@ subprojects {
             classDirectories.setFrom(fileTree(buildDir).include("**/classes/**"))
             dependsOn(testTask)
         }
+    }
+}
+
+tasks.register("jacocoAll") {
+    subprojects.forEach { p ->
+        dependsOn(p.tasks.matching { it.name == "jacocoTestReport" })
     }
 }
