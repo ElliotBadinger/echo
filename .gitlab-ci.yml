@@ -13,6 +13,12 @@ variables:
 
 stages: [verify, build, test]
 
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "refactor/phase1-modularization-kts-hilt"'
+
 before_script:
   - export GRADLE_USER_HOME="$CI_PROJECT_DIR/.gradle"
   - chmod +x ./gradlew || true
@@ -26,7 +32,13 @@ verify-gradle:
 assemble-modules:
   stage: build
   script:
-    - ./gradlew :core:assemble :domain:assemble :data:assemble :features:recorder:assemble --no-daemon --stacktrace
+    - ./gradlew :core:assemble :domain:assemble :data:assemble :features:recorder:assemble :SaidIt:assembleDebug --no-daemon --stacktrace
+
+android-lint:
+  stage: test
+  script:
+    - ./gradlew :SaidIt:lint :core:lint :data:lint :features:recorder:lint --no-daemon --stacktrace
+  allow_failure: true
 
 unit-tests:
   stage: test
@@ -39,3 +51,15 @@ unit-tests:
       - "*/build/reports/tests/"
       - "*/*/build/reports/tests/"
       - "SaidIt/build/reports/tests/"
+      - "**/reports/jacoco/"
+      - "**/jacoco/*.exec"
+
+coverage:
+  stage: test
+  script:
+    - ./gradlew jacocoTestReport --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+  artifacts:
+    when: always
+    paths:
+      - "**/reports/jacoco/"
+      - "**/jacoco/*.exec"
