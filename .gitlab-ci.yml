@@ -54,7 +54,7 @@ assemble-modules:
   before_script:
     - *before_android
   script:
-    - ./gradlew :core:assemble :domain:assemble :data:assemble :features:recorder:assemble :SaidIt:assembleDebug --no-daemon --stacktrace
+    - ./gradlew :core:assembleDebug :data:assembleDebug :features:recorder:assembleDebug :SaidIt:assembleDebug :domain:build --no-daemon --stacktrace
   retry: 1
 
 android-lint:
