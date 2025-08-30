@@ -86,6 +86,8 @@ public class SaidItService extends Service {
     // A flag to indicate if the service is running in a test environment.
     // This is a pragmatic approach to prevent test hangs.
     boolean mIsTestEnvironment = false;
+    private volatile boolean isShuttingDown = false;
+    private final Object shutdownLock = new Object();
 
     File mediaFile;
     AudioRecord audioRecord; // used only in the audio thread
@@ -114,6 +116,7 @@ public class SaidItService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        mIsTestEnvironment = "true".equals(System.getProperty("test.environment"));
         Log.d(TAG, "Reading native sample rate");
 
         final SharedPreferences preferences = this.getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
@@ -204,18 +207,32 @@ public class SaidItService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        stopRecording(null);
-        innerStopListening();
-        if (audioProcessingPipeline != null) {
-            audioProcessingPipeline.stop();
+        isShuttingDown = true;
+        
+        synchronized (shutdownLock) {
+            // 1. Stop recording first
+            if (state == ServiceState.RECORDING) {
+                stopRecording(null);
+            }
+            
+            // 2. Stop listening
+            if (state != ServiceState.READY) {
+                innerStopListening();
+            }
+            
+            // 3. Stop audio processing pipeline
+            if (audioProcessingPipeline != null) {
+                audioProcessingPipeline.stop();
+                audioProcessingPipeline = null;
+            }
+            
+            // 4. Clean up handlers and threads with timeout
+            cleanupHandlerThread(analysisHandler, analysisThread, "analysis");
+            cleanupHandlerThread(audioHandler, audioThread, "audio");
+            
+            // 5. Stop foreground
+            stopForeground(true);
         }
-        cleanupHandlerThread(audioThread);
-        audioThread = null;
-        audioHandler = null;
-        cleanupHandlerThread(analysisThread);
-        analysisThread = null;
-        analysisHandler = null;
-        stopForeground(true);
     }
 
     @Override
@@ -265,7 +282,7 @@ public class SaidItService extends Service {
     }
 
     private void innerStartListening() {
-        if (state != ServiceState.READY) return;
+        if (state != ServiceState.READY || isShuttingDown) return;
         state = ServiceState.LISTENING;
 
         Log.d(TAG, "Queueing: START LISTENING");
@@ -273,6 +290,7 @@ public class SaidItService extends Service {
         final long memorySize = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE).getLong(AUDIO_MEMORY_SIZE_KEY, Runtime.getRuntime().maxMemory() / 4);
 
         audioHandler.post(() -> {
+            if (isShuttingDown) return;
             Log.d(TAG, "Executing: START LISTENING");
             @SuppressLint("MissingPermission")
             AudioRecord newAudioRecord = new AudioRecord(
@@ -336,7 +354,7 @@ public class SaidItService extends Service {
     }
 
     private void innerStopListening() {
-        if (state == ServiceState.READY) return;
+        if (state == ServiceState.READY || isShuttingDown) return;
         state = ServiceState.READY;
 
         Log.d(TAG, "Queueing: STOP LISTENING");
@@ -355,14 +373,24 @@ public class SaidItService extends Service {
                 automaticGainControl = null;
             }
             if (audioRecord != null) {
-                try { audioRecord.setRecordPositionUpdateListener(null); } catch (Exception ignored) {}
-                if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED && audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
-                    audioRecord.stop();
+                try {
+                    // CRITICAL: Remove listener before stopping
+                    audioRecord.setRecordPositionUpdateListener(null);
+                    if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED && audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+                        audioRecord.stop();
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error stopping audio record", e);
+                } finally {
+                    audioRecord.release();
+                    audioRecord = null;
                 }
-                audioRecord.release();
-                audioRecord = null;
             }
-            audioHandler.removeCallbacks(audioReader);
+            
+            // Remove all pending callbacks
+            if (audioHandler != null) {
+                audioHandler.removeCallbacksAndMessages(null);
+            }
             audioMemory.allocate(0);
         });
     }
@@ -570,19 +598,24 @@ public class SaidItService extends Service {
         }
     }
 
-    private void cleanupHandlerThread(HandlerThread thread) {
-        if (thread == null) return;
-        thread.quitSafely();
-        // In a test environment, especially with a paused looper, blocking on join()
-        // will cause a deadlock. The test is responsible for cleaning up the looper.
-        if (mIsTestEnvironment) {
-            return;
+    private void cleanupHandlerThread(Handler handler, HandlerThread thread, String name) {
+        if (handler != null) {
+            handler.removeCallbacksAndMessages(null);
         }
-        try {
-            thread.join(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            Log.e(TAG, "Failed to join thread", e);
+        
+        if (thread != null) {
+            thread.quitSafely();
+            try {
+                // Wait max 1 second for thread to finish
+                thread.join(1000);
+                if (thread.isAlive()) {
+                    Log.w(TAG, name + " thread did not terminate in time");
+                    thread.interrupt();
+                }
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Interrupted while waiting for " + name + " thread", e);
+                Thread.currentThread().interrupt();
+            }
         }
     }
 }
