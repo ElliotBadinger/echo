@@ -158,7 +158,7 @@ sync_to_github:
     - git config --global user.email "ci@gitlab.com"
     - git config --global user.name "GitLab CI"
     - echo "Testing GitHub API connectivity..."
-    - curl -s -f -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user || echo "GitHub API test failed"
+    - 'curl -s -f -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user || echo "GitHub API test failed"'
     - git remote add github https://$GITHUB_TOKEN@github.com/ElliotBadinger/echo.git
     - git push github HEAD:refactor/phase1-modularization-kts-hilt
   only:
