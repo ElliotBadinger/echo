@@ -1,3 +1,6 @@
+include:
+  - local: '.gitlab-cii.yml'
+
 image: gradle:8.7.0-jdk17
 
 cache:
@@ -11,7 +14,7 @@ variables:
   ANDROID_SDK_URL: "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
   JAVA_TOOL_OPTIONS: "-Xmx2g"
 
-stages: [verify, build, test]
+stages: [verify, build, test, sync]
 
 workflow:
   rules:
@@ -143,6 +146,3 @@ coverage:
       - "**/reports/jacoco/"
       - "**/jacoco/*.exec"
   retry: 1
-
-  include:
-  - local: '.gitlab-cii.yml'
