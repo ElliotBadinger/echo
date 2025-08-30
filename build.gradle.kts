@@ -14,26 +14,31 @@ subprojects {
         }
         tasks.withType(Test::class.java).configureEach {
             useJUnit()
-            finalizedBy("jacocoTestReport")
         }
-        tasks.register("jacocoTestReport", org.gradle.testing.jacoco.tasks.JacocoReport::class.java) {
+        // Configure any existing JacocoReport tasks (e.g., the default 'jacocoTestReport' on JVM modules)
+        tasks.withType(org.gradle.testing.jacoco.tasks.JacocoReport::class.java).configureEach {
             reports {
                 xml.required.set(true)
                 html.required.set(true)
             }
-            val testTask = tasks.findByName("test") as? Test
             executionData.setFrom(fileTree(buildDir).include("**/jacoco/test.exec", "**/jacoco/*.exec", "**/jacoco/*.ec"))
             val javaSrc = fileTree("src/main/java")
             val kotlinSrc = fileTree("src/main/kotlin")
             sourceDirectories.setFrom(files(javaSrc, kotlinSrc))
             classDirectories.setFrom(fileTree(buildDir).include("**/classes/**"))
-            dependsOn(testTask)
+        }
+        // Ensure test tasks finalize by any JacocoReport tasks that exist in the project
+        tasks.withType(org.gradle.testing.jacoco.tasks.JacocoReport::class.java).configureEach {
+            val reportTask = this
+            tasks.withType(Test::class.java).configureEach {
+                finalizedBy(reportTask)
+            }
         }
     }
 }
 
 tasks.register("jacocoAll") {
     subprojects.forEach { p ->
-        dependsOn(p.tasks.matching { it.name == "jacocoTestReport" })
+        dependsOn(p.tasks.withType(org.gradle.testing.jacoco.tasks.JacocoReport::class.java))
     }
 }
