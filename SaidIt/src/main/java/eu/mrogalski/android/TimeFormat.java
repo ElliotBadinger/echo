@@ -1,4 +1,4 @@
-package com.siya.epistemophile;
+package eu.mrogalski.android;
 
 import android.content.res.Resources;
 
@@ -11,6 +11,24 @@ public final class TimeFormat {
 
     // Prevent instantiation
     private TimeFormat() {}
+
+    /**
+     * Formats the given duration in seconds into a natural language string using Android resources.
+     *
+     * @param resources The Android Resources object to access strings and plurals.
+     * @param totalSeconds The total duration in seconds (will be floored to integer for calculation).
+     * @param result The Result object to populate with the formatted text and count.
+     * @throws IllegalArgumentException if totalSeconds is negative.
+     */
+    public static void naturalLanguage(Resources resources, float totalSeconds, Result result) {
+        if (totalSeconds < 0) {
+            throw new IllegalArgumentException("Total seconds cannot be negative");
+        }
+
+        Result temp = formatNaturalLanguage(resources, (int) Math.floor(totalSeconds));
+        result.text = temp.text;
+        result.count = temp.count;
+    }
 
     /**
      * Formats the given duration in seconds into a natural language string using Android resources.
@@ -75,8 +93,13 @@ public final class TimeFormat {
      * Encapsulates the result of natural language time formatting.
      */
     public static final class Result {
-        private final String text;
-        private final int count;
+        public String text;
+        public int count;
+
+        public Result() {
+            this.text = "";
+            this.count = 0;
+        }
 
         public Result(String text, int count) {
             this.text = text;
