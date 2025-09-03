@@ -119,7 +119,6 @@ Every modification must include:
 - Expert-designed UI with comprehensive accessibility and usability testing
 - Progressive quality management with storage optimization tests
 - Real-time audio classification with accuracy measurement and performance tests
-
 ---
 
 ## 4. CHANGE TRACKING SYSTEM
@@ -224,6 +223,151 @@ Use this format for every significant change:
 - Revert gradle/libs.versions.toml: remove androidx-arch version and library entries
 - Revert features/recorder/build.gradle.kts: remove androidx-arch-core-testing dependency
 - Revert test file changes to original version
+
+---
+
+```markdown
+### Research-Enhanced Development Process
+
+#### Research Tool Priority Matrix:
+**For Scientific & SOTA Research (Use Brave Search MCP):**
+- ✅ **Audio processing algorithms**: Latest WebRTC, noise reduction, VAD techniques
+- ✅ **Mobile ML optimization**: SOTA models for on-device processing
+- ✅ **Performance research**: Academic papers on Android optimization
+- ✅ **UI/UX studies**: User research and accessibility studies for audio apps
+- ✅ **Architecture patterns**: Research on Clean Architecture implementations
+
+**For Implementation Documentation (Use Context7 MCP):**
+- ✅ **Android API guidance**: Current best practices for AudioRecord, AudioTrack
+- ✅ **Jetpack Compose**: Latest performance patterns and optimization guides
+- ✅ **Architecture Components**: Room, ViewModel, LiveData current documentation  
+- ✅ **Dependency Injection**: Hilt setup and advanced patterns
+- ✅ **Testing frameworks**: Latest testing approaches and frameworks
+
+**For General Information (Use Built-in web_search):**
+- ⚠️ **Fallback only**: When Brave/Context7 MCP not available
+- ⚠️ **Basic queries**: Simple fact-checking or general information
+
+#### CI Integration for Faster Development:
+**Use GitHub Actions instead of local testing when:**
+- Changes affect multiple modules (parallel testing advantage)
+- Audio/performance critical modifications (need matrix testing)
+- Architecture changes requiring comprehensive validation
+- Local testing is slow or resource-intensive
+
+**CI Integration Workflow:**
+1. **Push changes** → Use `push_files` GitHub MCP function
+2. **Monitor progress** → Use `list_workflow_runs` to track status  
+3. **Analyze failures** → Use `get_job_logs` and `download_workflow_run_artifact`
+4. **Fix and iterate** → Based on CI feedback, not local guesswork
+5. **Validate completion** → Ensure full CI pipeline passes before proceeding
+
+#### Research Integration Examples:
+
+**Audio Processing Optimization Research:**
+```javascript
+// 1. Find SOTA algorithms (Brave Search MCP)
+brave_search({
+  query: "WebRTC audio processing mobile real-time optimization 2024"
+})
+
+// 2. Get Android implementation guidance (Context7 MCP)  
+get_library_docs({
+  context7CompatibleLibraryID: "/android/media",
+  topic: "AudioRecord performance optimization"
+})
+
+// 3. Apply research to implementation
+// → Implement WebRTC-inspired buffer management
+// → Use Android AudioRecord best practices
+// → Validate with CI performance tests
+```
+
+**ML Integration Research:**
+```javascript
+// 1. Research mobile-optimized models (Brave Search MCP)
+brave_search({
+  query: "Whisper model mobile optimization TensorFlow Lite Android benchmarks"
+})
+
+// 2. Get TensorFlow Lite documentation (Context7 MCP)
+get_library_docs({
+  context7CompatibleLibraryID: "/tensorflow/lite",
+  topic: "speech recognition mobile optimization"  
+})
+
+// 3. Implement research findings
+// → Choose optimal model size for mobile
+// → Apply TF Lite optimization techniques
+// → Measure performance improvements
+```
+
+#### Enhanced Change Log Template:
+```markdown
+## Change [YYYY-MM-DD HH:MM] - [ID]
+
+### Goal
+[What specific problem this addresses]
+
+### Research Conducted
+**Brave Search MCP Research:**
+- Scientific papers: [SOTA algorithms and techniques found]
+- Performance benchmarks: [quantified improvements available]
+- Academic findings: [key research insights]
+
+**Context7 MCP Research:**
+- Android documentation: [specific APIs and patterns]
+- Implementation examples: [code patterns and best practices]
+- Architecture guidance: [how it fits with Clean Architecture]
+
+**Research-Informed Decision:**
+[How research findings influenced implementation approach]
+
+### Files Modified  
+- file1.kt - [changes based on research findings]
+- file2.gradle - [dependencies informed by research]
+
+### Implementation Details
+**Research Application:**
+- Algorithm: [SOTA technique applied from Brave research]
+- Android Patterns: [best practices from Context7 research]
+- Performance Target: [benchmarks from research to achieve]
+
+### Testing Strategy
+**Performance Validation:**
+- Baseline: [current performance metrics]
+- Research Target: [performance goals from academic papers]
+- CI Validation: [GitHub Actions tests to measure improvement]
+
+### Result
+- ✅/❌/🟡 [Outcome with research-backed performance metrics]
+- **Research Validation**: [Did implementation achieve research-predicted improvements?]
+- **Performance Impact**: [Measured vs. research-predicted results]
+
+### Knowledge Gained
+**Transferable Insights:**
+- Research patterns that worked
+- Implementation approaches validated by research
+- Performance optimization techniques confirmed
+
+### Future Research Directions
+[Follow-up research questions or optimization opportunities discovered]
+```
+
+#### GitHub Actions Workflow Files (Recommended)
+**Create these workflows for comprehensive CI:**
+
+1. **`.github/workflows/android-ci.yml`** - Core unit and integration tests
+2. **`.github/workflows/performance-tests.yml`** - Audio processing performance validation
+3. **`.github/workflows/ui-tests.yml`** - UI and accessibility testing
+
+**Benefits of CI Integration:**
+- **Speed**: Parallel testing across multiple Android versions
+- **Consistency**: Same environment every time, no local variations
+- **Comprehensive**: Full test suite execution without local resource usage
+- **Artifacts**: Detailed reports and logs for failure analysis
+- **Performance Tracking**: Historical performance metrics and trends
+```
 
 ---
 
