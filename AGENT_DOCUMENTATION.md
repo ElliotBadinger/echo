@@ -48,24 +48,33 @@
 
 ---
 
-## 3. CURRENT PRIORITY GOALS (In Order)
+## 3. CURRENT PRIORITY GOALS (Architecture-Informed)
 
 #### Immediate (Next 1-2 Changes) - ✅ COMPLETED
 1. **Fix RecordingViewModelTest runtime failure** ✅ COMPLETED
 2. **Fix ComposeView.kt compilation error** ✅ COMPLETED
 
-#### Short Term (Next 5-10 Changes)
-1. **Investigate and fix remaining test failures** (other than RecordingViewModelTest which is now passing)
-2. **Fix SaidItService threading violations** mentioned in documentation
-3. **Fix AudioMemory thread safety issues** if they exist
-4. **Add proper file cleanup in tests**
-5. **Add timeout protections to service operations**
+#### Short Term - Architecture-Aligned Priorities
+**Tier 1 - Foundation & Architecture (PREFER THESE)**
+1. **Convert SaidItService threading to coroutines** - Move toward modern async patterns
+2. **Add Result<T> wrapper to AudioMemory operations** - Modern error handling
+3. **Extract recording logic to repository pattern** - Improve separation of concerns
+4. **Convert Java utilities to Kotlin** - Language migration progress
+
+**Tier 2 - Stability & Testing**
+1. **Investigate and fix remaining test failures** - Testing foundation
+2. **Add proper file cleanup in tests** - Resource management
+3. **Add timeout protections to service operations** - Robustness
+
+**Tier 3 - Surface Issues** 
+1. Fix Gradle warnings about deprecated APIs
+2. Update documentation for new patterns
+3. Clean up unused imports and code
 
 #### Medium Term (After Short Term Success)
-1. Implement repository pattern properly
-2. Add dependency injection framework
-3. Consider re-adding proper Jetpack Compose support when UI enhancements are needed
-4. Implement comprehensive error handling
+- Implement Hilt dependency injection framework
+- Migrate UI components to proper MVVM pattern
+- Consider re-adding Jetpack Compose with proper architecture
 
 ---
 
