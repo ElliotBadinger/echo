@@ -48,33 +48,77 @@
 
 ---
 
-## 3. CURRENT PRIORITY GOALS (Architecture-Informed)
+## 3. CURRENT PRIORITY GOALS (Error-First, Incremental, Well-Tested)
 
-#### Immediate (Next 1-2 Changes) - ✅ COMPLETED
+### Product Vision Context
+Echo is becoming an advanced AI-powered audio application with expert UI design:
+- Real-time ML processing (Whisper speech-to-text, VAD)
+- Advanced audio enhancement (RNNoise, FFmpeg) 
+- Intelligent audio segmentation and classification
+- Clean, intuitive Android UI following Material You design principles
+- 24/7 background recording with smart storage management
+- Production-ready testing for all features and migrations
+
+### Immediate (Next 1-2 Changes) - ✅ COMPLETED
 1. **Fix RecordingViewModelTest runtime failure** ✅ COMPLETED
 2. **Fix ComposeView.kt compilation error** ✅ COMPLETED
 
-#### Short Term - Architecture-Aligned Priorities
-**Tier 1 - Foundation & Architecture (PREFER THESE)**
-1. **Convert SaidItService threading to coroutines** - Move toward modern async patterns
-2. **Add Result<T> wrapper to AudioMemory operations** - Modern error handling
-3. **Extract recording logic to repository pattern** - Improve separation of concerns
-4. **Convert Java utilities to Kotlin** - Language migration progress
+### Short Term - Error-First Priority System
 
-**Tier 2 - Stability & Testing**
-1. **Investigate and fix remaining test failures** - Testing foundation
-2. **Add proper file cleanup in tests** - Resource management
-3. **Add timeout protections to service operations** - Robustness
+#### **TIER 1 - ERROR FIXES (ABSOLUTE PRIORITY)**
+**Rule: Always fix these before any other work**
+1. **Fix any failing unit tests** - Production readiness requires all tests passing
+2. **Fix any build compilation errors** - Must maintain buildable state
+3. **Fix any integration test timeouts/failures** - Critical for CI/CD stability
+4. **Fix any runtime crashes or exceptions** - User experience blockers
+5. **Fix any file locking or resource cleanup issues** - Testing framework stability
 
-**Tier 3 - Surface Issues** 
-1. Fix Gradle warnings about deprecated APIs
-2. Update documentation for new patterns
-3. Clean up unused imports and code
+#### **TIER 2 - TESTED INCREMENTAL IMPROVEMENTS (Secondary Priority)**  
+**Rule: Every change must include comprehensive tests**
+1. **Convert SaidItService threading to coroutines** - Add unit + integration tests
+2. **Add Result<T> wrapper to AudioMemory operations** - Add error handling tests
+3. **Extract recording logic to repository pattern** - Add repository tests + mocks
+4. **Convert Java utilities to Kotlin with suspend functions** - Maintain test coverage
+5. **Add proper dependency injection patterns** - Add DI integration tests
+6. **Improve UI components with Material You design** - Add UI tests for interactions
 
-#### Medium Term (After Short Term Success)
-- Implement Hilt dependency injection framework
-- Migrate UI components to proper MVVM pattern
-- Consider re-adding Jetpack Compose with proper architecture
+#### **TIER 3 - ARCHITECTURE & UI ENHANCEMENTS (Only if Tiers 1-2 complete)**
+**Rule: Must not break existing functionality, must be incremental**
+1. **Implement single Hilt module** - Start with one component, full test suite
+2. **Migrate one UI fragment to modern design** - Expert UX patterns, accessibility tests
+3. **Add one ML processing interface** - Prepare for Whisper, include mock tests
+4. **Implement one audio pipeline component** - VAD preparation, performance tests
+5. **Add comprehensive error handling to one service** - Production-ready patterns
+
+#### **TIER 4 - POLISH & OPTIMIZATION (Lowest Priority)**
+1. Fix Gradle warnings (but don't change working functionality)
+2. Update documentation for implemented patterns
+3. Clean up unused imports (verify with tests first)
+4. UI accessibility improvements (with comprehensive testing)
+
+### Testing Requirements for ALL Changes
+Every modification must include:
+- [ ] **Unit Tests** - Test individual components in isolation
+- [ ] **Integration Tests** - Test component interactions
+- [ ] **Error Case Testing** - Test failure scenarios and recovery
+- [ ] **Performance Tests** - For audio/ML components, ensure real-time performance
+- [ ] **UI Tests** - For frontend changes, test user interactions
+- [ ] **Regression Testing** - Verify existing functionality still works
+
+### Medium Term (After Short Term Success + Full Test Coverage)
+1. **Implement complete Hilt dependency injection** - Full modular ML architecture support
+2. **Create comprehensive audio processing pipeline** - Production-ready VAD/ML foundation  
+3. **Redesign complete UI with expert Android design** - Modern, intuitive, accessible
+4. **Add real-time ML audio processing** - Whisper integration with performance testing
+5. **Implement advanced audio enhancement** - RNNoise with quality metrics
+
+### Long Term Vision (All Production-Ready with Comprehensive Testing)
+- Modular ML pipeline with Whisper/VAD integration + performance benchmarks
+- Advanced audio enhancement with RNNoise + quality measurement tests
+- FFmpeg integration with format conversion tests
+- Expert-designed UI with comprehensive accessibility and usability testing
+- Progressive quality management with storage optimization tests
+- Real-time audio classification with accuracy measurement and performance tests
 
 ---
 
