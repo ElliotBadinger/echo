@@ -43,13 +43,14 @@ echo "sdk.dir=/path/to/your/android/sdk" > local.properties
 ```
 
 ### Project Status
-- **Build Status:** 🟡 Partially working (70% success rate - compilation passes, some tests fail)
+- **Build Status:** 🟢 Fully working (100% success rate - full build completes successfully)
 - **Architecture:** Currently undergoing refactoring from monolithic to modular design
-- **Active Development:** Focus on fixing build issues and improving test stability
+- **Active Development:** Focus on improving test coverage and runtime stability
+- **Recent Success:** RecordingViewModelTest fixed, compilation errors resolved
 
 ## 🤖 AI Agent Development Workflow
 
-**IMPORTANT:** This project uses AI agents for development assistance. If you're working with Claude or other AI assistants, follow this workflow for best results.
+**IMPORTANT:** This project uses AI agents for development assistance and has GitHub MCP server integration. If you're working with Claude or other AI assistants, follow this workflow for best results.
 
 ### 📋 **FIRST TIME OR NEW CONVERSATION: Read This Guide**
 👉 **[Complete Agent Workflow Guide](AGENT_WORKFLOW_GUIDE.md)** - Essential reading for AI-assisted development
@@ -62,41 +63,74 @@ echo "sdk.dir=/path/to/your/android/sdk" > local.properties
 3. **`documentation/echo-critical-fixes.md`** - Critical build and infrastructure issues
 4. **`documentation/echo-refactoring-plan.md`** - Long-term architectural roadmap
 
-#### Recommended First Prompt for New AI Sessions:
+#### **COPY THIS PROMPT for New AI Sessions:**
 ```
-I'm starting work on the Echo Android project. Please:
+I'm continuing work on the Echo Android project. Please:
 
-1. Read the AGENT_DOCUMENTATION.md file completely to understand current state
+1. Read the AGENT_WORKFLOW_GUIDE.md file completely - this contains all essential instructions
 2. Follow the AGENT_SESSION_CHECKLIST.md for proper workflow
-3. Check current build status with: ./gradlew clean
-4. Identify the next small, incremental goal from the priority list
-5. Never attempt large architectural changes - focus on small, verifiable improvements
+3. Read AGENT_DOCUMENTATION.md to understand current project state
+4. Check current build status with: cd echo && ./gradlew clean
+5. Focus on the next small goal from the Current Priority Goals in documentation
+6. Use GitHub MCP server functions (push_files, create_or_update_file) for all Git operations
+7. Never attempt large architectural changes - focus on small, verifiable improvements
 
-Current focus areas: Fix test failures, resolve build issues, improve Compose integration.
-Follow the incremental change methodology documented in AGENT_DOCUMENTATION.md.
+Current status: Build success rate is 100%, RecordingViewModelTest fixed. 
+Focus on: improving other test failures, SaidItService threading issues, or runtime stability.
+Follow the incremental change methodology documented in the guides.
+```
+
+#### **COPY THIS for Completed Feature/Fix Sessions:**
+```
+I just completed [describe what you implemented/fixed] on the Echo Android project. Please:
+
+1. Read AGENT_DOCUMENTATION.md to understand current state and recent changes
+2. Verify the completed work is properly documented in the change log
+3. Check if there are any follow-up issues or improvements needed
+4. Use GitHub MCP server to push any documentation updates or final fixes
+5. Identify and start the next highest priority goal from the Current Priority Goals list
+6. Update the "Next Agent Should Focus On" section with clear next steps
+
+Current focus should be on: [check documentation for current priorities]
+Always make small, incremental improvements rather than large architectural changes.
 ```
 
 ### 🔄 **Git Workflow for Changes**
 
-#### Making Changes:
-```bash
-# Always work on a feature branch
-git checkout -b fix/your-specific-fix
-git add .
-git commit -m "Fix: specific description of what was changed"
-git push origin fix/your-specific-fix
+#### **🤖 IMPORTANT FOR AI AGENTS: Use GitHub MCP Server Functions**
+
+**✅ PREFERRED METHOD - Use MCP Functions:**
+```javascript
+// Push multiple files at once (RECOMMENDED)
+push_files({
+  owner: "ElliotBadinger",
+  repo: "echo",
+  branch: "refactor/phase1-modularization-kts-hilt", // or current branch
+  message: "Agent Session [DATE]: Fixed [specific issue] - description",
+  files: [
+    {path: "file1.kt", content: "..."},
+    {path: "AGENT_DOCUMENTATION.md", content: "...updated docs..."}
+  ]
+})
+
+// Or for single files
+create_or_update_file({
+  owner: "ElliotBadinger", 
+  repo: "echo",
+  path: "path/to/file.kt",
+  content: "file content",
+  message: "Agent: Fixed specific issue",
+  branch: "refactor/phase1-modularization-kts-hilt"
+})
 ```
 
-#### For AI Agents to Push Changes:
-After making successful changes, use these commands:
+#### **🔧 FALLBACK: Manual Git (only if MCP unavailable):**
 ```bash
 # Add all changes
 git add .
-
 # Commit with descriptive message
-git commit -m "Agent Session [DATE]: Fixed [specific issue] - improved build success rate"
-
-# Push to current branch
+git commit -m "Agent Session [DATE]: Fixed [specific issue] - improved [metric]"
+# Push to current branch  
 git push origin HEAD
 ```
 
@@ -116,11 +150,13 @@ echo/
 
 ## 🚨 Current Known Issues
 
-### Build & Test Issues
-- Some unit tests fail with runtime exceptions
-- Threading violations in SaidItService
-- File locking issues in CI/CD
-- Gradle warnings about deprecated APIs
+### Build & Test Issues ✅ MAJOR IMPROVEMENTS MADE
+- ✅ **Build system now 100% functional** (was 70% success rate)
+- ✅ **RecordingViewModelTest fixed** (was failing with IllegalStateException)
+- 🟡 **Some other unit tests may still need investigation**
+- 🟡 **Threading violations in SaidItService** (next priority)
+- 🟡 **File locking issues in CI/CD**
+- 🟡 **Gradle warnings about deprecated APIs**
 
 ### Architecture Issues  
 - Monolithic service design needs refactoring
@@ -139,11 +175,12 @@ echo/
 - Follow Material Design guidelines
 
 ### For AI Agents:
-- **Small incremental changes only**
-- **Document every change** in AGENT_DOCUMENTATION.md
-- **Test immediately** after each change
-- **Never assume context** from previous conversations
-- **Follow the checklist** in AGENT_SESSION_CHECKLIST.md
+- **Use GitHub MCP server functions** for all Git operations (push_files, create_or_update_file, etc.)
+- **Small incremental changes only** - never attempt large architectural changes  
+- **Document every change** in AGENT_DOCUMENTATION.md with proper change log entries
+- **Test immediately** after each change using ./gradlew commands
+- **Never assume context** from previous conversations - always read current documentation
+- **Follow the complete workflow** in AGENT_WORKFLOW_GUIDE.md and AGENT_SESSION_CHECKLIST.md
 
 ## 📚 Additional Resources
 
@@ -161,10 +198,12 @@ echo/
 4. Submit PRs with comprehensive descriptions
 
 ### For AI Assistant Contributors:
-1. **ALWAYS start by reading `AGENT_WORKFLOW_GUIDE.md`**
-2. Follow the established workflow in `AGENT_SESSION_CHECKLIST.md`
-3. Document all changes in `AGENT_DOCUMENTATION.md`
-4. Focus on incremental improvements, not large refactors
+1. **ALWAYS start by reading `AGENT_WORKFLOW_GUIDE.md`** (contains complete instructions)
+2. **Use GitHub MCP server functions** instead of manual git commands
+3. **Follow the established workflow** in `AGENT_SESSION_CHECKLIST.md`
+4. **Document all changes** in `AGENT_DOCUMENTATION.md` with proper change log entries
+5. **Focus on incremental improvements**, not large refactors
+6. **Use the copy-paste prompts above** for consistent session starts
 
 ## 📄 License
 
@@ -172,4 +211,29 @@ echo/
 
 ---
 
-**🔥 IMPORTANT FOR AI AGENTS:** Before making ANY changes, read `AGENT_WORKFLOW_GUIDE.md` for complete instructions on how to work with this project effectively.
+---
+
+## 🤖 **QUICK START COMMANDS FOR AI AGENTS**
+
+**✅ Use these exact commands in your development environment:**
+
+```bash
+# First time setup - verify environment
+cd echo && ./gradlew --version && ./gradlew clean
+
+# Check current build status  
+./gradlew build --continue
+
+# Run specific tests
+./gradlew :features:recorder:test
+./gradlew test
+
+# Find files
+find . -name "*.kt" -o -name "*.java" | head -20
+```
+
+**🔥 CRITICAL FOR AI AGENTS:** 
+1. **READ** `AGENT_WORKFLOW_GUIDE.md` before making ANY changes
+2. **USE** GitHub MCP server functions for Git operations
+3. **FOLLOW** the incremental change methodology - small steps only
+4. **DOCUMENT** every change in `AGENT_DOCUMENTATION.md`
