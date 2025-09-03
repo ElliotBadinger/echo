@@ -60,6 +60,7 @@ Every change must include:
 ### 4.2 Decision Examples
 
 #### SCENARIO: Multiple issues exist
+```markdown
 Current Issues:
 - RecorderService crashes on startup (CRITICAL)  
 - UI button could be more Material You styled (ENHANCEMENT)
@@ -73,9 +74,10 @@ CORRECT ORDER:
 WRONG ORDER:
 ❌ Start with UI styling while crashes exist
 ❌ Do architectural work before fixing stability
+```
 
-SCENARIO: Choosing between architectural approaches
-
+#### SCENARIO: Choosing between architectural approaches
+```markdown
 Problem: Audio threading issues
 
 ❌ LEGACY: "Add synchronized blocks to existing methods"
@@ -90,9 +92,10 @@ Problem: UI component needs improvement
 
 ❌ LEGACY: "Quick styling fix"
 ✅ BETTER: "Redesign with Material You principles + accessibility tests"
+```
 
 #### SCENARIO: Testing requirements
-
+```markdown
 Change: Convert AudioManager to Kotlin
 
 Required Tests:
@@ -106,7 +109,7 @@ Missing Tests:
 ❌ Only unit tests - insufficient for production readiness
 ❌ No error handling tests - could cause crashes
 ❌ No performance validation - could affect real-time audio
-
+```
 
 ### 4.3 UI/UX Excellence Standards
 When making frontend changes, ensure:
@@ -141,6 +144,223 @@ Before completing any change:
 - [ ] No new errors introduced
 - [ ] Feature works as intended (if applicable)
 - [ ] Performance hasn't degraded
+
+### 6.1 Enhanced Testing & Research Integration
+
+#### Testing Strategy Decision Matrix:
+**Use Local Testing When:**
+- [ ] Small, isolated changes (single function, simple bug fix)
+- [ ] Changes don't affect audio/performance critical paths
+- [ ] Quick iteration needed for development workflow
+- [ ] Limited to single module/component
+
+**Use GitHub Actions CI When:**
+- [ ] Changes affect multiple modules or core architecture
+- [ ] Audio processing or performance-critical modifications  
+- [ ] Need matrix testing across Android API levels
+- [ ] Complex integration testing required
+- [ ] Local testing is slow (>5 minutes) or resource-intensive
+
+#### GitHub Actions Integration Process:
+```javascript
+// 1. Push changes and trigger CI
+push_files({
+  owner: "ElliotBadinger",
+  repo: "echo", 
+  branch: "current-branch",
+  message: "Agent: [specific change description]",
+  files: [{path: "file.kt", content: "..."}]
+})
+
+// 2. Monitor workflow progress
+list_workflow_runs({
+  owner: "ElliotBadinger",
+  repo: "echo",
+  workflow_id: "android-ci.yml",
+  per_page: 5
+})
+
+// 3. If failures occur, get detailed logs
+get_job_logs({
+  owner: "ElliotBadinger", 
+  repo: "echo",
+  run_id: 12345,
+  failed_only: true,
+  return_content: true
+})
+
+// 4. Download artifacts for analysis
+download_workflow_run_artifact({
+  owner: "ElliotBadinger",
+  repo: "echo",
+  artifact_id: 67890
+})
+```
+
+#### Research Integration Guidelines:
+
+**Research Tool Selection Decision Tree:**
+
+**STEP 1 - Identify Research Need:**
+- [ ] **Scientific/SOTA research needed?** → Use Brave Search MCP
+- [ ] **Implementation guidance needed?** → Use Context7 MCP  
+- [ ] **Both research types needed?** → Use both in sequence
+- [ ] **Simple fact-checking only?** → Use built-in web_search
+
+**STEP 2 - Brave Search MCP Usage (Scientific Research):**
+```javascript
+// For SOTA algorithm research
+brave_search({
+  query: "WebRTC VAD mobile optimization android 2024 research papers"
+})
+
+// For performance optimization research  
+brave_search({
+  query: "jetpack compose performance optimization case studies benchmarks"
+})
+
+// For UI/UX research
+brave_search({
+  query: "mobile audio app interface usability studies accessibility research"
+})
+
+// For ML model research
+brave_search({
+  query: "on-device speech recognition mobile optimization tensorflow lite"
+})
+```
+
+**STEP 3 - Context7 MCP Usage (Implementation Guidance):**
+```javascript
+// For Android API documentation
+get_library_docs({
+  context7CompatibleLibraryID: "/android/media",
+  topic: "real-time audio processing"
+})
+
+// For architecture patterns
+get_library_docs({
+  context7CompatibleLibraryID: "/android/architecture",
+  topic: "clean architecture MVVM"
+})
+
+// For UI framework guidance
+get_library_docs({
+  context7CompatibleLibraryID: "/jetpack/compose", 
+  topic: "performance optimization"
+})
+
+// Or use natural language with "use context7"
+// "How do I optimize AudioRecord for real-time processing? use context7"
+```
+
+**STEP 4 - Research Documentation Requirements:**
+- [ ] **Document Brave Search findings**: SOTA algorithms, performance benchmarks
+- [ ] **Document Context7 findings**: Implementation patterns, API details
+- [ ] **Create research-to-implementation mapping**: How findings inform code changes
+- [ ] **Set performance targets**: Based on research benchmarks
+- [ ] **Plan validation strategy**: CI tests to measure research-predicted improvements
+
+#### Research-Driven Development Examples:
+
+**SCENARIO: Audio latency optimization needed**
+```
+RESEARCH PHASE:
+✅ Brave Search: "WebRTC audio processing mobile latency reduction 2024"
+   → Find: Buffer management techniques, processing algorithms
+✅ Context7: get Android AudioRecord optimization documentation
+   → Find: Android-specific API usage patterns
+
+IMPLEMENTATION PHASE:
+✅ Apply research findings to AudioBuffer.kt
+✅ Use research-informed buffer sizes and threading patterns
+✅ Set performance targets based on research benchmarks
+
+VALIDATION PHASE:  
+✅ CI performance tests measure latency improvements
+✅ Compare results against research-predicted performance
+✅ Document successful patterns for future use
+```
+
+**SCENARIO: ML model integration needed**
+```
+RESEARCH PHASE:
+✅ Brave Search: "Whisper model mobile optimization android memory usage 2024"
+   → Find: Model size trade-offs, quantization techniques
+✅ Context7: get TensorFlow Lite Android implementation guide
+   → Find: Integration patterns, optimization flags
+
+IMPLEMENTATION PHASE:
+✅ Choose model variant based on research findings
+✅ Apply TF Lite optimization techniques from documentation
+✅ Implement research-informed memory management
+
+VALIDATION PHASE:
+✅ Measure inference time and memory usage
+✅ Validate against research benchmarks
+✅ Adjust implementation based on performance data
+```
+
+#### Research Quality Assurance:
+**For Brave Search Results:**
+- [ ] **Verify source credibility**: Academic papers, reputable research institutions
+- [ ] **Check publication dates**: Prefer 2024+ for rapidly evolving fields
+- [ ] **Look for benchmarks**: Quantified performance improvements
+- [ ] **Assess mobile relevance**: Ensure findings apply to Android constraints
+
+**For Context7 Results:**
+- [ ] **Check documentation currency**: Ensure latest API versions
+- [ ] **Verify code examples**: Test snippets work with current Android versions
+- [ ] **Cross-reference patterns**: Multiple sources confirm best practices
+- [ ] **Validate architecture fit**: Patterns align with Clean Architecture goals
+
+#### Error Analysis Enhanced Workflow:
+
+**For CI Failures:**
+1. [ ] Use `get_workflow_run` to understand failure context
+2. [ ] Use `get_job_logs` with `failed_only: true` for targeted debugging
+3. [ ] Download test artifacts using `download_workflow_run_artifact`
+4. [ ] Analyze logs for specific error patterns
+5. [ ] Research solutions using Brave Search MCP if errors are complex
+6. [ ] Fix issues and push using GitHub MCP functions
+7. [ ] Monitor rerun until CI passes
+
+**For Performance Issues:**
+1. [ ] Research current optimization techniques using Brave Search MCP
+2. [ ] Get Android-specific guidance using Context7 MCP (if available)
+3. [ ] Implement research-informed solutions incrementally
+4. [ ] Validate improvements using CI performance tests
+5. [ ] Document performance gains achieved
+
+#### Research Integration Success Metrics:
+- [ ] **Research findings applied**: Clear connection between research and implementation
+- [ ] **Performance targets met**: Achieve research-predicted improvements
+- [ ] **Documentation quality**: Future developers can understand research basis
+- [ ] **Knowledge transfer**: Research insights documented for reuse
+
+#### Example Research-Informed Decision Process:
+```
+SCENARIO: Audio processing latency issues
+
+STEP 1 - Research:
+✅ brave_search("android audio processing latency optimization 2024")
+✅ Context7: get Android AudioTrack best practices (if available)
+
+STEP 2 - Analyze Findings:
+✅ Document SOTA techniques (WebRTC algorithms, buffer optimization)
+✅ Note Android-specific implementation patterns
+✅ Plan incremental implementation strategy
+
+STEP 3 - Implement with CI:
+✅ Implement smallest change based on research
+✅ Push and monitor CI for performance impact
+✅ Use CI artifacts to validate latency improvements
+
+STEP 4 - Validate:
+✅ Measure performance gains through CI benchmarks
+✅ Document successful patterns for future use
+```
+---
 
 ## 📝 END OF SESSION (Do this BEFORE ending)
 
