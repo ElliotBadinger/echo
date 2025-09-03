@@ -184,27 +184,73 @@ Complete the change log entry:
 ---
 ## 🏗️ ARCHITECTURAL CONTEXT FOR AI AGENTS
 
-### The Big Picture (READ ONLY - Don't Attempt)
-This project is gradually moving toward Clean Architecture (see `documentation/echo-refactoring-plan.md`):
-- **Target**: Modern Clean Architecture with MVVM + Hilt DI + Coroutines
-- **Timeline**: 8-week phased refactoring plan 
-- **Current Phase**: Phase 1 - Foundation & stabilization
-- **Your Role**: Contribute through tiny incremental improvements only
+### The Big Picture Vision (READ ONLY - Don't Attempt)
+This project is evolving toward an advanced AI-powered audio application with modern Android architecture:
+
+**Core Product Vision:**
+- 24/7 background audio recording with intelligent processing
+- Real-time ML features: speech-to-text (Whisper), voice activity detection
+- Advanced audio enhancement: RNNoise integration, FFmpeg processing  
+- Smart segmentation and classification of audio content
+- Clean, intuitive Android UI following expert design principles
+- Production-ready testing for all features and migrations
+
+**Technical Architecture Target** (see `documentation/echo-refactoring-plan.md`):
+- Modern Clean Architecture with MVVM + Hilt DI + Coroutines
+- Modular design: domain/data/presentation layers
+- Kotlin-first with coroutines for all async operations
+- Advanced audio pipeline with ML integration
+- Expert Android UI/UX design with Material You principles
+- Timeline: 8-week phased refactoring plan
+- Current Phase: Phase 1 - Foundation & stabilization
+
+### CRITICAL: Incremental Development Principles
+1. **NEVER break existing functionality** - Always maintain current features
+2. **ALWAYS fix errors first** - Build/test/integration failures take absolute priority
+3. **ALWAYS add comprehensive tests** - Every migration/feature needs production-ready testing
+4. **Make smallest possible changes** - Incremental is always better than big changes
 
 ### Decision Framework for Small Changes
-When choosing between multiple small fixes, prefer:
-1. **Kotlin over Java** - Convert utilities when fixing them
-2. **Coroutines over Threads** - Use suspend functions for async fixes
-3. **Result types over exceptions** - Wrap operations in Result<T>
-4. **Dependency injection patterns** - Avoid manual instantiation
-5. **Separation of concerns** - Keep UI, business logic, and data separate
+When choosing between multiple small fixes, prefer changes that align with the vision:
+
+1. **Fix errors FIRST** - Build, unit, integration, functional test failures
+2. **Kotlin over Java** - Convert utilities when fixing them (but don't break existing)
+3. **Coroutines over Threads** - Use suspend functions for async fixes  
+4. **Result types over exceptions** - Wrap operations in Result<T>
+5. **Comprehensive testing** - Add tests for any code you touch
+6. **UI/UX improvements** - Modern Material You patterns for frontend changes
+7. **Separation of concerns** - Keep UI, business logic, and data separate
 
 ### Change Quality Assessment
-Document architectural alignment:
-- ✅ **ARCHITECTURAL**: Moves toward target architecture
-- ✅ **MODERN**: Uses modern Android patterns  
-- ✅ **TESTABLE**: Improves testability
-- ⚠️ **LEGACY**: Fixes issue but maintains old patterns
+When documenting changes, note alignment and testing:
+- ✅ **FIXES-ERRORS**: Resolves build/test/integration failures
+- ✅ **WELL-TESTED**: Includes comprehensive tests for production readiness
+- ✅ **ARCHITECTURAL**: Moves toward Clean Architecture (incrementally)
+- ✅ **MODERN**: Uses modern Android patterns (coroutines, Material You, etc.)
+- ✅ **UI-EXPERT**: Follows expert Android design principles
+- ⚠️ **LEGACY**: Fixes issue but maintains old patterns (acceptable if well-tested)
+
+### Example: Priority-Ordered Fixes
+PRIORITY 1 - ERROR FIXES (Always first):
+✅ "Fix failing RecordingViewModelTest with proper test setup"
+✅ "Resolve build compilation errors in audio module"
+✅ "Fix integration test timeouts with proper resource cleanup"
+PRIORITY 2 - TESTED IMPROVEMENTS:
+✅ "Convert AudioManager to Kotlin with comprehensive unit tests"
+✅ "Add Result<T> to file operations with integration tests"
+✅ "Improve UI button accessibility with UI tests"
+PRIORITY 3 - ARCHITECTURAL (Only if no errors):
+✅ "Extract repository pattern with full test coverage"
+✅ "Add Hilt DI to single module with integration tests"
+
+### Frontend Innovation Guidelines
+When touching UI code, follow expert Android design:
+- **Material You** design system and dynamic theming
+- **Accessibility first** - proper content descriptions, navigation
+- **Intuitive navigation** - clear user flows and interaction patterns  
+- **Performance** - smooth animations, responsive interactions
+- **Clean visual hierarchy** - proper spacing, typography, colors
+- **User testing** - UI tests for all interactive elements
 
 ## 📋 SPECIFIC WORKFLOWS BY TASK TYPE
 
