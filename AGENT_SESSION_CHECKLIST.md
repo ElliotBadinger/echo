@@ -30,6 +30,102 @@
 - [ ] List all files you expect to modify
 - [ ] Note current state of those files
 
+### 4.1 Error-First Decision Framework
+Before making ANY changes, prioritize in this exact order:
+
+#### Step 1: Check for Critical Issues (MUST FIX FIRST)
+- [ ] **Build Errors**: Are there any compilation failures?
+- [ ] **Test Failures**: Are any unit/integration tests failing?
+- [ ] **Runtime Crashes**: Are there any exceptions or crashes?
+- [ ] **Resource Issues**: File locks, memory leaks, resource cleanup problems?
+
+**If ANY of these exist, fix them FIRST before any other work.**
+
+#### Step 2: Plan Incremental Improvement (Only if no critical issues)
+- [ ] **Maintains Functionality**: Will existing features continue working?
+- [ ] **Comprehensive Testing**: Can I add complete tests for this change?
+- [ ] **Incremental**: Is this the smallest possible improvement?
+- [ ] **Architecture Alignment**: Does this move toward modern patterns?
+- [ ] **UI Excellence**: If touching UI, does this follow expert design principles?
+
+#### Step 3: Testing Requirements Check
+Every change must include:
+- [ ] **Unit Tests**: Test the component in isolation
+- [ ] **Integration Tests**: Test how it works with other components  
+- [ ] **Error Handling Tests**: Test failure scenarios
+- [ ] **Regression Tests**: Verify existing functionality still works
+- [ ] **UI Tests**: If changing UI, test user interactions
+- [ ] **Performance Tests**: If affecting audio/ML, measure performance
+
+### 4.2 Decision Examples
+
+#### SCENARIO: Multiple issues exist
+Current Issues:
+- RecorderService crashes on startup (CRITICAL)  
+- UI button could be more Material You styled (ENHANCEMENT)
+- AudioBuffer could use coroutines (ARCHITECTURAL)
+
+CORRECT ORDER:
+1. ✅ Fix RecorderService crash + add crash prevention tests
+2. ✅ Convert AudioBuffer to coroutines + add concurrency tests  
+3. ✅ Style UI button with Material You + add interaction tests
+
+WRONG ORDER:
+❌ Start with UI styling while crashes exist
+❌ Do architectural work before fixing stability
+
+SCENARIO: Choosing between architectural approaches
+
+Problem: Audio threading issues
+
+❌ LEGACY: "Add synchronized blocks to existing methods"
+✅ BETTER: "Convert to suspend functions with proper dispatchers + concurrency tests"
+
+Problem: File operation errors  
+
+❌ LEGACY: "Add try-catch blocks around operations"
+✅ BETTER: "Wrap in Result<T> with comprehensive error handling tests"
+
+Problem: UI component needs improvement
+
+❌ LEGACY: "Quick styling fix"
+✅ BETTER: "Redesign with Material You principles + accessibility tests"
+
+#### SCENARIO: Testing requirements
+
+Change: Convert AudioManager to Kotlin
+
+Required Tests:
+✅ Unit: Test AudioManager methods in isolation
+✅ Integration: Test AudioManager with RecordingService  
+✅ Error: Test AudioManager with invalid input/permissions
+✅ Performance: Measure audio processing latency
+✅ Regression: Verify existing recording functionality works
+
+Missing Tests:
+❌ Only unit tests - insufficient for production readiness
+❌ No error handling tests - could cause crashes
+❌ No performance validation - could affect real-time audio
+
+
+### 4.3 UI/UX Excellence Standards
+When making frontend changes, ensure:
+- [ ] **Material You Design**: Uses modern design tokens and theming
+- [ ] **Accessibility**: Proper content descriptions, focus management
+- [ ] **Expert Layout**: Clean visual hierarchy, proper spacing
+- [ ] **Intuitive Navigation**: Clear user flow and interaction patterns
+- [ ] **Performance**: Smooth animations, responsive touch feedback
+- [ ] **UI Testing**: Comprehensive interaction and accessibility tests
+
+### 4.4 Production Readiness Checklist
+Before completing any change:
+- [ ] **All tests pass**: Unit, integration, error, performance tests
+- [ ] **No regressions**: Existing functionality verified working  
+- [ ] **Error handling**: Comprehensive error scenarios covered
+- [ ] **Documentation**: Change properly documented with examples
+- [ ] **Performance**: No degradation in critical paths
+- [ ] **Accessibility**: UI changes include accessibility testing
+
 ## 🔧 EXECUTION PHASE (Making changes)
 
 ### 5. Make Changes (Incremental approach)
