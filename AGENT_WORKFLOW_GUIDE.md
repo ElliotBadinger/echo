@@ -231,17 +231,21 @@ When documenting changes, note alignment and testing:
 - ⚠️ **LEGACY**: Fixes issue but maintains old patterns (acceptable if well-tested)
 
 ### Example: Priority-Ordered Fixes
+```
 PRIORITY 1 - ERROR FIXES (Always first):
 ✅ "Fix failing RecordingViewModelTest with proper test setup"
 ✅ "Resolve build compilation errors in audio module"
 ✅ "Fix integration test timeouts with proper resource cleanup"
-PRIORITY 2 - TESTED IMPROVEMENTS:
+
+PRIORITY 2 - TESTED IMPROVEMENTS:  
 ✅ "Convert AudioManager to Kotlin with comprehensive unit tests"
 ✅ "Add Result<T> to file operations with integration tests"
 ✅ "Improve UI button accessibility with UI tests"
+
 PRIORITY 3 - ARCHITECTURAL (Only if no errors):
-✅ "Extract repository pattern with full test coverage"
+✅ "Extract repository pattern with full test coverage" 
 ✅ "Add Hilt DI to single module with integration tests"
+```
 
 ### Frontend Innovation Guidelines
 When touching UI code, follow expert Android design:
@@ -252,6 +256,220 @@ When touching UI code, follow expert Android design:
 - **Clean visual hierarchy** - proper spacing, typography, colors
 - **User testing** - UI tests for all interactive elements
 
+## 🔬 RESEARCH & CI INTEGRATION TOOLS
+
+### Available MCP Server Integration
+When implementing features or optimizing performance, use available MCP servers for enhanced capabilities:
+
+#### GitHub MCP Server (Already Available)
+**Use for**: CI/CD workflow monitoring and artifact analysis
+- Monitor GitHub Actions workflow runs and build status
+- Download and analyze test artifacts and logs  
+- Manage workflow runs (cancel, rerun, get usage statistics)
+- Access job logs and failure details for debugging
+
+**Confirmed Available Functions:**
+```javascript
+// Check workflow status and runs
+list_workflow_runs({
+  owner: "ElliotBadinger",
+  repo: "echo",
+  workflow_id: "android-ci.yml"
+})
+
+// Get specific workflow run details
+get_workflow_run({
+  owner: "ElliotBadinger", 
+  repo: "echo",
+  run_id: 12345
+})
+
+// Download test artifacts for analysis
+download_workflow_run_artifact({
+  owner: "ElliotBadinger",
+  repo: "echo", 
+  artifact_id: 67890
+})
+
+// Get job logs for debugging failures
+get_job_logs({
+  owner: "ElliotBadinger",
+  repo: "echo",
+  run_id: 12345,
+  failed_only: true,  // Get logs for failed jobs only
+  return_content: true  // Return actual log content
+})
+```
+
+#### Brave Search MCP Server (If Installed: @modelcontextprotocol/server-brave-search)
+**Use for**: Scientific research and state-of-the-art algorithm discovery
+- Research latest academic papers and scholarly articles
+- Find cutting-edge audio processing algorithms and techniques
+- Discover mobile ML optimization patterns and performance studies
+- Search for Android development best practices and case studies
+- Privacy-focused search with no tracking (superior to Google for research)
+
+**Installation Requirements:**
+- Brave Search API key (free tier: 2,000 queries/month)
+- Add to MCP configuration: `"@modelcontextprotocol/server-brave-search"`
+
+**Research Capabilities:**
+- **Web Search**: General queries with freshness and pagination controls
+- **Local Search**: Find businesses and services (useful for UX research)
+- **Academic Focus**: Better for finding research papers and technical documentation
+- **Privacy**: No tracking or data collection during research
+
+**Example Research Queries:**
+```javascript
+// Research SOTA audio processing for mobile
+brave_search({
+  query: "state-of-the-art real-time audio processing android mobile 2024 scholarly"
+})
+
+// Find performance optimization techniques
+brave_search({
+  query: "android jetpack compose performance optimization case studies 2024"
+})
+
+// Research ML model optimization for mobile devices
+brave_search({
+  query: "on-device machine learning optimization mobile android research papers"
+})
+
+// Find UI/UX research and design patterns
+brave_search({
+  query: "mobile audio app interface usability research user experience studies"
+})
+```
+
+#### Context7 MCP Server (If Installed: github.com/upstash/context7)
+**Use for**: Fetching current Android development documentation
+- Get up-to-date Android API documentation and examples
+- Access current Kotlin, Jetpack Compose, and architecture guides
+- Fetch specific library documentation (Hilt, Room, Coroutines)
+
+**Usage Pattern:**
+```javascript
+// First resolve the library you need
+resolve_library_id({
+  libraryName: "Android Jetpack Compose"  
+})
+
+// Then fetch specific documentation  
+get_library_docs({
+  context7CompatibleLibraryID: "/android/compose",
+  topic: "performance optimization",
+  tokens: 15000
+})
+```
+
+**Or simply add "use context7" to your prompts when asking about Android development patterns.**
+
+#### Web Search Tool (Built-in Fallback)
+**Use when Brave Search MCP is not available**
+- Basic web search functionality
+- Less specialized for academic/research content
+- No privacy guarantees like Brave Search
+
+### Research Tool Selection Matrix
+
+**Use Brave Search MCP When:**
+- ✅ Researching SOTA algorithms and scientific papers
+- ✅ Finding performance optimization research
+- ✅ Looking for academic studies on mobile ML/audio
+- ✅ Privacy-focused research without tracking
+- ✅ Need freshness controls and pagination
+
+**Use Context7 MCP When:**
+- ✅ Need current API documentation and examples
+- ✅ Want library-specific implementation guidance
+- ✅ Looking for official Android development patterns
+- ✅ Need code examples and best practices
+
+**Use Built-in Web Search When:**
+- ⚠️ Neither Brave nor Context7 MCP is available
+- ⚠️ Basic information gathering only
+
+### Research Integration Workflow:
+
+#### For SOTA Algorithm Research:
+1. **Use Brave Search MCP** for academic papers and research
+2. **Use Context7 MCP** for implementation documentation
+3. **Combine findings** into informed implementation plan
+4. **Validate with CI** using GitHub Actions integration
+
+#### Example Research Session:
+```
+GOAL: Optimize audio processing latency for real-time performance
+
+STEP 1 - Scientific Research (Brave Search MCP):
+brave_search({
+  query: "WebRTC VAD algorithm mobile optimization latency 2024 research"
+})
+→ Find: Latest WebRTC improvements, mobile-specific optimizations
+
+STEP 2 - Implementation Guidance (Context7 MCP):  
+get_library_docs({
+  context7CompatibleLibraryID: "/android/media",
+  topic: "AudioRecord performance optimization"
+})
+→ Find: Android AudioRecord best practices, buffer management
+
+STEP 3 - Informed Implementation:
+- Apply research findings to AudioBuffer.kt
+- Implement WebRTC-inspired VAD techniques
+- Use Android-specific optimization patterns
+
+STEP 4 - CI Validation:
+- Push changes using GitHub MCP
+- Monitor performance through CI benchmarks
+- Validate latency improvements
+```
+
+### Research Documentation Template:
+```
+## Research Session [DATE] - [TOPIC]
+
+### Problem/Goal:
+[What needs optimization - performance, new feature, architecture]
+
+### Research Findings:
+
+**Scientific Research** (Brave Search MCP):
+- SOTA Algorithm: [specific technique with performance metrics]
+- Academic Papers: [relevant research with citations]
+- Performance Benchmarks: [quantified improvements available]
+- Mobile Suitability: [Android compatibility and constraints]
+
+**Implementation Guidance** (Context7 MCP):
+- Android APIs: [specific APIs and minimum requirements]
+- Code Examples: [implementation patterns and snippets]
+- Best Practices: [Android-specific optimization techniques]
+- Architecture Fit: [how it integrates with Clean Architecture]
+
+**Research Sources:**
+- Brave Search queries: [specific queries used]
+- Context7 libraries: [documentation sources accessed]
+- Key papers/articles: [important sources found]
+
+### Implementation Plan:
+1. [Research-informed incremental step with CI testing]
+2. [Performance validation with benchmarks]
+3. [Integration with existing architecture]
+
+### Expected Improvements:
+- Performance: [quantified goals based on research]
+- User Experience: [UX improvements from research]
+- Technical Debt: [architectural improvements]
+
+### Research-to-Implementation Mapping:
+- Research Finding → Implementation Approach
+- Benchmark Data → Success Metrics
+- Academic Technique → Practical Android Code
+
+```
+
+---
 ## 📋 SPECIFIC WORKFLOWS BY TASK TYPE
 
 ### For Build Failures:
