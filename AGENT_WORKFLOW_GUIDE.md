@@ -182,6 +182,29 @@ Complete the change log entry:
 - ✅ Build success rate: 70% → 100%
 
 ---
+## 🏗️ ARCHITECTURAL CONTEXT FOR AI AGENTS
+
+### The Big Picture (READ ONLY - Don't Attempt)
+This project is gradually moving toward Clean Architecture (see `documentation/echo-refactoring-plan.md`):
+- **Target**: Modern Clean Architecture with MVVM + Hilt DI + Coroutines
+- **Timeline**: 8-week phased refactoring plan 
+- **Current Phase**: Phase 1 - Foundation & stabilization
+- **Your Role**: Contribute through tiny incremental improvements only
+
+### Decision Framework for Small Changes
+When choosing between multiple small fixes, prefer:
+1. **Kotlin over Java** - Convert utilities when fixing them
+2. **Coroutines over Threads** - Use suspend functions for async fixes
+3. **Result types over exceptions** - Wrap operations in Result<T>
+4. **Dependency injection patterns** - Avoid manual instantiation
+5. **Separation of concerns** - Keep UI, business logic, and data separate
+
+### Change Quality Assessment
+Document architectural alignment:
+- ✅ **ARCHITECTURAL**: Moves toward target architecture
+- ✅ **MODERN**: Uses modern Android patterns  
+- ✅ **TESTABLE**: Improves testability
+- ⚠️ **LEGACY**: Fixes issue but maintains old patterns
 
 ## 📋 SPECIFIC WORKFLOWS BY TASK TYPE
 
