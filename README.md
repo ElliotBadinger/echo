@@ -67,32 +67,62 @@ echo "sdk.dir=/path/to/your/android/sdk" > local.properties
 ```
 I'm continuing work on the Echo Android project. Please:
 
-1. Read the AGENT_WORKFLOW_GUIDE.md file completely - this contains all essential instructions
-2. Follow the AGENT_SESSION_CHECKLIST.md for proper workflow
-3. Read AGENT_DOCUMENTATION.md to understand current project state
+1. Read the AGENT_WORKFLOW_GUIDE.md file completely - this contains all essential instructions including research tools and CI integration
+2. Follow the AGENT_SESSION_CHECKLIST.md for proper workflow with error-first prioritization  
+3. Read AGENT_DOCUMENTATION.md to understand current project state and research-enhanced development process
 4. Check current build status with: cd echo && ./gradlew clean
-5. Focus on the next small goal from the Current Priority Goals in documentation
-6. Use GitHub MCP server functions (push_files, create_or_update_file) for all Git operations
-7. Never attempt large architectural changes - focus on small, verifiable improvements
+5. Focus on ERROR FIXES FIRST - any failing tests, build errors, or crashes take absolute priority
+6. Use available MCP servers for enhanced development:
+   - GitHub MCP (available): CI/CD workflow monitoring, artifact analysis
+   - Brave Search MCP (if installed): SOTA algorithm research, scientific papers  
+   - Context7 MCP (if installed): Current Android API documentation
+7. Use GitHub MCP server functions (push_files, list_workflow_runs, get_job_logs) for all Git operations and CI monitoring
+8. Never attempt large architectural changes - focus on small, well-tested, incremental improvements
+9. Every change must include comprehensive testing (unit, integration, error handling, performance)
+10. For UI changes, follow expert Android design principles with Material You and accessibility
 
 Current status: Build success rate is 100%, RecordingViewModelTest fixed. 
-Focus on: improving other test failures, SaidItService threading issues, or runtime stability.
-Follow the incremental change methodology documented in the guides.
+
+PRIORITY SYSTEM:
+- TIER 1: Fix any failing tests, build errors, crashes (ABSOLUTE PRIORITY)
+- TIER 2: Research-informed incremental improvements with comprehensive testing
+- TIER 3: Architecture enhancements only if Tiers 1-2 complete
+
+RESEARCH WORKFLOW:
+- Use Brave Search MCP for SOTA algorithms and scientific research
+- Use Context7 MCP for Android API documentation and implementation guidance  
+- Use GitHub Actions CI for faster testing and comprehensive validation
+- Document all research findings and their application to implementation
+
+Follow the incremental change methodology and comprehensive testing requirements documented in the guides.
 ```
+
 
 #### **COPY THIS for Completed Feature/Fix Sessions:**
 ```
 I just completed [describe what you implemented/fixed] on the Echo Android project. Please:
 
-1. Read AGENT_DOCUMENTATION.md to understand current state and recent changes
-2. Verify the completed work is properly documented in the change log
-3. Check if there are any follow-up issues or improvements needed
-4. Use GitHub MCP server to push any documentation updates or final fixes
-5. Identify and start the next highest priority goal from the Current Priority Goals list
-6. Update the "Next Agent Should Focus On" section with clear next steps
+1. Read AGENT_DOCUMENTATION.md to understand current state and recent changes with research integration
+2. Verify the completed work is properly documented in the change log with research findings
+3. Check if there are any follow-up issues or improvements needed using available MCP tools
+4. Use GitHub MCP server to:
+   - Push any documentation updates or final fixes using push_files
+   - Check CI status with list_workflow_runs  
+   - Analyze any test failures with get_job_logs and download_workflow_run_artifact
+5. If needed, conduct research using:
+   - Brave Search MCP for SOTA techniques and performance optimization
+   - Context7 MCP for Android API best practices and implementation patterns
+6. Identify and start the next highest priority goal from the Error-First Priority System
+7. Update the "Next Agent Should Focus On" section with clear next steps and research directions
 
-Current focus should be on: [check documentation for current priorities]
-Always make small, incremental improvements rather than large architectural changes.
+Current focus should be: [check documentation for current priorities - always ERROR FIXES FIRST]
+
+REMEMBER: 
+- Always prioritize failing tests, build errors, and crashes before any other work
+- Every change needs comprehensive testing (unit, integration, error, performance, UI)
+- Use research tools to make informed decisions about optimizations and implementations
+- Leverage GitHub Actions CI for faster, more comprehensive testing
+- Make incremental improvements that don't break existing functionality
 ```
 
 ### 🔄 **Git Workflow for Changes**
