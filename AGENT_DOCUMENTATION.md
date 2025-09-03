@@ -158,7 +158,7 @@ Use this format for every significant change:
 
 ### Current Active Changes
 
-## Change [2025-01-15 16:15] - FIX003
+## Change [2025-09-03 16:15] - FIX003
 
 ### Goal
 - Fix ComposeView.kt compilation error blocking full build
@@ -192,7 +192,7 @@ Use this format for every significant change:
 - Java SaidItFragment.java remains functional and contains all necessary UI logic
 - Original functionality preserved while removing problematic additions
 
-## Change [2025-01-15 15:45] - FIX002
+## Change [2025-09-03 15:45] - FIX002
 
 ### Goal
 - Fix RecordingViewModelTest runtime failure (IllegalStateException)
