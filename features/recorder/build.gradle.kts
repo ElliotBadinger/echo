@@ -33,4 +33,5 @@ dependencies {
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.coroutines.core)
     testImplementation(libs.coroutines.test)
+    testImplementation(libs.androidx.arch.core.testing)
 }
