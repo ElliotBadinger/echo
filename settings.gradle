@@ -16,6 +16,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "echo"
 include(":SaidIt")
+include(":audio")
 include(":core")
 include(":domain")
 include(":data")

@@ -390,83 +390,85 @@ get_library_docs({
 - ⚠️ Neither Brave nor Context7 MCP is available
 - ⚠️ Basic information gathering only
 
-### Research Integration Workflow:
+### Research-Enhanced Development Process (UPDATED)
 
-#### For SOTA Algorithm Research:
-1. **Use Brave Search MCP** for academic papers and research
-2. **Use Context7 MCP** for implementation documentation
-3. **Combine findings** into informed implementation plan
-4. **Validate with CI** using GitHub Actions integration
+#### MCP Server Integration Status:
+**✅ CONFIGURED - Brave Search MCP:**
+- Academic paper discovery and technical documentation search
+- AI-powered summaries for quick research evaluation  
+- Free tier: 2,000 queries/month with comprehensive search capabilities
+- Usage: `brave_web_search({query: "...", summary: true})`
 
-#### Example Research Session:
-```
-GOAL: Optimize audio processing latency for real-time performance
+**✅ CONFIGURED - Playwright MCP:**
+- Complete content extraction from research papers and documentation
+- PDF processing capabilities for academic papers
+- Full page content extraction with structured accessibility snapshots
+- Usage: `browser_navigate()` → `browser_snapshot()` → `browser_pdf_save()`
 
-STEP 1 - Scientific Research (Brave Search MCP):
-brave_search({
-  query: "WebRTC VAD algorithm mobile optimization latency 2024 research"
+**✅ CONFIGURED - GitHub MCP:**
+- CI/CD workflow automation and performance validation
+- Comprehensive testing and artifact analysis
+- Usage: `list_workflow_runs()` → `get_job_logs()` → `download_workflow_run_artifact()`
+
+#### Complete Research Workflow:
+
+**Phase 1: Discovery (Brave Search MCP)**
+```javascript
+// Academic research discovery
+brave_web_search({
+  query: "WebRTC VAD mobile optimization android 2024 research papers",
+  result_filter: ["web"],
+  summary: true,  // AI summary for quick evaluation
+  freshness: "py"  // Recent research priority
 })
-→ Find: Latest WebRTC improvements, mobile-specific optimizations
 
-STEP 2 - Implementation Guidance (Context7 MCP):  
-get_library_docs({
-  context7CompatibleLibraryID: "/android/media",
-  topic: "AudioRecord performance optimization"
+// Implementation documentation search  
+brave_web_search({
+  query: "android AudioRecord real-time performance optimization",
+  count: 10,
+  summary: true
 })
-→ Find: Android AudioRecord best practices, buffer management
-
-STEP 3 - Informed Implementation:
-- Apply research findings to AudioBuffer.kt
-- Implement WebRTC-inspired VAD techniques
-- Use Android-specific optimization patterns
-
-STEP 4 - CI Validation:
-- Push changes using GitHub MCP
-- Monitor performance through CI benchmarks
-- Validate latency improvements
 ```
 
-### Research Documentation Template:
+**Phase 2: Deep Extraction (Playwright MCP)**
+```javascript
+// Navigate to research papers found in Phase 1
+browser_navigate({url: "https://arxiv.org/abs/2024.audio-research"})
+browser_snapshot()  // Structured content extraction
+
+// Extract complete PDF research papers
+browser_navigate({url: "https://research-paper.pdf"})
+browser_pdf_save({filename: "audio-optimization-research.pdf"})
+
+// Get complete implementation documentation
+browser_navigate({url: "https://developer.android.com/audio-guide"})
+browser_snapshot()  // Full Android documentation
 ```
-## Research Session [DATE] - [TOPIC]
 
-### Problem/Goal:
-[What needs optimization - performance, new feature, architecture]
+**Phase 3: Application & Validation (GitHub MCP)**
+```javascript
+// Apply research findings to Echo codebase
+// Monitor CI performance for research-predicted improvements
+list_workflow_runs({workflow_id: "android-ci.yml"})
 
-### Research Findings:
+// Analyze performance data against research benchmarks
+get_job_logs({run_id: 12345, failed_only: false})
+download_workflow_run_artifact({artifact_id: 67890})
+```
 
-**Scientific Research** (Brave Search MCP):
-- SOTA Algorithm: [specific technique with performance metrics]
-- Academic Papers: [relevant research with citations]
-- Performance Benchmarks: [quantified improvements available]
-- Mobile Suitability: [Android compatibility and constraints]
+#### Research Quality Assurance:
+**Source Credibility Assessment:**
+- ✅ **Academic papers**: arXiv, IEEE, ACM (highest credibility)
+- ✅ **Official documentation**: developer.android.com, official library docs
+- ✅ **Industry research**: Google Research, Microsoft Research
+- ⚠️ **Blog posts**: Cross-reference with authoritative sources
+- ❌ **Stack Overflow answers**: Use for debugging only, not architecture
 
-**Implementation Guidance** (Context7 MCP):
-- Android APIs: [specific APIs and minimum requirements]
-- Code Examples: [implementation patterns and snippets]
-- Best Practices: [Android-specific optimization techniques]
-- Architecture Fit: [how it integrates with Clean Architecture]
-
-**Research Sources:**
-- Brave Search queries: [specific queries used]
-- Context7 libraries: [documentation sources accessed]
-- Key papers/articles: [important sources found]
-
-### Implementation Plan:
-1. [Research-informed incremental step with CI testing]
-2. [Performance validation with benchmarks]
-3. [Integration with existing architecture]
-
-### Expected Improvements:
-- Performance: [quantified goals based on research]
-- User Experience: [UX improvements from research]
-- Technical Debt: [architectural improvements]
-
-### Research-to-Implementation Mapping:
-- Research Finding → Implementation Approach
-- Benchmark Data → Success Metrics
-- Academic Technique → Practical Android Code
-
+**Research-to-Implementation Validation:**
+- [ ] Research findings include quantified benchmarks
+- [ ] Implementation patterns verified across multiple sources  
+- [ ] Performance predictions testable with GitHub MCP CI
+- [ ] Mobile constraints and Android compatibility confirmed
 ```
 
 ---

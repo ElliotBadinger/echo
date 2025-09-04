@@ -110,8 +110,56 @@ Missing Tests:
 ❌ No error handling tests - could cause crashes
 ❌ No performance validation - could affect real-time audio
 ```
+### 4.3 Research-Enhanced Decision Making
 
-### 4.3 UI/UX Excellence Standards
+#### Pre-Implementation Research Process:
+**For any significant change (threading, performance, UI, ML), conduct research FIRST:**
+
+**STEP 1 - Discovery (Brave Search MCP):**
+- [ ] Search for SOTA techniques: `brave_web_search({query: "...", summary: true})`
+- [ ] Find performance benchmarks: Include "benchmarks", "optimization", current year
+- [ ] Locate implementation guides: Search official documentation sites
+- [ ] Document source quality: Academic papers > official docs > blog posts
+
+**STEP 2 - Deep Extraction (Playwright MCP):**
+- [ ] Extract complete research papers: `browser_navigate()` → `browser_pdf_save()`
+- [ ] Get full documentation: `browser_snapshot()` for structured content
+- [ ] Collect code examples: Extract implementation patterns
+- [ ] Gather performance data: Benchmarks, optimization techniques, constraints
+
+**STEP 3 - Research Validation:**
+- [ ] Cross-reference multiple sources: Ensure consistency across findings
+- [ ] Assess mobile applicability: Android constraints, device limitations
+- [ ] Set quantified targets: Performance goals based on research
+- [ ] Plan validation strategy: How to measure success with GitHub MCP
+
+**STEP 4 - Implementation with CI Validation (GitHub MCP):**
+- [ ] Apply research findings incrementally: Small, testable changes
+- [ ] Monitor CI performance: `list_workflow_runs()` for benchmark tracking
+- [ ] Compare to research predictions: Measured vs. expected improvements
+- [ ] Document accuracy: How well research predicted actual results
+
+#### Research Integration Examples:
+
+**SCENARIO: Audio processing optimization**
+```
+✅ Brave Search: "WebRTC audio processing mobile latency reduction 2024"
+✅ Playwright: Extract complete WebRTC documentation + research papers
+✅ Implementation: Apply buffer management techniques from research
+✅ GitHub MCP: Measure latency improvements through CI benchmarks
+✅ Validation: Compare measured latency against research predictions
+```
+
+**SCENARIO: UI performance improvement**
+```
+✅ Brave Search: "jetpack compose performance optimization 2024 case studies"
+✅ Playwright: Extract complete Compose performance guides + benchmark data
+✅ Implementation: Apply research-backed optimization techniques
+✅ GitHub MCP: Monitor UI performance through automated testing
+✅ Validation: Measure frame rates against research-established targets
+```
+
+### 4.4 UI/UX Excellence Standards
 When making frontend changes, ensure:
 - [ ] **Material You Design**: Uses modern design tokens and theming
 - [ ] **Accessibility**: Proper content descriptions, focus management
