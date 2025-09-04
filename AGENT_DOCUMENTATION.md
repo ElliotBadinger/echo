@@ -397,13 +397,36 @@ download_workflow_run_artifact({artifact_id: 67890})  // Performance benchmarks
 
 #### Research Integration Examples:
 
-**SCENARIO: Audio latency optimization needed**
-```
-RESEARCH PHASE:
-✅ Brave Search: "android audio buffer optimization real-time 2024"
-   → Find: Latest WebRTC improvements, mobile optimization papers
-✅ Playwright: Extract complete research papers and Android docs
-   → Find: Specific algorithms, implementation patterns, performance data
+**Audio Processing Optimization Research:**
+```javascript
+// 1. Find SOTA algorithms (Brave Search MCP)
+brave_search({
+  query: "WebRTC audio processing mobile real-time optimization 2024 research"
+})
+>>>>>>> origin/refactor/phase1-modularization-kts-hilt
+
+IMPLEMENTATION PHASE:
+✅ Apply research findings to AudioBuffer.kt with quantified targets
+✅ Use research-informed buffer sizes and threading patterns
+✅ Set performance benchmarks based on extracted research data
+**Audio Processing Optimization Research:**
+```javascript
+// 1. Find SOTA algorithms (Brave Search MCP)  
+brave_search({
+  query: "WebRTC audio processing mobile real-time optimization 2024 research"
+})
+ IMPLEMENTATION PHASE:
+✅ Apply research findings to AudioBuffer.kt with quantified targets
+✅ Use research-informed buffer sizes and threading patterns
+✅ Set performance benchmarks based on extracted research data
+=======
+**Audio Processing Optimization Research:**
+```javascript
+// 1. Find SOTA algorithms (Brave Search MCP)
+brave_search({
+  query: "WebRTC audio processing mobile real-time optimization 2024 research"
+})
+>>>>>>> origin/refactor/phase1-modularization-kts-hilt
 
 IMPLEMENTATION PHASE:
 ✅ Apply research findings to AudioBuffer.kt with quantified targets
@@ -449,11 +472,18 @@ VALIDATION PHASE:
 - Performance benchmarks: [quantified improvements available]
 - Technical documentation: [implementation guidance discovered]
 
+<<<<<<< HEAD
 **Playwright MCP Deep Extraction:**
 - Papers extracted: [complete content from X papers]
 - Documentation accessed: [full Android/library guides obtained]  
 - Code examples: [specific implementation patterns found]
 - Performance data: [detailed benchmarks and optimization techniques]
+=======
+**Context7 MCP Research:**
+- Android documentation: [specific APIs and patterns]
+- Implementation examples: [code patterns and best practices]
+- Architecture guidance: [how it integrates with Clean Architecture]
+>>>>>>> origin/refactor/phase1-modularization-kts-hilt
 
 **Research-Informed Decision:**
 [How research findings directly influenced implementation approach]
