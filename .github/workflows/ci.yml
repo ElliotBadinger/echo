@@ -92,7 +92,7 @@ jobs:
     needs: validate
     strategy:
       matrix:
-        module: [domain, core, data, features/recorder, SaidIt]
+        module: [domain, core, data, features:recorder, SaidIt]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -131,7 +131,7 @@ jobs:
         if: always()
         with:
           name: test-results-${{ matrix.module }}
-          path: ${{ matrix.module }}/build/reports/tests/
+          path: "**/build/reports/tests/"
 
   # GitHub-to-GitLab sync (mirrors GitLab CI functionality)
   sync-to-gitlab:
