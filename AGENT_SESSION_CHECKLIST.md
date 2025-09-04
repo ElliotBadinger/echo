@@ -428,8 +428,11 @@ STEP 4 - Validate:
 ### 9. Git Operations (Use MCP Server!)
 - [ ] Use `push_files()` MCP function to commit and push all changes
 - [ ] Never use manual git commands when MCP server is available
-- [ ] Verify changes are successfully pushed to repository
+- [ ] **CRITICAL**: Always verify changes are successfully pushed to repository
+- [ ] **CRITICAL**: If MCP push fails, use manual git commands: `git add .`, `git commit -m "message"`, `git push origin HEAD`
+- [ ] **CRITICAL**: Resolve any merge conflicts with `git pull --rebase` before pushing
 - [ ] Update README.md if any major functionality changed
+- [ ] **VERIFY**: Check GitHub to confirm changes are visible
 
 ## ⚠️ CRITICAL WARNINGS
 
@@ -447,8 +450,9 @@ If you break something badly:
 2. Identify exactly what you changed
 3. Revert changes one by one in reverse order
 4. Test after each revert
-5. Document what went wrong and why
-6. Update documentation with lessons learned
+5. **COMMIT AND PUSH** reverted state immediately
+6. Document what went wrong and why
+7. Update documentation with lessons learned
 
 ## 📊 Session Success Indicators
 
@@ -501,6 +505,12 @@ push_files({
     {path: "AGENT_DOCUMENTATION.md", content: "...updated docs..."}
   ]
 })
+
+// If MCP fails, use manual git:
+git add .
+git commit -m "Agent Session [DATE]: Fixed [specific issue]"
+git pull --rebase origin branch-name  // Resolve conflicts if needed
+git push origin HEAD
 ```
 
 ---
