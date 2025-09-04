@@ -25,7 +25,8 @@
 - [ ] Consider what could go wrong and how to rollback
 
 ### 4. Pre-Change Documentation
-- [ ] Create new Change Log entry with template
+- [ ] **USE TIME MCP**: Call `get_current_time({timezone: "UTC"})` for accurate timestamps
+- [ ] Create new Change Log entry with template using correct UTC time
 - [ ] Document exactly what you plan to change
 - [ ] List all files you expect to modify
 - [ ] Note current state of those files
@@ -413,7 +414,8 @@ STEP 4 - Validate:
 ## 📝 END OF SESSION (Do this BEFORE ending)
 
 ### 7. Documentation Updates
-- [ ] Complete the Change Log entry with results
+- [ ] **USE TIME MCP**: Call `get_current_time({timezone: "UTC"})` for completion timestamp
+- [ ] Complete the Change Log entry with results and accurate UTC time
 - [ ] Update issue statuses if anything was resolved
 - [ ] Update "Current Status" section if project state changed
 - [ ] Move completed goals from priority list

@@ -3,7 +3,9 @@
 **Version:** 1.0  
 **Target Audience:** Claude, ChatGPT, and other AI development assistants  
 **Project:** Echo Android Application  
-**Last Updated:** 2025-09-03
+**Last Updated:** 2025-09-04 22:47 UTC
+
+**CRITICAL FOR AI AGENTS:** Always use `get_current_time({timezone: "UTC"})` MCP function for accurate timestamps in all documentation.
 
 ---
 
@@ -557,7 +559,7 @@ download_workflow_run_artifact({artifact_id: 67890})
 
 #### Change Log Entry Template:
 ```markdown
-## Change [YYYY-MM-DD HH:MM] - [ID]
+## Change [YYYY-MM-DD HH:MM UTC] - [ID]  // Use get_current_time MCP function
 
 ### Goal
 [What you were trying to accomplish]
