@@ -61,10 +61,15 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     annotationProcessor(libs.hilt.compiler)
+    
+    // Coroutines for modern threading
+    implementation(libs.coroutines.core)
+    implementation(libs.coroutines.android)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
     testImplementation(libs.robolectric)
+    testImplementation(libs.coroutines.test)
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("androidx.test:runner:1.5.2")
