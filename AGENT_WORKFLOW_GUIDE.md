@@ -216,6 +216,14 @@ This project is evolving toward an advanced AI-powered audio application with mo
 When choosing between multiple small fixes, prefer changes that align with the vision:
 
 1. **Fix errors FIRST** - Build, unit, integration, functional test failures
+2. **Use Research Frameworks for Technical Decisions**:
+   - **RESEARCH_FRAMEWORK.md** - Overall research-driven development methodology
+   - **ML_STRATEGY_FRAMEWORK.md** - ML research and implementation strategy  
+   - **PERFORMANCE_RESEARCH_FRAMEWORK.md** - Performance optimization research
+   - **UI_UX_ENHANCEMENT_FRAMEWORK.md** - Professional UI development framework
+   - **KOTLIN_MIGRATION_FRAMEWORK.md** - Java-to-Kotlin conversion methodology
+3. **Prioritize foundation work** - Kotlin migration before UI enhancement
+4. **Make incremental improvements** - Small, well-tested changes that compound
 2. **Kotlin over Java** - Convert utilities when fixing them (but don't break existing)
 3. **Coroutines over Threads** - Use suspend functions for async fixes  
 4. **Result types over exceptions** - Wrap operations in Result<T>

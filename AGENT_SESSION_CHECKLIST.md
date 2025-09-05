@@ -35,6 +35,20 @@
 Before making ANY changes, prioritize in this exact order:
 
 #### Step 1: Check for Critical Issues (MUST FIX FIRST)
+- [ ] **Build errors** - Any compilation failures
+- [ ] **Test failures** - Unit, integration, or UI tests failing
+- [ ] **Runtime crashes** - App crashes or ANRs
+- [ ] **CI/CD failures** - GitHub Actions workflow failures
+
+#### Step 2: Use Research Frameworks for Technical Decisions
+For any significant technical work, consult the appropriate framework:
+- [ ] **RESEARCH_FRAMEWORK.md** - Overall research-driven development methodology
+- [ ] **ML_STRATEGY_FRAMEWORK.md** - ML research and implementation strategy  
+- [ ] **PERFORMANCE_RESEARCH_FRAMEWORK.md** - Performance optimization research
+- [ ] **UI_UX_ENHANCEMENT_FRAMEWORK.md** - Professional UI development framework
+- [ ] **KOTLIN_MIGRATION_FRAMEWORK.md** - Java-to-Kotlin conversion methodology
+
+#### Step 3: Apply Incremental Improvement Strategy
 - [ ] **Build Errors**: Are there any compilation failures?
 - [ ] **Test Failures**: Are any unit/integration tests failing?
 - [ ] **Runtime Crashes**: Are there any exceptions or crashes?
