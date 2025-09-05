@@ -29,8 +29,8 @@ public class AutoSaveTest {
 
     @After
     public void tearDown() {
-        // Stop the service
-        serviceRule.stopService(new Intent(context, SaidItService.class));
+        // ServiceTestRule automatically handles service cleanup
+        // No manual stopService() call needed - ServiceTestRule manages lifecycle
     }
 
     @Test

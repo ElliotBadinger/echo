@@ -138,7 +138,13 @@ class SaidItService : Service() {
                 }
 
                 audioRecord = newAudioRecord
-                audioMemory.allocate(memorySize)
+                val allocateResult = audioMemory.allocate(memorySize)
+                if (allocateResult.isFailure) {
+                    Log.e(TAG, "Failed to allocate audio memory", allocateResult.exceptionOrNull())
+                    newAudioRecord.release()
+                    state = STATE_READY
+                    return@launch
+                }
                 
                 if (!isTestEnvironment) {
                     newAudioRecord.startRecording()
@@ -159,28 +165,27 @@ class SaidItService : Service() {
                 val read = record.read(array, offset, count, AudioRecord.READ_NON_BLOCKING)
                 if (read < 0) {
                     Log.e(TAG, "AUDIO RECORD ERROR: $read")
-                    return@Consumer 0
+                    return@Consumer Result.success(0)
                 }
                 if (aacWriter != null && read > 0) {
                     aacWriter?.write(array, offset, read)
                 }
-                read
-            } ?: 0
+                Result.success(read)
+            } ?: Result.success(0)
         }
 
         while (currentCoroutineContext().isActive && state != STATE_READY) {
-            try {
-                audioMemory.fill(filler)
-                delay(50) // ~50ms intervals
-            } catch (e: IOException) {
+            val fillResult = audioMemory.fill(filler)
+            if (fillResult.isFailure) {
                 val errorMessage = getString(R.string.error_during_recording_into) + (mediaFile?.name ?: "")
                 withContext(Dispatchers.Main) {
                     showToast(errorMessage)
                 }
-                Log.e(TAG, errorMessage, e)
+                Log.e(TAG, errorMessage, fillResult.exceptionOrNull())
                 stopRecording(SaidItFragment.NotifyFileReceiver(this@SaidItService))
                 break
             }
+            delay(50) // ~50ms intervals
         }
     }
 
@@ -203,7 +208,7 @@ class SaidItService : Service() {
                 }
             }
             audioRecord = null
-            audioMemory.allocate(0)
+            audioMemory.allocate(0) // Deallocate memory - ignore result as this is cleanup
         }
     }
 
@@ -248,7 +253,7 @@ class SaidItService : Service() {
                 if (prependedMemorySeconds > 0) {
                     val bytesPerSecond = (1f / getBytesToSeconds()).toInt()
                     val bytesToDump = (prependedMemorySeconds * bytesPerSecond).toInt()
-                    audioMemory.dump({ array, offset, count ->
+                    audioMemory.dump(AudioMemory.LegacyConsumer { array, offset, count ->
                         aacWriter?.write(array, offset, count)
                         count
                     }, bytesToDump)
@@ -305,7 +310,7 @@ class SaidItService : Service() {
                 
                 val bytesPerSecond = (1f / getBytesToSeconds()).toInt()
                 val bytesToDump = (memorySeconds * bytesPerSecond).toInt()
-                audioMemory.dump({ array, offset, count ->
+                audioMemory.dump(AudioMemory.LegacyConsumer { array, offset, count ->
                     dumper.write(array, offset, count)
                     count
                 }, bytesToDump)
@@ -370,7 +375,7 @@ class SaidItService : Service() {
         Toast.makeText(this@SaidItService, message, Toast.LENGTH_LONG).show()
     }
 
-    fun getMemorySize(): Long = audioMemory.allocatedMemorySize
+    fun getMemorySize(): Long = audioMemory.getAllocatedMemorySize()
 
     fun setMemorySize(memorySize: Long) {
         val preferences = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
@@ -378,7 +383,10 @@ class SaidItService : Service() {
 
         if (preferences.getBoolean(SaidIt.AUDIO_MEMORY_ENABLED_KEY, true)) {
             audioScope.launch {
-                audioMemory.allocate(memorySize)
+                val allocateResult = audioMemory.allocate(memorySize)
+                if (allocateResult.isFailure) {
+                    Log.e(TAG, "Failed to allocate audio memory for size $memorySize", allocateResult.exceptionOrNull())
+                }
             }
         }
     }
