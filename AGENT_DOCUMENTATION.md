@@ -58,12 +58,31 @@ The development environment was missing Android SDK setup:
 2. **Verify Build Compilation** - ✅ COMPLETED - Build compiles successfully in 3m 7s
 3. **Verify Test Execution** - ✅ COMPLETED - All 241 test tasks pass in 2s
 
-### TIER 2 - TESTED INCREMENTAL IMPROVEMENTS (After Tier 1 Complete)
-1. **Enhanced SaidItService Testing** - Add Android context mocking for comprehensive test coverage
-2. **Add Result<T> wrapper to AudioMemory operations** - Add error handling tests
-3. **Extract recording logic to repository pattern** - Add repository tests + mocks
-4. **Convert Java utilities to Kotlin with suspend functions** - Maintain test coverage
-5. **Add proper dependency injection patterns** - Add DI integration tests
+### TIER 2 - Next Priority (Incremental Improvements):
+
+**🔄 STRATEGIC DECISION: Complete Kotlin migration first, then UI enhancement**
+*Rationale: Establish solid technical foundation before user-facing features*
+
+1. **🔧 Complete Kotlin Migration** - Convert remaining 39 Java files to Kotlin with comprehensive testing:
+   - **Phase 1**: Utility classes (TimeFormat, Views, UserInfo) - 1-2 weeks
+   - **Phase 2**: Core components (IntentResult, Clock, BroadcastReceiver) - 2-3 weeks  
+   - **Phase 3**: UI components (Fragments, Activities) - 2-3 weeks
+   - **Phase 4**: Audio components (AacMp4Writer) - 1 week
+   - Each conversion includes unit tests, integration tests, and regression testing
+   - Creates consistent codebase foundation for future UI work
+
+2. **🎨 Professional UI/UX Enhancement** - Transform UI to professional-grade, intuitive design:
+   - Apply Material You design principles and accessibility standards
+   - Implement comprehensive UI testing (screenshot testing, UI automation, accessibility testing)
+   - Use research frameworks for UX decisions and user interaction patterns
+   - Agent-driven UI validation: prompt user for screenshots and navigation feedback
+   - Incremental UI improvements with before/after validation
+   - **Benefits from pure Kotlin codebase**: Cleaner, more maintainable UI code
+
+3. **Enhanced SaidItService Testing** - Add comprehensive Android integration tests in androidTest/
+4. ✅ **Add Result<T> wrapper to AudioMemory operations** - ALREADY COMPLETE (AudioMemory uses Result<T>)
+5. **Extract recording logic to repository pattern** - Separate concerns with proper abstraction
+6. ✅ **Convert StringFormat Java utility to Kotlin** - COMPLETED (StringFormat.java → StringFormat.kt)
 
 ### TIER 3 - ARCHITECTURE & UI ENHANCEMENTS (Only if Tiers 1-2 complete)
 1. **Implement single Hilt module** - Start with one component, full test suite
@@ -172,7 +191,7 @@ The development environment was missing Android SDK setup:
 ### Next Steps
 - TIER 1 objectives completely achieved
 - Ready to proceed with TIER 2 incremental improvements
-- Focus areas: Enhanced testing, Result<T> patterns, repository extraction
+- Focus on enhanced testing and architectural improvements
 
 ## Change [2025-09-04 22:30] - TIER1_DUPLICATE_CLASS_FIX001
 
@@ -233,14 +252,20 @@ The development environment was missing Android SDK setup:
 ### Next Agent Should Focus On
 ✅ **TIER 1 COMPLETE** - All critical errors resolved, Android SDK setup complete, build and tests working perfectly
 
-**TIER 2 - Next Priority (Incremental Improvements):**
-1. **Enhanced SaidItService Testing** - Add comprehensive Android integration tests in androidTest/
-2. ✅ **Add Result<T> wrapper to AudioMemory operations** - ALREADY COMPLETE (AudioMemory uses Result<T>)
-3. **Extract recording logic to repository pattern** - Separate concerns with proper abstraction
-4. ✅ **Convert StringFormat Java utility to Kotlin** - COMPLETED (StringFormat.java → StringFormat.kt)
-5. **Convert remaining Java utilities to Kotlin** - Continue with TimeFormat, Views, etc.
+**🔬 NEW: RESEARCH FRAMEWORK INTEGRATION**
+The project now has comprehensive research frameworks to guide all major technical decisions:
+
+- **RESEARCH_FRAMEWORK.md**: Overall research-driven development methodology
+- **ML_STRATEGY_FRAMEWORK.md**: Research framework for all ML/AI decisions  
+- **PERFORMANCE_RESEARCH_FRAMEWORK.md**: Research-driven performance optimization
+
+**Next agents should:**
+1. **Continue TIER 2 work** with enhanced research integration
+2. **Use research frameworks** for any significant technical decisions
+3. **Begin VAD research** as first ML priority when ready for TIER 3
+4. **Apply research methodology** to performance optimizations
 
 **Current Status**: Project is in excellent state with 100% build success (3m 7s) and test pass rates (2s)
 **Environment**: Android SDK fully configured at /opt/android-sdk with all required components
-**Approach**: Make small, well-tested incremental improvements
-**Avoid**: Large architectural changes - focus on incremental modernization
+**Approach**: Make small, well-tested incremental improvements guided by research frameworks
+**Avoid**: Large architectural changes - focus on incremental modernization with research backing

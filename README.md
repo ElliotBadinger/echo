@@ -60,8 +60,13 @@ echo "sdk.dir=/path/to/your/android/sdk" > local.properties
 #### Essential Files to Read First (In Order):
 1. **`AGENT_DOCUMENTATION.md`** - Current project state, issues, and change tracking
 2. **`AGENT_SESSION_CHECKLIST.md`** - Step-by-step session workflow
-3. **`documentation/echo-critical-fixes.md`** - Critical build and infrastructure issues
-4. **`documentation/echo-refactoring-plan.md`** - Long-term architectural roadmap
+3. **`RESEARCH_FRAMEWORK.md`** - Research-driven development methodology
+4. **`ML_STRATEGY_FRAMEWORK.md`** - ML research and implementation strategy
+5. **`PERFORMANCE_RESEARCH_FRAMEWORK.md`** - Performance optimization research
+6. **`UI_UX_ENHANCEMENT_FRAMEWORK.md`** - Professional UI development framework
+7. **`KOTLIN_MIGRATION_FRAMEWORK.md`** - Java-to-Kotlin conversion methodology
+8. **`documentation/echo-critical-fixes.md`** - Critical build and infrastructure issues
+9. **`documentation/echo-refactoring-plan.md`** - Long-term architectural roadmap
 
 #### **COPY THIS PROMPT for New AI Sessions:**
 ```
@@ -76,6 +81,12 @@ I'm continuing work on the Echo Android project. Please:
    - GitHub MCP (available): CI/CD workflow monitoring, artifact analysis
    - Brave Search MCP (if installed): SOTA algorithm research, scientific papers  
    - Context7 MCP (if installed): Current Android API documentation
+7. Use research frameworks for technical decisions:
+   - RESEARCH_FRAMEWORK.md for overall methodology
+   - ML_STRATEGY_FRAMEWORK.md for ML/AI decisions
+   - PERFORMANCE_RESEARCH_FRAMEWORK.md for optimization
+   - UI_UX_ENHANCEMENT_FRAMEWORK.md for UI work
+   - KOTLIN_MIGRATION_FRAMEWORK.md for Java conversion
 7. Use GitHub MCP server functions (push_files, list_workflow_runs, get_job_logs) for all Git operations and CI monitoring
 8. Never attempt large architectural changes - focus on small, well-tested, incremental improvements
 9. Every change must include comprehensive testing (unit, integration, error handling, performance)
@@ -215,6 +226,11 @@ echo/
 ## 📚 Additional Resources
 
 - **[Agent Workflow Guide](AGENT_WORKFLOW_GUIDE.md)** - Complete guide for AI-assisted development
+- **[Research Framework](RESEARCH_FRAMEWORK.md)** - Research-driven development methodology
+- **[ML Strategy Framework](ML_STRATEGY_FRAMEWORK.md)** - ML research and implementation
+- **[Performance Research Framework](PERFORMANCE_RESEARCH_FRAMEWORK.md)** - Performance optimization
+- **[UI/UX Enhancement Framework](UI_UX_ENHANCEMENT_FRAMEWORK.md)** - Professional UI development
+- **[Kotlin Migration Framework](KOTLIN_MIGRATION_FRAMEWORK.md)** - Java-to-Kotlin conversion
 - **[Critical Fixes Documentation](documentation/echo-critical-fixes.md)** - Immediate build fixes needed
 - **[Refactoring Plan](documentation/echo-refactoring-plan.md)** - Long-term architecture roadmap
 - **[Agent Session Logs](AGENT_DOCUMENTATION.md)** - Track all changes and current state
