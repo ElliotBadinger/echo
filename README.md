@@ -106,6 +106,17 @@ RESEARCH WORKFLOW:
 - Document all research findings and their application to implementation
 
 Follow the incremental change methodology and comprehensive testing requirements documented in the guides.
+
+The current TIER 1 priority is resolving the ClassNotFoundException in AudioMemoryTest.kt (Clock class missing from test classpath). Local testing hasn't resolved it, so shift to GitHub Actions CI for validation in a clean environment. 
+- If no workflow exists, create a basic .github/workflows/android-test.yml file to run './gradlew test' on push/pull_request.
+- Use push_files to commit and push the workflow file (or any code fixes).
+- Trigger a workflow run by pushing a small change.
+- Monitor with list_workflow_runs and get_job_logs (focus on failed_only: true).
+- Download artifacts if needed with download_workflow_run_artifact for detailed test reports.
+- Do not proceed until CI tests pass or the failure is analyzed/documented in AGENT_DOCUMENTATION.md.
+- If CI passes but local fails, document it as a potential local environment issue.
+
+When encountering errors or issues (especially TIER 1 build/test failures), always research fixes using available MCP tools and frameworks before attempting changes. Use Brave Search MCP for state-of-the-art (SOTA) solutions and scientific papers, Context7 MCP for Android API documentation, and integrate findings from RESEARCH_FRAMEWORK.md or specific frameworks like KOTLIN_MIGRATION_FRAMEWORK.md. Document all research in AGENT_DOCUMENTATION.md, including sources and how they apply to the fix. Examples: For ClassNotFoundException, search "Android Kotlin Kapt stub conflicts 2025" via Brave Search MCP; for test classpath issues, query Context7 MCP for "Android Gradle test classpath configuration best practices".
 ```
 
 
