@@ -743,39 +743,103 @@ download_workflow_run_artifact({artifact_id: 67890})
 
 ## 🔄 GIT WORKFLOW & PUBLISHING CHANGES
 
-### GitHub MCP Server - IMPORTANT FOR ALL AGENTS
+### ⚠️ CRITICAL GITHUB MCP SYNCHRONIZATION WARNING
 
-**🚨 CRITICAL: This project has GitHub MCP server available! Use it instead of manual git commands.**
+**🚨 MAJOR ISSUE: GitHub MCP tools create synchronization conflicts with local git!**
 
-#### Available GitHub MCP Functions:
-- `push_files` - Push multiple files in a single commit (PREFERRED)
-- `create_or_update_file` - Create/update single files
+#### The Problem:
+- GitHub MCP functions (`push_files`, `create_or_update_file`) create commits **directly on GitHub**
+- These commits bypass the user's local git repository
+- When user tries to push local changes, git rejects with "fetch first" errors
+- This creates complex merge conflicts and workflow disruption
+
+#### MANDATORY WORKFLOW RULES:
+
+**❌ NEVER USE GitHub MCP functions for routine commits:**
+- ❌ `push_files()` - Creates commits directly on GitHub, bypassing local git
+- ❌ `create_or_update_file()` - Same synchronization issue
+- ❌ Any MCP function that creates commits
+
+**✅ ONLY USE GitHub MCP for read-only operations:**
+- ✅ `list_workflow_runs()` - Monitor CI status
+- ✅ `get_job_logs()` - Debug CI failures
+- ✅ `download_workflow_run_artifact()` - Analyze test results
+- ✅ `get_file_contents()` - Read repository files
+- ✅ `get_pull_request()` - Check PR status
+
+**✅ ALWAYS USE manual git commands for commits:**
+```bash
+# The ONLY safe way to commit changes
+git add .
+git commit -m "Agent Session [DATE]: Description"
+git push origin HEAD
+```
+
+#### Synchronization Conflict Symptoms:
+- User gets "error: failed to push some refs" when trying to push
+- Git says "Updates were rejected because the remote contains work"
+- User must run complex merge procedures to sync local and remote
+- Files appear as "untracked" locally but exist in remote commits
+
+#### Emergency Resolution (If Conflict Occurs):
+```bash
+# 1. Stash local changes
+git stash push -m "Local changes before agent sync"
+
+# 2. Remove conflicting untracked files (ONLY if confirmed they exist in remote)
+git ls-tree -r origin/branch-name | grep filename  # Verify file exists remotely
+rm -rf path/to/conflicting/files  # ONLY if confirmed above
+
+# 3. Pull remote changes
+git pull
+
+# 4. Restore and merge local changes
+git stash pop
+# Resolve any conflicts manually
+git add .
+git commit -m "Merge local changes with agent commits"
+git push origin HEAD
+```
+
+### GitHub MCP Server - RESTRICTED USAGE
+
+**🚨 CRITICAL: GitHub MCP server available but RESTRICTED to read-only operations only!**
+
+#### Safe GitHub MCP Functions (Read-Only):
+- `list_workflow_runs` - Monitor CI status
+- `get_workflow_run` - Check specific run details
+- `get_job_logs` - Debug CI failures
+- `download_workflow_run_artifact` - Analyze test results
 - `get_file_contents` - Read files from repository
-- `create_pull_request` - Create PRs
-- `merge_pull_request` - Merge PRs
-- `create_branch` - Create new branches
-- And many more GitHub API functions
+- `get_pull_request` - Check PR status
+- `list_issues` - View project issues
 
-#### Recommended Workflow:
-```
-1. Make local changes using edit_file, delete_path, etc.
-2. Use push_files() to commit and push all changes at once
-3. Never use manual git commands when MCP server is available
-```
+#### FORBIDDEN GitHub MCP Functions (Create Sync Issues):
+- ❌ `push_files` - **NEVER USE** - Creates commits directly on GitHub
+- ❌ `create_or_update_file` - **NEVER USE** - Bypasses local git
+- ❌ `create_pull_request` - Use only if explicitly requested by user
+- ❌ `merge_pull_request` - Use only if explicitly requested by user
+- ❌ `create_branch` - Use manual git commands instead
 
-#### Example Usage:
+#### Example Safe Usage:
 ```javascript
-// Push multiple files with one command
-push_files({
+// ✅ SAFE: Monitor CI status
+list_workflow_runs({
   owner: "ElliotBadinger",
-  repo: "echo", 
-  branch: "refactor/phase1-modularization-kts-hilt",
-  message: "Agent Session: Fixed build issues",
-  files: [
-    {path: "build.gradle.kts", content: "..."},
-    {path: "README.md", content: "..."}
-  ]
+  repo: "echo",
+  workflow_id: "android-ci.yml"
 })
+
+// ✅ SAFE: Debug CI failures
+get_job_logs({
+  owner: "ElliotBadinger",
+  repo: "echo",
+  run_id: 12345,
+  failed_only: true
+})
+
+// ❌ FORBIDDEN: Creates sync conflicts
+// push_files({...})  // NEVER USE THIS
 ```
 
 ### Traditional Git Commands (Use only if MCP unavailable):

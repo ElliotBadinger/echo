@@ -87,7 +87,7 @@ I'm continuing work on the Echo Android project. Please:
    - PERFORMANCE_RESEARCH_FRAMEWORK.md for optimization
    - UI_UX_ENHANCEMENT_FRAMEWORK.md for UI work
    - KOTLIN_MIGRATION_FRAMEWORK.md for Java conversion
-7. Use GitHub MCP server functions (push_files, list_workflow_runs, get_job_logs) for all Git operations and CI monitoring
+7. Use GitHub MCP server functions ONLY for read-only operations (list_workflow_runs, get_job_logs) - NEVER for commits due to synchronization conflicts
 8. Never attempt large architectural changes - focus on small, well-tested, incremental improvements
 9. Every change must include comprehensive testing (unit, integration, error handling, performance)
 10. For UI changes, follow expert Android design principles with Material You and accessibility
@@ -127,10 +127,10 @@ I just completed [describe what you implemented/fixed] on the Echo Android proje
 1. Read AGENT_DOCUMENTATION.md to understand current state and recent changes with research integration
 2. Verify the completed work is properly documented in the change log with research findings
 3. Check if there are any follow-up issues or improvements needed using available MCP tools
-4. Use GitHub MCP server to:
-   - Push any documentation updates or final fixes using push_files
+4. Use GitHub MCP server ONLY for read-only operations:
    - Check CI status with list_workflow_runs  
    - Analyze any test failures with get_job_logs and download_workflow_run_artifact
+   - NEVER use push_files or create_or_update_file (causes git sync conflicts)
 5. If needed, conduct research using:
    - Brave Search MCP for SOTA techniques and performance optimization
    - Context7 MCP for Android API best practices and implementation patterns
@@ -149,42 +149,29 @@ REMEMBER:
 
 ### 🔄 **Git Workflow for Changes**
 
-#### **🤖 IMPORTANT FOR AI AGENTS: Use GitHub MCP Server Functions**
+#### **⚠️ CRITICAL FOR AI AGENTS: GitHub MCP Synchronization Issue**
 
-**✅ PREFERRED METHOD - Use MCP Functions:**
-```javascript
-// Push multiple files at once (RECOMMENDED)
-push_files({
-  owner: "ElliotBadinger",
-  repo: "echo",
-  branch: "refactor/phase1-modularization-kts-hilt", // or current branch
-  message: "Agent Session [DATE]: Fixed [specific issue] - description",
-  files: [
-    {path: "file1.kt", content: "..."},
-    {path: "AGENT_DOCUMENTATION.md", content: "...updated docs..."}
-  ]
-})
+**🚨 WARNING: GitHub MCP functions create git synchronization conflicts!**
 
-// Or for single files
-create_or_update_file({
-  owner: "ElliotBadinger", 
-  repo: "echo",
-  path: "path/to/file.kt",
-  content: "file content",
-  message: "Agent: Fixed specific issue",
-  branch: "refactor/phase1-modularization-kts-hilt"
-})
-```
+**❌ NEVER USE these GitHub MCP functions for commits:**
+- `push_files()` - Creates commits directly on GitHub, bypassing local git
+- `create_or_update_file()` - Same synchronization issue
+- These cause "fetch first" errors when user tries to push local changes
 
-#### **🔧 FALLBACK: Manual Git (only if MCP unavailable):**
+**✅ SAFE GitHub MCP functions (read-only only):**
+- `list_workflow_runs()` - Monitor CI status
+- `get_job_logs()` - Debug CI failures
+- `download_workflow_run_artifact()` - Analyze test results
+
+**✅ REQUIRED: Use Manual Git for ALL Commits:**
 ```bash
-# Add all changes
+# The ONLY safe way to commit changes
 git add .
-# Commit with descriptive message
 git commit -m "Agent Session [DATE]: Fixed [specific issue] - improved [metric]"
-# Push to current branch  
 git push origin HEAD
 ```
+
+**📝 See AGENT_WORKFLOW_GUIDE.md section 4.5 for complete synchronization issue details and resolution steps.**
 
 ## 📁 Project Structure
 
@@ -227,7 +214,8 @@ echo/
 - Follow Material Design guidelines
 
 ### For AI Agents:
-- **Use GitHub MCP server functions** for all Git operations (push_files, create_or_update_file, etc.)
+- **NEVER use GitHub MCP functions for commits** - causes synchronization conflicts with local git
+- **Use manual git commands only** for all commits and pushes
 - **Small incremental changes only** - never attempt large architectural changes  
 - **Document every change** in AGENT_DOCUMENTATION.md with proper change log entries
 - **Test immediately** after each change using ./gradlew commands

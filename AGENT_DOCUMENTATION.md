@@ -150,6 +150,60 @@ The development environment was missing Android SDK setup:
 
 ---
 
+## 4.5. CRITICAL GITHUB MCP SYNCHRONIZATION ISSUE 🚨
+
+### Issue Description
+**RECURRING CROSS-SESSION PROBLEM**: GitHub MCP server functions create synchronization conflicts between agent commits and user's local git repository.
+
+### Root Cause
+- GitHub MCP functions (`push_files`, `create_or_update_file`) create commits **directly on GitHub**
+- These commits bypass the user's local git repository entirely
+- When user tries to push local changes, git rejects with "fetch first" errors
+- Creates complex merge conflicts requiring manual resolution
+
+### Symptoms
+- User gets "error: failed to push some refs" when trying to push
+- Git says "Updates were rejected because the remote contains work"
+- Files appear as "untracked" locally but exist in remote commits
+- User must run complex stash/pull/merge procedures
+
+### MANDATORY WORKFLOW RULES FOR ALL AGENTS
+
+**❌ FORBIDDEN GitHub MCP Functions:**
+- `push_files()` - **NEVER USE** - Creates commits directly on GitHub
+- `create_or_update_file()` - **NEVER USE** - Bypasses local git
+- Any MCP function that creates commits or pushes changes
+
+**✅ SAFE GitHub MCP Functions (Read-Only Only):**
+- `list_workflow_runs()` - Monitor CI status
+- `get_job_logs()` - Debug CI failures  
+- `download_workflow_run_artifact()` - Analyze test results
+- `get_file_contents()` - Read repository files
+
+**✅ REQUIRED: Use Manual Git Commands for ALL Commits:**
+```bash
+# The ONLY safe way to commit changes
+git add .
+git commit -m "Agent Session [DATE]: Description"
+git push origin HEAD
+```
+
+### Resolution Steps (If Conflict Occurs)
+1. **Verify Remote Files**: `git ls-tree -r origin/branch-name | grep filename`
+2. **Stash Local Changes**: `git stash push -m "Local changes before agent sync"`
+3. **Remove Conflicting Files**: `rm -rf path/to/conflicting/files` (ONLY if confirmed in remote)
+4. **Pull Remote Changes**: `git pull`
+5. **Restore Local Changes**: `git stash pop`
+6. **Resolve Conflicts**: Manual merge and commit
+
+### Prevention
+- **ALL AGENTS**: Read this section before making any commits
+- **NEVER** use GitHub MCP functions for routine development work
+- **ALWAYS** use manual git commands for commits and pushes
+- **DOCUMENT** any unavoidable use of GitHub MCP functions
+
+---
+
 ## 5. CHANGE TRACKING SYSTEM
 
 ### Change [2025-09-06 08:15] - TIER1_KAPT_ANNOTATION_PROCESSING_ERROR_FIXED
