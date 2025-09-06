@@ -73,9 +73,9 @@ echo "sdk.dir=/path/to/your/android/sdk" > local.properties
 ```
 I'm continuing work on the Echo Android project. Please:
 
-1. Read the docs/agent-workflow/detailed-guide.md file completely - this contains all essential instructions including research tools and CI integration
-2. Follow the docs/agent-workflow/session-checklist.md for proper workflow with error-first prioritization  
-3. Read docs/project-state/current-status.md to understand current project state and research-enhanced development process
+1. Read the AGENT_WORKFLOW_GUIDE.md file completely - this contains all essential instructions including research tools and CI integration
+2. Follow the AGENT_SESSION_CHECKLIST.md for proper workflow with error-first prioritization  
+3. Read AGENT_DOCUMENTATION.md to understand current project state and research-enhanced development process
 4. Check current build status with: cd echo && ./gradlew clean
 5. Focus on ERROR FIXES FIRST - any failing tests, build errors, or crashes take absolute priority
 6. Use available MCP servers for enhanced development:
@@ -114,10 +114,10 @@ The current TIER 1 priority is resolving the ClassNotFoundException in AudioMemo
 - Trigger a workflow run by pushing a small change.
 - Monitor with list_workflow_runs and get_job_logs (focus on failed_only: true).
 - Download artifacts if needed with download_workflow_run_artifact for detailed test reports.
-- Do not proceed until CI tests pass or the failure is analyzed/documented in docs/project-state/current-status.md.
+- Do not proceed until CI tests pass or the failure is analyzed/documented in AGENT_DOCUMENTATION.md.
 - If CI passes but local fails, document it as a potential local environment issue.
 
-When encountering errors or issues (especially TIER 1 build/test failures), always research fixes using available MCP tools and frameworks before attempting changes. Use Brave Search MCP for state-of-the-art (SOTA) solutions and scientific papers, Context7 MCP for Android API documentation, and integrate findings from RESEARCH_FRAMEWORK.md or specific frameworks like KOTLIN_MIGRATION_FRAMEWORK.md. Document all research in docs/project-state/current-status.md, including sources and how they apply to the fix. Examples: For ClassNotFoundException, search "Android Kotlin Kapt stub conflicts 2025" via Brave Search MCP; for test classpath issues, query Context7 MCP for "Android Gradle test classpath configuration best practices".
+When encountering errors or issues (especially TIER 1 build/test failures), always research fixes using available MCP tools and frameworks before attempting changes. Use Brave Search MCP for state-of-the-art (SOTA) solutions and scientific papers, Context7 MCP for Android API documentation, and integrate findings from RESEARCH_FRAMEWORK.md or specific frameworks like KOTLIN_MIGRATION_FRAMEWORK.md. Document all research in AGENT_DOCUMENTATION.md, including sources and how they apply to the fix. Examples: For ClassNotFoundException, search "Android Kotlin Kapt stub conflicts 2025" via Brave Search MCP; for test classpath issues, query Context7 MCP for "Android Gradle test classpath configuration best practices".
 ```
 
 
@@ -125,7 +125,7 @@ When encountering errors or issues (especially TIER 1 build/test failures), alwa
 ```
 I just completed [describe what you implemented/fixed] on the Echo Android project. Please:
 
-1. Read docs/project-state/current-status.md to understand current state and recent changes with research integration
+1. Read AGENT_DOCUMENTATION.md to understand current state and recent changes with research integration
 2. Verify the completed work is properly documented in the change log with research findings
 3. Check if there are any follow-up issues or improvements needed using available MCP tools
 4. Use GitHub MCP server ONLY for read-only operations:
@@ -172,7 +172,7 @@ git commit -m "Agent Session [DATE]: Fixed [specific issue] - improved [metric]"
 git push origin HEAD
 ```
 
-**📝 See docs/agent-workflow/detailed-guide.md section 4.5 for complete synchronization issue details and resolution steps.**
+**📝 See AGENT_WORKFLOW_GUIDE.md section 4.5 for complete synchronization issue details and resolution steps.**
 
 ## 📁 Project Structure
 
@@ -223,10 +223,10 @@ echo/
 - **NEVER use GitHub MCP functions for commits** - causes synchronization conflicts with local git
 - **Use manual git commands only** for all commits and pushes
 - **Small incremental changes only** - never attempt large architectural changes  
-- **Document every change** in docs/project-state/current-status.md with proper change log entries
+- **Document every change** in AGENT_DOCUMENTATION.md with proper change log entries
 - **Test immediately** after each change using ./gradlew commands
 - **Never assume context** from previous conversations - always read current documentation
-- **Follow the complete workflow** in docs/agent-workflow/detailed-guide.md and docs/agent-workflow/session-checklist.md
+- **Follow the complete workflow** in AGENT_WORKFLOW_GUIDE.md and AGENT_SESSION_CHECKLIST.md
 
 ## 📚 Additional Resources
 
@@ -276,10 +276,10 @@ echo/
 4. Submit PRs with comprehensive descriptions
 
 ### For AI Assistant Contributors:
-1. **ALWAYS start by reading `docs/agent-workflow/detailed-guide.md`** (contains complete instructions)
+1. **ALWAYS start by reading `AGENT_WORKFLOW_GUIDE.md`** (contains complete instructions)
 2. **Use GitHub MCP server functions** instead of manual git commands
-3. **Follow the established workflow** in `docs/agent-workflow/session-checklist.md`
-4. **Document all changes** in `docs/project-state/current-status.md` with proper change log entries
+3. **Follow the established workflow** in `AGENT_SESSION_CHECKLIST.md`
+4. **Document all changes** in `AGENT_DOCUMENTATION.md` with proper change log entries
 5. **Focus on incremental improvements**, not large refactors
 6. **Use the copy-paste prompts above** for consistent session starts
 
@@ -311,24 +311,7 @@ find . -name "*.kt" -o -name "*.java" | head -20
 ```
 
 **🔥 CRITICAL FOR AI AGENTS:** 
-1. **READ** `docs/agent-workflow/detailed-guide.md` before making ANY changes
+1. **READ** `AGENT_WORKFLOW_GUIDE.md` before making ANY changes
 2. **USE** GitHub MCP server functions for Git operations
 3. **FOLLOW** the incremental change methodology - small steps only
-4. **DOCUMENT** every change in `docs/project-state/current-status.md`
-
-## 📚 Documentation
-
-This project uses a unified documentation system for efficient knowledge management:
-
-- **[Documentation Hub](docs/README.md)** - Central navigation and overview
-- **[Agent Quick Start](docs/agent-workflow/quick-start.md)** - 15-minute agent onboarding
-- **[Current Status](docs/project-state/current-status.md)** - Live project state
-- **[Development Frameworks](docs/frameworks/)** - Technical frameworks and methodologies
-- **[MCP Integration](docs/mcp-integration/)** - MCP server optimization guides
-
-### Quick Navigation
-- 🚀 **New to the project?** Start with [Agent Quick Start](docs/agent-workflow/quick-start.md)
-- 📊 **Current project state?** Check [Current Status](docs/project-state/current-status.md)
-- 🔧 **Development workflow?** See [Session Checklist](docs/agent-workflow/session-checklist.md)
-- 🤖 **MCP optimization?** Review [MCP Integration](docs/mcp-integration/mcp-optimization.md)
-
+4. **DOCUMENT** every change in `AGENT_DOCUMENTATION.md`
