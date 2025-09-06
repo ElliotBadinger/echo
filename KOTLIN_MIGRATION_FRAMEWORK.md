@@ -253,6 +253,11 @@ class IntegrationTest {
 - [ ] **Performance Maintained**: No performance regression
 - [ ] **Integration Success**: Works properly with rest of codebase
 
+##### Final Validation (To be checked by the NEXT agent)
+- [ ] **Audit Trail:** The commit history clearly shows the addition of both the feature code and its corresponding tests.
+- [ ] **Test Persistence:** The tests exist on the main branch and are executed as part of the full test suite.
+- [ ] **No Test Deletions:** The commit history does not show the removal of tests to force a passing build.
+
 ### 🔄 INTEGRATION WITH EXISTING WORKFLOW
 
 #### Research Framework Integration

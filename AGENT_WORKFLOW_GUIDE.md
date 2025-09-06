@@ -77,11 +77,12 @@ Rollback Plan: [How to undo if it breaks things]
 
 ### The Golden Rules:
 
-1. **ONE CHANGE AT A TIME** - Never modify multiple unrelated things
-2. **TEST IMMEDIATELY** - After each change, verify it works
-3. **ROLLBACK ON FAILURE** - If something breaks, undo immediately
-4. **DOCUMENT EVERYTHING** - Use the change log template
-5. **USE MCP SERVER** - Always use GitHub MCP functions for Git operations
+1.  **VERIFY PREVIOUS WORK FIRST** - Always audit the last session's changes before starting new work.
+2.  **ONE CHANGE AT A TIME** - Never modify multiple unrelated things.
+3.  **TEST IMMEDIATELY** - After each change, verify it works.
+4.  **ROLLBACK ON FAILURE** - If something breaks, undo immediately.
+5.  **DOCUMENT EVERYTHING** - Use the change log template.
+6.  **USE MCP SERVER** - Always use GitHub MCP functions for Git operations.
 
 ### Change Process:
 
@@ -530,6 +531,27 @@ download_workflow_run_artifact({artifact_id: 67890})
 - You can't easily explain exactly what you changed
 
 ---
+
+**"Protocol for Intractable Tier 1 Errors"**
+
+> If a Tier 1 error (build failure, test failure) cannot be resolved after a reasonable number of attempts (e.g., 3-5 distinct strategies), the agent must not bypass the error. Instead, it must switch to a **Deep Diagnostic Mode**.
+>
+> **Deep Diagnostic Mode Checklist:**
+>
+> 1.  **Halt Feature Progress:** Stop all work on the current feature (e.g., "Kotlin Conversion of Clock.java"). The goal now is to solve the Tier 1 blocker itself.
+> 2.  **Isolate the Problem:** Create the smallest possible reproducible example. For the `Clock` issue, this would mean creating a new, single, extremely simple test file (`SimpleTest.kt`) and trying to run just that.
+> 3.  **Investigate the Build System:** The problem is likely not in the source code, but in the build configuration. The agent must investigate:
+>     *   `SaidIt/build.gradle.kts`: Are the `sourceSets` configured correctly to include Kotlin files in the test directories?
+>     *   `gradle/libs.versions.toml`: Are there conflicting test dependency versions?
+>     *   `gradle.properties`: Are there any flags affecting compilation or caching?
+> 4.  **Force a True Clean State:** The agent tried a clean build, but it saw `FROM-CACHE`. The protocol should be more aggressive:
+>     *   Run `./gradlew clean`.
+>     *   Attempt to clear the Gradle cache if possible (e.g., by deleting `.gradle/caches`).
+>     *   Re-run the build with `--no-build-cache`.
+> 5.  **Document the Blocker:** If the issue persists, the final step is to:
+>     *   Revert all code changes related to the feature.
+>     *   Create a **new Change Log entry** specifically documenting the Tier 1 blocker. Title it: `BLOCKER - [Description of issue]`.
+>     *   In the "Next Agent Should Focus On" section, make resolving this blocker the **only priority**.
 
 ## ✅ BEST PRACTICES - THINGS THAT WORK
 

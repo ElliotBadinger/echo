@@ -2,18 +2,47 @@
 
 ## 🚀 START OF SESSION (Do this FIRST, always)
 
-### 1. Orientation Phase (5-10 minutes)
-- [ ] Read `AGENT_DOCUMENTATION.md` completely
-- [ ] Check current project state: `./gradlew --version` and basic build status
-- [ ] Review last 3 entries in the Change Log section
-- [ ] Identify what the previous session was working on
-- [ ] Check if there are any pending/broken changes that need fixing first
+### Phase 1: Previous Session Audit & Validation (MANDATORY)
+*Before assessing the overall project state, you must first verify the claims of the last session. This prevents building on a faulty foundation.*
 
-### 2. Current State Assessment (5 minutes)
-- [ ] Run: `./gradlew clean` (note: may timeout, that's expected)
-- [ ] Check if tests run: `./gradlew test` (also may fail, document what fails)
-- [ ] Look for any obvious error messages or build failures
-- [ ] Update "Current Status" section with any new findings
+- [ ] **Identify the Last Change:** Open `AGENT_DOCUMENTATION.md` and locate the most recent entry in the "Change Log". This is your audit target.
+- [ ] **List the Claims:** Read the "Result" and "Files Modified" sections of the last change log. Note the specific claims made (e.g., "TIER 2 CLOCK CONVERSION COMPLETE", "integration verified", "comprehensive testing").
+- [ ] **Verify Modified Files:** Get the list of files changed in the last commit and compare it to the documentation.
+    ```bash
+    # See the actual files changed in the last commit
+    git show --name-only HEAD
+    ```
+- [ ] **Audit Test Coverage for Changes:** For every non-test file that was added or modified, verify that a corresponding test file exists and is meaningful.
+    *   **Existence Check:** For a changed `src/main/.../Foo.kt`, does `src/test/.../FooTest.kt` exist?
+    *   **Content Sanity Check:** Read the contents of the test file. Does it contain `@Test` annotations? Does it import testing libraries (`junit`, `mockito`)? A file with no actual tests is a failure.
+    *   **Run Specific Tests:** Run the tests related *only* to the last change. This isolates the validation.
+        ```bash
+        # Example for the Clock change
+        ./gradlew :SaidIt:test --tests "*Clock*Test"
+        ```
+
+- [ ] **Verify Full Regression Test:** Run the entire test suite to ensure the last change didn't break anything unexpectedly.
+    ```bash
+    ./gradlew test
+    ```
+
+- [ ] **Make the Audit Verdict:**
+    *   [ ] **✅ PASS:** The previous session's documented work is verified and meets the project's testing standards. You may proceed to the next phase.
+    *   [ ] **❌ FAIL:** The previous session's work is incomplete, untested, or violates the project's "Error-First" principles (e.g., tests were deleted to achieve a "pass").
+
+- [ ] **Act on the Verdict:**
+    *   **If the verdict is FAIL:**
+        1.  **Your session's first goal is now to fix the discrepancy.** Create a new Change Log entry titled: `TIER1_FIX - Correcting Incomplete Work from Session [Previous Session Timestamp]`.
+        2.  Document your findings from the audit.
+        3.  Do not proceed with any other goals until the tests are reinstated and passing. This is now a TIER 1 priority.
+
+### Phase 2: Orientation & State Assessment (5-10 minutes)
+*(Only proceed to this phase if the Audit Verdict was PASS)*
+
+- [ ] Read the rest of `AGENT_DOCUMENTATION.md` completely.
+- [ ] Check current project state: `./gradlew --version` and basic build status.
+- [ ] Run: `./gradlew clean`
+- [ ] Review last 3 entries in the Change Log section to understand recent history.
 
 ## 🎯 PLANNING PHASE (Before making ANY changes)
 
@@ -193,6 +222,12 @@ Before completing any change:
 - [ ] **Accessibility**: UI changes include accessibility testing
 
 ## 🔧 EXECUTION PHASE (Making changes)
+
+### Session Execution
+- [ ] **Initialize Session**: Record the start time of the session (e.g., using `date +%s` or a timestamp tool).
+- [ ] **Task Execution**: Perform the assigned task (e.g., convert a file, fix a TIER 1 error).
+- [ ] **Task Completion**: Record the end time upon successful completion (e.g., all tests pass, PR is ready). Calculate the duration (end time - start time) and log it in the session notes.
+- [ ] **Audit and Commit**: ...
 
 ### 5. Make Changes (Incremental approach)
 - [ ] Make ONE small change at a time
