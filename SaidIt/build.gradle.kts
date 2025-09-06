@@ -50,6 +50,16 @@ android {
     testOptions { unitTests.isIncludeAndroidResources = true }
 }
 
+// Kapt configuration to fix CI annotation processing issues
+kapt {
+    correctErrorTypes = true
+    useBuildCache = false  // Disable caching to prevent CI issues
+    arguments {
+        arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+        arg("dagger.fastInit", "enabled")
+    }
+}
+
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     implementation(libs.androidx.appcompat)
