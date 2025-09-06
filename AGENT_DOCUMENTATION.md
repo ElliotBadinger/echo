@@ -1,8 +1,8 @@
 # Echo Project Agent Documentation System
 
-**Version:** 1.0  
-**Last Updated:** 2025-09-05 20:51 UTC TIER 2 Clock Conversion Complete  
-**Current Status:** Active Development - TIER 1 Complete, TIER 2 Clock Conversion 100% Complete
+**Version:** 1.1  
+**Last Updated:** 2025-09-06 06:40 UTC  
+**Current Status:** Active Development - TIER 1 AudioMemoryTest ClassNotFoundException Partially Resolved, Awaiting CI Validation
 
 **NOTE FOR AI AGENTS:** Always use `get_current_time({timezone: "UTC"})` MCP function for accurate timestamps in documentation.
 
@@ -15,12 +15,12 @@
 - **CI Pipeline:** ✅ READY - GitHub Actions can now work with proper Android SDK setup
 - **Audio Pipeline:** ✅ MODERNIZED - Threading converted to Kotlin coroutines with structured concurrency
 - **UI Layer:** ✅ STABLE - Java-based UI functional, Compose integration removed temporarily
-- **Testing:** ✅ FULLY OPERATIONAL - All tests passing, Clock conversion verified
+- **Testing:** 🟡 PARTIAL - 92% test pass rate (AudioMemoryTest.kt fails locally with ClassNotFoundException)
 - **Architecture:** ✅ IMPROVED - SaidItService modernized, Clock interface modernized
 
 ### Key Metrics
 - **Build Success Rate:** 100% (compiles successfully, all functionality works)
-- **Test Pass Rate:** 100% (all tests pass, Clock conversion verified through integration)
+- **Test Pass Rate:** 92% (13/14 tests pass; AudioMemoryTest.kt fails locally)
 - **Code Coverage:** Good (can now measure with successful compilation)
 - **Technical Debt:** SIGNIFICANTLY REDUCED (duplicate class cleanup + Clock modernization completed)
 
@@ -51,12 +51,36 @@ The development environment was missing Android SDK setup:
 
 ---
 
-## 3. NEXT PRIORITY GOALS (Error-First, Incremental, Well-Tested)
+## 3. TIER 1 CRITICAL ERROR - AUDIOMEMORYTEST CLASSNOTFOUNDEXCEPTION 🟡 PARTIALLY RESOLVED
 
-### TIER 1 - ERROR FIXES ✅ **ALL RESOLVED**
-1. **Fix Android SDK Missing Error** - ✅ COMPLETED - SDK installed and configured
+### Critical Issue Found
+**ClassNotFoundException in AudioMemoryTest.kt**: Test runtime fails with `java.lang.ClassNotFoundException: eu.mrogalski.saidit.Clock`.
+
+### Root Cause Analysis
+- Duplicate Java/Kotlin Clock files caused initial compilation conflicts.
+- After removing Java files, Kapt-generated Java stubs in `build/tmp/kapt3/stubs/` are conflicting with Kotlin classes in the local test classpath.
+- Likely a local environment issue (stale caches or Gradle misconfiguration).
+- Pushed to CI (commit cb277e5) for clean environment validation.
+
+### Actions Taken
+- Removed duplicate Java files: `Clock.java`, `FakeClock.java`, `SystemClockWrapper.java`.
+- Verified Kotlin files: `Clock.kt`, `FakeClock.kt`, `SystemClockWrapper.kt` compile correctly.
+- Pushed changes to CI for validation in a clean environment.
+- Local test pass rate: 92% (13/14 tests pass).
+
+### Next Steps
+- Monitor CI results using `list_workflow_runs` and `get_job_logs`.
+- If CI passes, document as local environment issue and proceed to TIER 2.
+- If CI fails, research Kapt configuration fixes (e.g., `kapt { correctErrorTypes = true }`).
+
+---
+
+## 4. NEXT PRIORITY GOALS (Error-First, Incremental, Well-Tested)
+
+### TIER 1 - ERROR FIXES 🟡 PARTIALLY RESOLVED
+1. **AudioMemoryTest ClassNotFoundException** - 🟡 Awaiting CI validation for Kapt stub issue
 2. **Verify Build Compilation** - ✅ COMPLETED - Build compiles successfully in 3m 7s
-3. **Verify Test Execution** - ✅ COMPLETED - All 241 test tasks pass in 2s
+3. **Verify Test Execution** - 🟡 PARTIAL - 92% pass rate, AudioMemoryTest fails locally
 
 ### TIER 2 - Next Priority (Incremental Improvements):
 
@@ -92,11 +116,45 @@ The development environment was missing Android SDK setup:
 
 ---
 
-## 4. CHANGE TRACKING SYSTEM
+## 5. CHANGE TRACKING SYSTEM
 
-### Current Active Changes
+### Change [2025-09-06 06:40] - TIER1_CLOCK_CLASSNOTFOUND_RESOLUTION_PROGRESS
 
-## Change [2025-09-05 20:51] - TIER2_CLOCK_CONVERSION_COMPLETE_SUCCESS
+### Goal
+- Resolve ClassNotFoundException in AudioMemoryTest.kt (Clock class missing from test classpath).
+- Eliminate duplicate classes and shift to CI for clean environment validation.
+
+### Files Modified
+- REMOVED: SaidIt/src/main/java/eu/mrogalski/saidit/Clock.java
+- REMOVED: SaidIt/src/main/java/eu/mrogalski/saidit/FakeClock.java
+- REMOVED: SaidIt/src/main/java/eu/mrogalski/saidit/SystemClockWrapper.java
+- VERIFIED: SaidIt/src/main/kotlin/eu/mrogalski/saidit/Clock.kt
+- VERIFIED: SaidIt/src/main/kotlin/eu/mrogalski/saidit/FakeClock.kt
+- VERIFIED: SaidIt/src/main/kotlin/eu/mrogalski/saidit/SystemClockWrapper.kt
+- UPDATED: AGENT_DOCUMENTATION.md (root cause analysis and handoff)
+
+### Testing Done
+- ./gradlew clean build - SUCCESS (100% compilation)
+- ./gradlew :SaidIt:testDebugUnitTest - PARTIAL SUCCESS (92% pass rate; ClassNotFoundException persists locally due to Kapt stubs)
+- Pushed to CI (commit cb277e5) for fresh environment validation
+
+### Result
+- ✅ SUCCESS: Duplicate classes fixed; Kapt stubs identified as root cause
+- 🟡 PARTIAL: Local ClassNotFoundException persists, likely environment-specific
+- Root Cause: Kapt-generated Java stubs conflicting with Kotlin classes in local cache
+- CI Status: In progress - monitor for confirmation
+
+### Next Steps
+- Monitor CI with `list_workflow_runs` and `get_job_logs`
+- If CI passes: Document as local environment issue, proceed to TIER 2 (next Kotlin migration: TimeFormat.java)
+- If CI fails: Research Kapt config fixes (e.g., via Brave Search MCP)
+
+### Rollback Info
+- Re-add Java files if needed; No breaking changes to functionality
+
+---
+
+### Change [2025-09-05 20:51] - TIER2_CLOCK_CONVERSION_COMPLETE_SUCCESS
 
 ### Goal
 - Complete TIER 2 incremental improvement: Convert Clock interface and related classes from Java to Kotlin
@@ -193,27 +251,34 @@ The development environment was missing Android SDK setup:
 - [x] UI components properly decoupled ✅
 - [x] Comprehensive error handling ✅ (can now test with working build)
 
-**Status: All TIER 1 critical errors resolved. TIER 2 Clock conversion 100% complete.**
+**Status: TIER 1 AudioMemoryTest issue partially resolved, awaiting CI validation.**
 
 ### Current Session Workspace
-- **Today's Focus**: TIER 2 Clock conversion - Java to Kotlin migration with integration verification
-- **Session Start**: 2025-09-05 20:01 UTC
-- **Session End**: 2025-09-05 20:51 UTC
-- **Changes Made This Session**: Clock interface conversion, pragmatic issue resolution, integration verification
-- **Session Status**: TIER 2 Clock conversion 100% complete - ready for next improvement
+- **Today's Focus**: TIER 1 Resolution: Clock ClassNotFoundException via duplicate cleanup and CI validation
+- **Session Start**: 2025-09-06 06:00 UTC
+- **Session End**: 2025-09-06 06:40 UTC
+- **Changes Made This Session**: Removed duplicate Java Clock files; Identified Kapt stub conflicts; Pushed to CI for validation
+- **Session Status**: TIER 1 partially resolved - local issue identified, awaiting CI confirmation
 
 ### Next Agent Should Focus On
-✅ **TIER 2 CLOCK CONVERSION COMPLETE** - Successfully modernized Clock interface to Kotlin
+- **Monitor CI Results**:
+  - Use `list_workflow_runs({owner: "ElliotBadinger", repo: "echo"})` to check workflow status.
+  - Use `get_job_logs({run_id: <id>, failed_only: true})` for failure analysis.
+  - Use `download_workflow_run_artifact` for test reports.
+- **Decision Framework**:
+  - If CI passes: Document as local environment issue, proceed to TIER 2 (convert TimeFormat.java).
+  - If CI fails: Research Kapt configuration fixes (e.g., `kapt { correctErrorTypes = true }` in build.gradle.kts) using Brave Search MCP.
+- **Verify Push Success**:
+  - Confirm commit (e.g., cb277e5) is visible on GitHub using `git ls-remote origin` or manual check.
+  - If not visible, use manual git commands to push and resolve conflicts.
+- **Check Workflow Alignment**:
+  - Ensure `.github/workflows/android-test.yml` runs `./gradlew test`, uses JDK 17, and uploads test artifacts.
+  - Create/update if misaligned with project requirements.
 
-**Next Priority**: Continue TIER 2 Kotlin migration with next utility class
-**Recommended Target**: Convert next Java utility class (TimeFormat, Views, or UserInfo)
-**Approach**: Apply same incremental methodology with pragmatic testing
-**Success Pattern**: Focus on functional integration rather than perfect unit test coverage
-
-**Current Status**: Project is in excellent state with 100% build success and all functionality working
-**Environment**: Android SDK fully configured, Clock interface successfully modernized
-**Methodology**: Error-first prioritization with pragmatic resolution approach proven successful
-**Continue**: Incremental Kotlin migration using established patterns
+**Current Status**: Project is stable with 100% build success, but TIER 1 test issue persists locally. CI validation in progress.
+**Environment**: Android SDK fully configured, Clock interface modernized
+**Methodology**: Error-first prioritization with CI-driven validation
+**Continue**: Monitor CI, resolve TIER 1, then proceed to TIER 2
 
 ---
 

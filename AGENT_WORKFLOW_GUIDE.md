@@ -1,11 +1,11 @@
 # Complete AI Agent Workflow Guide for Echo Android Project
 
-**Version:** 1.0  
+**Version:** 1.2  
 **Target Audience:** Claude, ChatGPT, and other AI development assistants  
 **Project:** Echo Android Application  
-**Last Updated:** 2025-09-04 22:47 UTC
+**Last Updated:** 2025-09-06 08:40 SAST
 
-**CRITICAL FOR AI AGENTS:** Always use `get_current_time({timezone: "UTC"})` MCP function for accurate timestamps in all documentation.
+**IMPORTANT NOTE ON RESEARCHING FIXES:** When encountering errors or issues (especially TIER 1 build/test failures), **always research fixes using available MCP tools and frameworks before attempting changes**. This is a core principle you must know and apply rigorously: Use Brave Search MCP for state-of-the-art (SOTA) solutions and scientific papers, Context7 MCP for Android API documentation, and integrate findings from RESEARCH_FRAMEWORK.md or specific frameworks like KOTLIN_MIGRATION_FRAMEWORK.md. Document all research in AGENT_DOCUMENTATION.md, including sources and how they apply to the fix. Examples: For ClassNotFoundException, search "Android Kotlin Kapt stub conflicts 2025" via Brave Search MCP; for test classpath issues, query Context7 MCP for "Android Gradle test classpath configuration best practices".
 
 ---
 
@@ -94,6 +94,12 @@ Rollback Plan: [How to undo if it breaks things]
 - What specific problem this addresses
 - Expected outcome
 
+### Research Conducted (if applicable)
+- MCP Tool Used: [e.g., Brave Search MCP]
+- Query: [e.g., "Android Kotlin Kapt stub conflicts fixes 2025"]
+- Key Findings: [Summarize relevant solutions and sources]
+- Application to Fix: [How research informs the planned change]
+
 ### Files Modified
 - [List files you plan to change]
 
@@ -101,12 +107,21 @@ Rollback Plan: [How to undo if it breaks things]
 - How you'll verify this works
 ```
 
-#### Step 2: Make ONE Small Change
+#### Step 2: Research Fixes (Mandatory for Errors/Fixes)
+- **When Applicable**: Always for TIER 1 issues (e.g., build errors, test failures like ClassNotFoundException) or any non-trivial fix.
+- **Process**:
+  - Use Brave Search MCP: `brave_web_search({query: "specific error + Android Kotlin 2025", summary: true})` for SOTA fixes.
+  - Use Context7 MCP: For Android-specific guidance, e.g., "Kapt configuration for Kotlin test classpath".
+  - Cross-reference with frameworks: e.g., KOTLIN_MIGRATION_FRAMEWORK.md for migration-related issues.
+  - Document: Summarize findings, sources, and rationale in the pre-change log.
+- **Know This Well**: Research is not optional—it's the foundation for informed, error-free changes. Avoid guessing; base fixes on documented best practices.
+
+#### Step 3: Make ONE Small Change
 - Edit one file or fix one specific issue
 - Keep the change as minimal as possible
 - Do NOT make multiple changes at once
 
-#### Step 3: Test Immediately
+#### Step 4: Test Immediately
 ```bash
 # For build changes:
 ./gradlew clean build
@@ -118,7 +133,111 @@ Rollback Plan: [How to undo if it breaks things]
 ./gradlew :module-name:test
 ```
 
-#### Step 4: Document Results
+#### Step 6: Commit and Push Changes with Verification
+- **Preferred Method**: Use GitHub MCP `push_files` function to commit and push all changes in one operation.
+- **Verify Push Success**:
+  - After `push_files`, use `git ls-remote origin` to confirm the commit appears on GitHub.
+  - Alternatively, check the repository manually (e.g., https://github.com/ElliotBadinger/echo/commits/<branch>) to ensure the commit is visible.
+  - If `push_files` fails, fall back to manual git commands (below) and document the failure reason.
+- **Handle Merge Conflicts**:
+  - If push fails due to conflicts, run `git pull --rebase origin <branch>`, resolve conflicts, then retry `git push origin HEAD`.
+
+```javascript
+// Push multiple files with one command
+push_files({
+  owner: "ElliotBadinger",
+  repo: "echo", 
+  branch: "refactor/phase1-modularization-kts-hilt",
+  message: "Agent Session [YYYY-MM-DD HH:MM UTC]: Fixed [specific issue]",
+  files: [
+    {path: "build.gradle.kts", content: "..."},
+    {path: "AGENT_DOCUMENTATION.md", content: "..."}
+  ]
+}).then(() => {
+  // Verify push success
+  executeBash("git ls-remote origin").then(output => {
+    if (output.includes("<commit-hash>")) {
+      console.log("Push confirmed on GitHub");
+    } else {
+      console.error("Push failed to appear on GitHub, falling back to manual git");
+      // Fallback manual git commands
+      executeBash(`
+        git add .
+        git commit -m "Agent Session [YYYY-MM-DD HH:MM UTC]: Fixed [specific issue]"
+        git pull --rebase origin refactor/phase1-modularization-kts-hilt
+        git push origin HEAD
+      `);
+    }
+  });
+});
+```
+
+#### Step 7: Verify GitHub Actions Workflow Alignment
+- **Check Existing Workflow**: Read `.github/workflows/android-test.yml` to ensure it runs `./gradlew test` on push/pull_request for the `refactor/phase1-modularization-kts-hilt` branch.
+- **Create Workflow if Missing**:
+  - If no workflow exists, create `.github/workflows/android-test.yml` with a basic configuration (see example below).
+  - Ensure it uses JDK 17, Gradle wrapper, and runs unit tests for the `SaidIt` module.
+- **Verify Workflow Requirements**:
+  - Runs `./gradlew test` to cover unit tests (including `AudioMemoryTest.kt`).
+  - Supports Kotlin migration testing (e.g., verifies `Clock.kt` integration).
+  - Publishes test artifacts for debugging (via `actions/upload-artifact`).
+  - Triggers on push/pull_request to `refactor/phase1-modularization-kts-hilt`.
+- **Monitor Workflow**:
+  - After pushing, use `list_workflow_runs({owner: "ElliotBadinger", repo: "echo"})` to check run status.
+  - If failed, use `get_job_logs({run_id: <id>, failed_only: true})` and `download_workflow_run_artifact` for test reports.
+  - Document CI results in `AGENT_DOCUMENTATION.md`.
+
+**Example Workflow File** (create if missing):
+```yaml
+name: Android CI
+on:
+  push:
+    branches: [ "refactor/phase1-modularization-kts-hilt" ]
+  pull_request:
+    branches: [ "refactor/phase1-modularization-kts-hilt" ]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+      - name: Run unit tests
+        run: ./gradlew test
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/build/test-results/**/*"
+```
+
+#### Fallback Manual Git Commands (Use only if MCP fails):
+```bash
+# Add all changes
+git add .
+
+# Commit with descriptive message
+git commit -m "Agent Session [YYYY-MM-DD HH:MM UTC]: [Description of what was fixed/changed]
+
+- Fixed: [specific issue]
+- Improved: [specific metric]
+- Files: [list main files changed]"
+
+# Verify remote availability
+git ls-remote origin
+
+# Push to current branch, handling conflicts
+git pull --rebase origin refactor/phase1-modularization-kts-hilt
+git push origin HEAD
+```
+
+#### Step 8: Document Results
 Complete the change log entry:
 ```markdown
 ### Result
@@ -131,6 +250,15 @@ Complete the change log entry:
 ```
 
 ### What Counts as "One Change":
+- ✅ Add one missing dependency
+- ✅ Fix one compilation error
+- ✅ Resolve one import issue
+- ✅ Fix one failing test
+- ❌ "Refactor the entire service layer"
+- ❌ "Migrate to Jetpack Compose"
+- ❌ "Fix all the threading issues"
+
+---
 - ✅ Add one missing dependency
 - ✅ Fix one compilation error
 - ✅ Resolve one import issue

@@ -1,5 +1,8 @@
 # Agent Session Checklist - Echo Project
 
+**Version:** 1.2  
+**Last Updated:** 2025-09-06 08:40 SAST
+
 ## 🚀 START OF SESSION (Do this FIRST, always)
 
 ### Phase 1: Previous Session Audit & Validation (MANDATORY)
@@ -69,7 +72,32 @@ Before making ANY changes, prioritize in this exact order:
 - [ ] **Runtime crashes** - App crashes or ANRs
 - [ ] **CI/CD failures** - GitHub Actions workflow failures
 
-#### Step 2: Use Research Frameworks for Technical Decisions
+#### Step 2: Research Fixes for Issues (Mandatory When Applicable)
+- [ ] **When to Research**: Always for TIER 1 errors (e.g., ClassNotFoundException, compilation failures) or any fix requiring technical decisions. This is a principle you must know and apply well: Research ensures informed, reliable solutions.
+- [ ] **Process**:
+    * Use Brave Search MCP for SOTA fixes: e.g., `brave_web_search({query: "Android Kapt stub conflicts in Kotlin tests 2025", summary: true})`.
+    * Use Context7 MCP for Android docs: e.g., query "Gradle Kapt configuration for test classpath".
+    * Consult frameworks: e.g., KOTLIN_MIGRATION_FRAMEWORK.md for migration issues, PERFORMANCE_RESEARCH_FRAMEWORK.md for optimization.
+    * Document: Include queries, findings, sources, and application in the change log.
+- [ ] **Examples**:
+    * For ClassNotFoundException: Research "Kapt correctErrorTypes true Android Kotlin" and apply config like `kapt { correctErrorTypes = true }` in build.gradle.kts.
+    * For test failures: Search "Android unit test classpath missing main classes 2025".
+- [ ] **Know This Well**: Skipping research leads to suboptimal fixes—always prioritize it for accuracy and to avoid repeated issues.
+
+#### Step 3: Verify GitHub Actions Workflow
+- [ ] Check if `.github/workflows/android-test.yml` exists and aligns with project requirements:
+    * Runs `./gradlew test` for unit tests (including `AudioMemoryTest.kt`).
+    * Uses JDK 17 and Gradle wrapper.
+    * Publishes test artifacts via `actions/upload-artifact`.
+    * Triggers on push/pull_request to `refactor/phase1-modularization-kts-hilt`.
+- [ ] If missing or misconfigured, create/update the workflow (see example in `AGENT_WORKFLOW_GUIDE.md`).
+- [ ] After pushing changes, monitor CI:
+    * Use `list_workflow_runs({owner: "ElliotBadinger", repo: "echo"})` to check status.
+    * Use `get_job_logs({run_id: <id>, failed_only: true})` for failures.
+    * Use `download_workflow_run_artifact` for test reports.
+- [ ] If CI passes but local tests fail, document as a local environment issue.
+
+#### Step 4: Use Research Frameworks for Technical Decisions
 For any significant technical work, consult the appropriate framework:
 - [ ] **RESEARCH_FRAMEWORK.md** - Overall research-driven development methodology
 - [ ] **ML_STRATEGY_FRAMEWORK.md** - ML research and implementation strategy  
@@ -77,7 +105,7 @@ For any significant technical work, consult the appropriate framework:
 - [ ] **UI_UX_ENHANCEMENT_FRAMEWORK.md** - Professional UI development framework
 - [ ] **KOTLIN_MIGRATION_FRAMEWORK.md** - Java-to-Kotlin conversion methodology
 
-#### Step 3: Apply Incremental Improvement Strategy
+#### Step 5: Apply Incremental Improvement Strategy
 - [ ] **Build Errors**: Are there any compilation failures?
 - [ ] **Test Failures**: Are any unit/integration tests failing?
 - [ ] **Runtime Crashes**: Are there any exceptions or crashes?
@@ -85,14 +113,14 @@ For any significant technical work, consult the appropriate framework:
 
 **If ANY of these exist, fix them FIRST before any other work.**
 
-#### Step 2: Plan Incremental Improvement (Only if no critical issues)
+#### Step 6: Plan Incremental Improvement (Only if no critical issues)
 - [ ] **Maintains Functionality**: Will existing features continue working?
 - [ ] **Comprehensive Testing**: Can I add complete tests for this change?
 - [ ] **Incremental**: Is this the smallest possible improvement?
 - [ ] **Architecture Alignment**: Does this move toward modern patterns?
 - [ ] **UI Excellence**: If touching UI, does this follow expert design principles?
 
-#### Step 3: Testing Requirements Check
+#### Step 7: Testing Requirements Check
 Every change must include:
 - [ ] **Unit Tests**: Test the component in isolation
 - [ ] **Integration Tests**: Test how it works with other components  
