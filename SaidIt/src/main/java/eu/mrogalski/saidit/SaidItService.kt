@@ -423,7 +423,7 @@ class SaidItService : Service() {
 
             var recorded = 0
             aacWriter?.let { writer ->
-                recorded += writer.totalSampleBytesWritten
+                recorded += writer.getTotalSampleBytesWritten()
                 recorded += stats.estimation
             }
             
