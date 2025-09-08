@@ -232,6 +232,7 @@ echo/
 
 ### 📖 Documentation System
 - **[Documentation Overview](docs/README.md)** - Unified documentation system navigation
+- **[🚨 Critical Principles](docs/agent-workflow/critical-principles.md)** - MANDATORY quality standards (READ FIRST)
 - **[Agent Workflow Guide](docs/agent-workflow/detailed-guide.md)** - Complete guide for AI-assisted development
 - **[Quick Start Guide](docs/agent-workflow/quick-start.md)** - 1-page agent onboarding
 - **[Session Checklist](docs/agent-workflow/session-checklist.md)** - Step-by-step workflow
@@ -276,12 +277,14 @@ echo/
 4. Submit PRs with comprehensive descriptions
 
 ### For AI Assistant Contributors:
-1. **ALWAYS start by reading `docs/agent-workflow/detailed-guide.md`** (contains complete instructions)
-2. **Use GitHub MCP server functions** instead of manual git commands
-3. **Follow the established workflow** in `docs/agent-workflow/session-checklist.md`
-4. **Document all changes** in `docs/project-state/current-status.md` with proper change log entries
-5. **Focus on incremental improvements**, not large refactors
-6. **Use the copy-paste prompts above** for consistent session starts
+1. **🚨 MANDATORY: Read `docs/agent-workflow/critical-principles.md` FIRST** - Non-negotiable quality standards
+2. **ALWAYS start by reading `docs/agent-workflow/detailed-guide.md`** (contains complete instructions)
+3. **Use manual git commands only** for commits (GitHub MCP causes sync conflicts)
+4. **Follow the established workflow** in `docs/agent-workflow/session-checklist.md`
+5. **Document all changes** in `docs/project-state/current-status.md` with proper change log entries
+6. **Focus on incremental improvements**, not large refactors
+7. **NEVER delete or simplify test files** - fix testing issues properly
+8. **Use the copy-paste prompts above** for consistent session starts
 
 ## 📄 License
 
