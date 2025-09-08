@@ -65,3 +65,4 @@ Thumbs.db
 !README.md
 !docs/**/*.md
 !documentation/**/*.md
+docs/archive/automation/scripts/docs-automation-env/
