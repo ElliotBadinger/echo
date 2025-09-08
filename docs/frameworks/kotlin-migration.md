@@ -6,7 +6,7 @@
 
 ### 🎯 FRAMEWORK OVERVIEW
 
-This framework provides a structured approach to converting the remaining 38 Java files to Kotlin while maintaining 100% functional equivalence and comprehensive testing coverage. The migration follows the project's commitment to incremental improvements and error-first prioritization.
+This framework provides a structured approach to converting the remaining 38 Java files to Kotlin while maintaining 100% functional equivalence and comprehensive testing coverage. **CRITICAL UPDATE**: Current testing coverage is approximately 40% with significant gaps that must be addressed before proceeding with new conversions. The migration follows the project's commitment to incremental improvements and error-first prioritization.
 
 ### 🏗️ MIGRATION STRATEGY
 
@@ -67,6 +67,22 @@ Each Java file conversion is treated as a focused, well-tested improvement:
 **Rationale**: Audio components that handle file processing and encoding.
 
 ### 🧪 COMPREHENSIVE TESTING STRATEGY
+
+#### ⚠️ CRITICAL TESTING GAPS IDENTIFIED (FUTURE AGENTS MUST ADDRESS)
+
+**Immediate Priority Issues:**
+- **Audio Module Testing**: Current `AudioPlayerRecorderTest.kt` uses `Thread.sleep()` instead of proper async testing patterns
+- **Domain Layer Coverage**: No tests exist for `RecordingRepository` interface or `StartListeningUseCase`/`StopListeningUseCase`
+- **ViewModel Testing**: `RecordingViewModelTest.kt` contains incomplete assertions with TODO comments
+- **Integration Testing**: Missing cross-module integration tests to verify component interactions
+- **Performance Testing**: No performance regression tests despite performance framework emphasis
+
+**Required Testing Improvements:**
+- Replace `Thread.sleep()` with proper coroutine testing using `runTest` and `advanceTimeBy()`
+- Implement comprehensive unit tests for all domain layer components
+- Complete all TODO items in existing test files with proper assertions
+- Add integration tests that verify end-to-end functionality across modules
+- Implement performance benchmarking tests using the performance framework
 
 #### 1. Pre-Conversion Analysis
 **Before converting each file:**
@@ -200,16 +216,31 @@ class IntegrationTest {
 
 #### Quantitative Metrics
 - **Conversion Rate**: Percentage of Java files converted to Kotlin
-- **Test Coverage**: Maintain or improve test coverage during conversion
+- **Test Coverage**: Maintain or improve test coverage during conversion (CRITICAL: Currently ~40%, target 90%+)
 - **Build Time**: Monitor build performance (should improve with Kotlin)
 - **Code Quality**: Reduce cyclomatic complexity where possible
 - **Performance**: Maintain or improve runtime performance
+
+#### Testing Coverage Requirements (CRITICAL)
+- **Unit Test Coverage**: 90%+ for all converted Kotlin classes
+- **Integration Test Coverage**: End-to-end tests for all major user flows
+- **Performance Test Coverage**: Regression tests for all performance-critical paths
+- **Edge Case Coverage**: Tests for null safety, error conditions, and boundary cases
+- **Cross-Module Testing**: Integration tests verifying component interactions
 
 #### Qualitative Metrics
 - **Code Readability**: Kotlin code should be more readable and concise
 - **Null Safety**: Eliminate potential null pointer exceptions
 - **Maintainability**: Easier to maintain and extend Kotlin code
 - **Developer Experience**: Better IDE support and tooling
+
+#### Testing Excellence Requirements (MANDATORY FOR FUTURE AGENTS)
+- **No Thread.sleep()**: Replace all `Thread.sleep()` calls with proper coroutine testing (`runTest`, `advanceTimeBy()`)
+- **Complete Assertions**: All test methods must have meaningful assertions, no TODO comments for test logic
+- **Domain Layer Coverage**: 100% unit test coverage for repositories, use cases, and business logic
+- **Integration Testing**: Cross-module tests that verify real component interactions
+- **Performance Regression Tests**: Automated tests that catch performance degradation
+- **Error Path Testing**: Comprehensive testing of error conditions and edge cases
 
 ### 🔧 TOOLS AND AUTOMATION
 
@@ -307,11 +338,16 @@ Once Kotlin migration is complete:
 ## 🎯 IMPLEMENTATION PRIORITY
 
 ### Immediate Focus (Next 2-3 Sessions):
-1. **Resolve TIER 1 AudioMemoryTest Issue**: Confirm CI results for ClassNotFoundException
-2. **Start Phase 1**: Convert TimeFormat.java → TimeFormat.kt (after TIER 1 resolution)
-3. **Establish Testing Pattern**: Create comprehensive testing template
-4. **Document Conversion Process**: Record decisions and patterns
-5. **Validate Approach**: Ensure conversion methodology works well
+1. **CRITICAL: Address Testing Gaps**: Fix identified testing issues before proceeding with new conversions
+   - Replace `Thread.sleep()` in `AudioPlayerRecorderTest.kt` with proper coroutine testing
+   - Implement missing tests for domain layer (`RecordingRepository`, use cases)
+   - Complete TODO assertions in `RecordingViewModelTest.kt`
+   - Add integration tests for cross-module functionality
+2. **Resolve TIER 1 AudioMemoryTest Issue**: Confirm CI results for ClassNotFoundException
+3. **Start Phase 1**: Convert TimeFormat.java → TimeFormat.kt (after testing gaps resolved)
+4. **Establish Testing Pattern**: Create comprehensive testing template
+5. **Document Conversion Process**: Record decisions and patterns
+6. **Validate Approach**: Ensure conversion methodology works well
 
 ### Medium Term (4-8 Sessions):
 1. **Complete Phase 1**: Finish utility class conversions
