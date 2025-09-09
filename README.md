@@ -88,7 +88,7 @@ echo "sdk.dir=/path/to/your/android/sdk" > local.properties
 
 #### **COPY THIS PROMPT for New AI Sessions:**
 ```
-I'm continuing work on the Echo Android project. Please follow this EXACT workflow:
+I'm working on the Echo Android project. Follow this EXACT workflow:
 
 🚨 PHASE 1: MANDATORY READING (15 minutes - DO NOT SKIP)
 1. Read docs/agent-workflow/critical-principles.md COMPLETELY - Non-negotiable quality standards
