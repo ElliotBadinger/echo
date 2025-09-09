@@ -50,6 +50,13 @@ echo "sdk.dir=/path/to/your/android/sdk" > local.properties
 
 ## 🤖 AI Agent Development
 
+### Default Agent Prompt (for new agents)
+- Remote-first TIER 1: Check GitHub CI/CD workflows; if failing, fix remote first
+- Local TIER 1: Only after remote is green, run local build/tests and fix critical errors
+- Small, incremental changes; test immediately after each change
+- Use manual git commands for commits/pushes; never push via GitHub MCP
+- Research with MCP before complex changes; document significant changes via templates
+
 **Essential Reading (5 minutes):**
 1. **[Core Principles](docs/agent-workflow/core-principles.md)** - The 5 non-negotiable rules
 2. **[Current Status](docs/project-state/current-status.md)** - Project state and priorities
@@ -150,6 +157,7 @@ echo/
 - **[Brave Search Guide](docs/mcp-integration/brave-search-guide.md)** - Technical research methodology
 - **[GitHub MCP Guide](docs/mcp-integration/github-mcp-guide.md)** - CI/CD and repository management
 - **[Playwright Guide](docs/mcp-integration/playwright-guide.md)** - Web research and extraction
+- **[Browserbase/Stagehand Guide](docs/mcp-integration/browserbase-stagehand-guide.md)** - Single-session cloud browser workflow
 
 ### 📝 Templates
 - **[Change Log Template](docs/templates/change-log-template.md)** - Standardized change documentation
@@ -204,10 +212,11 @@ find . -name "*.kt" -o -name "*.java" | head -20
 ```
 
 **🔥 CRITICAL FOR AI AGENTS:** 
-1. **READ** `docs/agent-workflow/core-principles.md` before making ANY changes
-2. **NEVER USE** GitHub MCP for commits - use manual git commands only
-3. **FOLLOW** the incremental change methodology - small steps only
-4. **DOCUMENT** significant changes using templates in `docs/templates/`
+1. Remote-first: Check remote CI/CD (GitHub) and fix failures before local TIER 1
+2. READ `docs/agent-workflow/core-principles.md` before making ANY changes
+3. NEVER USE GitHub MCP for commits - use manual git commands only
+4. FOLLOW the incremental change methodology - small steps only
+5. DOCUMENT significant changes using templates in `docs/templates/`
 
 ## 📚 Documentation
 

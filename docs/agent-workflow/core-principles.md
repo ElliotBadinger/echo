@@ -4,6 +4,10 @@
 
 ## 🚨 The Error-First Priority System
 
+### Remote-First Rule (New)
+- Before local TIER 1, check remote (GitHub) CI/CD. If remote CI is failing, treat that as TIER 1 and fix it first.
+- Rationale: Remote CI represents the source of truth and ensures clean-environment reproducibility.
+
 **TIER 1 - Critical Errors (FIX FIRST, ALWAYS)**
 - Build failures, test compilation errors, runtime crashes
 - **Rule:** Never proceed to TIER 2 if ANY TIER 1 issues exist

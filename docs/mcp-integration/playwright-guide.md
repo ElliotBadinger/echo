@@ -43,6 +43,24 @@ Playwright MCP server provides web automation capabilities for research, documen
 
 ## 🛠️ Playwright Usage Patterns
 
+### Initialization Checklist (Required)
+- Run install once per environment boot (ensures browser availability)
+- Validate configuration (credentials/paths if needed) before first navigation
+
+### Robust Extraction Flow (Recommended)
+1) Install (once): Ensure the browser is installed/bootstrapped
+2) Navigate: Go to target URL
+3) Wait: Wait for known on-page text (e.g., a heading string) to appear
+4) Evaluate or Extract:
+   - Prefer evaluating after the wait, targeting specific selectors or headings
+   - If `evaluate` returns nothing, fall back to extracting page text content (not raw HTML) using the extraction step
+
+### Fallback Strategy
+- If DOM evaluation yields empty content, run a text-extract to capture the rendered page’s main content (headings + body) rather than HTML nodes.
+
+### Do Not Mix Engines in One Flow
+- Treat Playwright and Puppeteer as independent engines. Do not assume shared state.
+
 ### Documentation Extraction Workflow
 
 #### Step 1: Navigate to Target Content

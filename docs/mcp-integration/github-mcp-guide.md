@@ -116,6 +116,19 @@ list_workflow_run_artifacts({
 
 ## 🛠️ Development Workflow Integration
 
+### Remote-First TIER 1 Policy (Critical)
+- Always check remote CI/CD status first and address failures before beginning local TIER 1 work.
+- Why: Remote CI validates a clean environment and protects the mainline; resolving remote failures first prevents divergence and wasted local effort.
+
+#### Remote TIER 1 Checklist
+1) list_workflows → identify CI workflow(s)
+2) list_workflow_runs → inspect latest run(s)
+3) If failure: get_job_logs (failed_only=true, return_content=true) → identify error
+4) Fix or open an issue/PR to address the failure
+5) Re-run failed jobs or workflow as needed
+
+Once remote CI is green, proceed to local TIER 1 (build/test on your machine).
+
 ### CI/CD Monitoring Strategy
 
 #### Pre-Implementation Validation

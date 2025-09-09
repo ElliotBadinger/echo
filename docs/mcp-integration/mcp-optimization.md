@@ -21,6 +21,20 @@ This guide provides comprehensive strategies for optimizing MCP server usage acr
 
 ## 🔍 MCP Server Selection Framework
 
+### Operational Playbooks (Addenda)
+
+- Browserbase/Stagehand:
+  - Use single-session flow for most documentation tasks: create → navigate → extract → close session
+  - Do not mix with `multi_..._session` calls in the same flow
+
+- Playwright (generic browser):
+  - Always run install once per environment boot
+  - Sequence: install → navigate → wait for known text → evaluate/extract
+  - If evaluate returns nothing, fall back to extracting page text (not HTML nodes)
+
+- GitHub MCP (Policy):
+  - Remote-first TIER 1: Check and fix CI/CD failures on the remote repository before starting local TIER 1 work
+
 ### Decision Tree for MCP Server Selection
 
 #### Step 1: Identify Task Type
