@@ -522,44 +522,5 @@ class SaidItService : Service() {
         fun getService(): SaidItService = this@SaidItService
     }
 
-    /**
-     * File receiver that creates notifications for saved recordings.
-     * Used for background auto-save operations.
-     */
-    inner class NotifyFileReceiver(private val context: Context) : WavFileReceiver {
-        override fun onSuccess(fileUri: Uri) {
-            val notificationManager = NotificationManagerCompat.from(context)
-            if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
-                return
-            }
-            notificationManager.notify(43, buildNotificationForFile(context, fileUri, "Recording Saved"))
-        }
-
-        override fun onFailure(e: Exception) {
-            // Do nothing for background notifications
-        }
-    }
-
-    /**
-     * Builds a notification for a saved recording file.
-     */
-    private fun buildNotificationForFile(context: Context, fileUri: Uri, fileName: String): Notification {
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(fileUri, "audio/mp4")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-
-        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-
-        return NotificationCompat.Builder(context, YOUR_NOTIFICATION_CHANNEL_ID)
-            .setContentTitle(context.getString(R.string.recording_saved))
-            .setContentText(fileName)
-            .setSmallIcon(R.drawable.ic_stat_notify_recorded)
-            .setTicker(fileName)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .build()
-    }
+    // NotifyFileReceiver has been moved to a separate file as a top-level class
 }
