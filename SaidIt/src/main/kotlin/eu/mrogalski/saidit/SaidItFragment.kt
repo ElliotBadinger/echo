@@ -81,7 +81,7 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
         }
     }
 
-    private val updater = Runnable {
+    private val updater: Runnable = Runnable {
         view?.let { view ->
             echo?.let { service ->
                 service.getState(serviceStateCallback)
