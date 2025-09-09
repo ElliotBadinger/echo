@@ -184,10 +184,25 @@ Uses Gradle version catalog for dependency management. Key versions:
 
 ### Migration Strategy
 Project is actively migrating Java classes to Kotlin:
-- Focus on utility classes first
-- Each migration includes comprehensive tests
-- Maintain backward compatibility during transition
-- Use modern Kotlin patterns (coroutines, data classes, extension functions)
+- **Impact-First Selection**: Choose files with meaningful business logic (50+ lines)
+- **Comprehensive Testing Mandatory**: Integration tests, not just annotation validation
+- **Architectural Investigation**: Identify and fix design issues during conversion
+- **Backward Compatibility**: Maintain during transition
+- **Modern Patterns**: Use coroutines, data classes, extension functions
+
+### 🚨 Migration Quality Requirements
+**Each Kotlin migration MUST include:**
+1. **Integration Tests**: Verify actual framework integration (Hilt, Android, etc.)
+2. **Behavioral Testing**: Test real use cases, not just method signatures
+3. **Dependency Verification**: Confirm injected dependencies are actually used
+4. **Error Scenarios**: Edge cases, null handling, invalid inputs
+5. **Architectural Audit**: Document any discovered design issues
+
+**FORBIDDEN Migration Patterns:**
+- Converting only trivial files (< 30 lines)
+- Tests that only check annotations exist
+- Skipping integration with actual Android framework
+- Ignoring discovered architectural problems
 
 ## Common Development Tasks
 

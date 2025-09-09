@@ -36,6 +36,18 @@
 - If something breaks, rollback immediately before proceeding
 - Commit frequently with descriptive messages
 
+### 🚨 Anti-Complexity-Avoidance Rule
+**DO NOT cherry-pick the easiest files to avoid real challenges:**
+- ❌ **Lazy Pattern**: Converting only 10-line Application classes or simple data holders
+- ❌ **Shortcuts**: Choosing files with minimal logic to convert quickly
+- ✅ **Proper Approach**: Tackle meaningful complexity - Activities, Adapters, Services with real business logic
+- ✅ **Impact Focus**: Each migration should solve actual architectural problems or improve maintainability
+
+**Size Guidelines for Kotlin Migration:**
+- **Avoid**: Files < 30 lines (usually trivial conversions)
+- **Prefer**: Files 50-200 lines (meaningful business logic)
+- **Challenge**: Files > 200 lines (significant architectural improvements)
+
 ## 📋 Session Audit Requirement
 
 **Before starting ANY new work:**
@@ -43,6 +55,20 @@
 2. Verify the previous session's claims by running tests
 3. Check that "completed" conversions have proper comprehensive tests
 4. If previous work is incomplete/broken, fix it FIRST before new goals
+
+### 🚨 CRITICAL: Migration Quality Audit
+**All previous Kotlin migrations MUST be validated for comprehensive testing:**
+- EchoApp.kt - Check if tests cover Application lifecycle, not just annotations
+- AppModule.kt - Verify Hilt integration tests, singleton behavior, actual usage verification  
+- SaidItFragment.kt - Validate Fragment lifecycle, service integration, UI state testing
+- All utility classes - Ensure tests cover actual use cases, not just method signatures
+
+**RED FLAGS - Signs of Inadequate Testing:**
+- Tests only check annotations exist (@Module, @Singleton, etc.)
+- No integration testing with actual Android framework
+- No verification that injected dependencies are actually used
+- Tests don't cover error scenarios or edge cases
+- Missing actual behavioral verification
 
 ## ⚠️ Critical Git Warning
 

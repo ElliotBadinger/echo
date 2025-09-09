@@ -9,15 +9,20 @@
 ## 🎯 Priority Framework
 
 ### TIER 1 - Critical Errors
-**Status:** ✅ RESOLVED - No active blocking issues
+**Status:** 🚨 **ACTIVE** - Migration Quality Audit Required
 
 - ✅ **Kotlin Compilation Errors** - Fixed (MockK → Mockito conversion)
 - ✅ **Gradle Build Hanging** - Resolved (root cause fixed)
 - ✅ **CI Pipeline** - Operational (all modules included)
+- 🚨 **NEW**: **Migration Quality Audit** - HIGHEST PRIORITY
+  - EchoApp.kt tests are superficial (annotation-only)
+  - AppModule.kt tests don't verify integration
+  - AudioConfig architectural disconnect needs investigation
+  - All previous migrations need comprehensive test validation
 
-### TIER 2 - Incremental Improvements (ACTIVE)
-**Status:** 🟢 ACTIVE - Ready for development
-**Strategic Decision:** Complete Kotlin migration first, then UI enhancement
+### TIER 2 - Incremental Improvements 
+**Status:** ❌ **BLOCKED** - Awaiting migration quality audit completion
+**Strategic Decision:** Complete quality audit first, then continue Kotlin migration
 
 ### TIER 3 - Architecture & Advanced Features (Planned)
 **Status:** ⏳ After TIER 2 progress
@@ -83,12 +88,19 @@
 
 ---
 
-## ✅ Next Agent Actions (Immediate)
+## 🚨 Next Agent Actions (MANDATORY - TIER 1)
 
-1. Continue Kotlin migration on next Java file
-2. If working on Android framework tests, refine Robolectric config for SaidIt (fix 18 failing tests)
-3. Keep CI green and tests passing after each change
-4. Document each change in `docs/project-state/change-log.md`
+**BEFORE ANY NEW MIGRATION WORK:**
+1. **READ**: `docs/templates/migration-quality-audit.md` - Complete mandatory audit
+2. **FIX**: EchoApp.kt tests - Add Application lifecycle and Hilt integration testing
+3. **INVESTIGATE**: AppModule AudioConfig architectural issue - Is it used by SaidItService?
+4. **UPGRADE**: All migration tests from annotation-checking to behavioral verification
+5. **DOCUMENT**: Architectural decisions and any discovered issues
+
+**ONLY AFTER AUDIT COMPLETE:**
+6. Continue Kotlin migration with proper comprehensive testing
+7. Focus on meaningful files (50+ lines, real business logic)
+8. Document each change with architectural investigation results
 
 ---
 
