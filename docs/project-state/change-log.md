@@ -1,8 +1,81 @@
 # Project Change Log
 
-**Version:** 2.4 - Quality Standards Update + Migration Audit Framework
-**Last Updated:** 2025-09-09 11:05 UTC
+**Version:** 2.5 - RecordingsActivity Kotlin Migration Complete
+**Last Updated:** 2025-09-09 19:02 UTC
 **Format:** Research-driven change documentation with MCP integration
+
+---
+
+## Change [2025-09-09 19:02] - TIER2_RECORDINGS_ACTIVITY_MIGRATION_COMPLETE
+
+### Goal
+- Continue TIER 2 Kotlin migration with RecordingsActivity
+- Apply comprehensive behavioral testing as per quality standards
+- Validate changes through GitHub Actions CI/CD
+- Document any discovered architectural issues
+
+### What Changed
+- **CONVERTED**: RecordingsActivity.java → RecordingsActivity.kt (97 → 107 lines)
+- **ADDED**: RecordingsActivityTest.kt with 11 comprehensive behavioral tests
+- **DELETED**: Original RecordingsActivity.java file
+- **VALIDATED**: All changes through GitHub Actions CI/CD pipeline
+
+### Technical Improvements
+**Kotlin Patterns Applied:**
+- Resource management with `.use { }` for auto-closing cursors
+- Null safety with safe call operators (`?.`)
+- Method extraction for better organization (`setupToolbar()`, `setupRecordingsList()`)
+- String interpolation for cleaner MediaStore queries
+- `mutableListOf()` instead of ArrayList
+
+**Comprehensive Tests Added (11 test cases):**
+- Activity lifecycle management verification
+- UI component initialization checks
+- Toolbar configuration with back navigation
+- Empty view visibility when no recordings exist
+- RecyclerView adapter setup validation
+- MediaStore query parameters verification
+- Media player release on `onStop()`
+- Cursor data parsing correctness
+- Navigation click behavior
+- MIME type filtering validation
+
+### CI/CD Validation Results
+✅ **Unit Tests (Robolectric)**: All passed including new RecordingsActivityTest
+✅ **Android Lint**: No code quality issues
+✅ **Cross-Platform CI**: Build successful
+✅ **Compilation**: All Kotlin code compiles correctly
+❌ **Instrumentation Tests**: Failed (pre-existing permission issue, not related to migration)
+
+### Discovered Issue
+**Android 14 (API 34) Permission Issue:**
+- **Problem**: SaidItService crashes with `SecurityException` when starting foreground service
+- **Root Cause**: Missing `FOREGROUND_SERVICE_MICROPHONE` permission in manifest
+- **Impact**: Only affects instrumentation tests on API 34+
+- **Status**: Pre-existing issue, not caused by this migration
+- **Fix Required**: Add permission to AndroidManifest.xml (future work)
+
+### Result
+✅ **MIGRATION SUCCESS**: RecordingsActivity fully converted with quality standards met
+✅ **BEHAVIORAL TESTS**: All 11 tests passing, no superficial annotation-only tests
+✅ **CI VALIDATION**: GitHub Actions confirmed all unit tests pass
+✅ **CODE QUALITY**: Lint checks passed without issues
+🚨 **KNOWN ISSUE DOCUMENTED**: API 34 permission issue logged for future fix
+
+### Migration Progress Update
+**Completed Kotlin Conversions** (as of this change):
+- ✅ RecordingsActivity.java → RecordingsActivity.kt (THIS SESSION)
+- ✅ EchoApp.java → EchoApp.kt
+- ✅ AppModule.java → AppModule.kt
+- ✅ SaidItFragment.java → SaidItFragment.kt
+- ✅ Multiple utility classes (StringFormat, Clock, TimeFormat, Views, UserInfo, IntentResult, BroadcastReceiver, AacMp4Writer)
+
+**Remaining Major Java Files:**
+- SaidItActivity.java (195 lines)
+- SettingsActivity.java (243 lines)
+- RecordingsAdapter.java (258 lines)
+- SaveClipBottomSheet.java (102 lines)
+- Audio processing classes in simplesound package
 
 ---
 
