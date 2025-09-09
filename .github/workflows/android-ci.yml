@@ -63,8 +63,8 @@ jobs:
 
   android-instrumented:
     name: Instrumentation tests (API 34)
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+    runs-on: macos-13
+    timeout-minutes: 50
     needs: unit-tests
     steps:
       - name: Checkout
@@ -85,15 +85,24 @@ jobs:
         run: |
           ./gradlew :SaidIt:assembleDebug :SaidIt:assembleAndroidTest --no-daemon
 
-      - name: Run instrumented tests on emulator
+      - name: Run instrumented tests on emulator (macOS Intel)
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          target: google_apis
+          target: default
           arch: x86_64
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
+          profile: pixel_6
+          avd-name: ci-api-34
+          force-avd-creation: true
           disable-animations: true
-          script: ./gradlew :SaidIt:connectedDebugAndroidTest --no-daemon
+          emulator-boot-timeout: 1200
+          ram-size: 4096
+          disk-size: 8G
+          cores: 3
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none -no-snapshot -no-snapshot-save -wipe-data
+          script: |
+            adb devices -l
+            ./gradlew :SaidIt:connectedDebugAndroidTest --no-daemon
 
       - name: Upload android test reports
         if: always()
