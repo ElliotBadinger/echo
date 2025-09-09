@@ -41,11 +41,12 @@ data class RecordingItem(
     
     /**
      * Checks if this recording is considered recent (within the last 24 hours).
+     * Uses >= comparison to include recordings exactly at the 24-hour boundary.
      * 
      * @return true if the recording was created within the last 24 hours
      */
     fun isRecent(): Boolean {
         val twentyFourHoursAgo = System.currentTimeMillis() - (24 * 60 * 60 * 1000)
-        return date > twentyFourHoursAgo
+        return date >= twentyFourHoursAgo
     }
 }

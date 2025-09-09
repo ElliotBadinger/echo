@@ -9,20 +9,64 @@ import java.io.Closeable
 import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
+import javax.inject.Inject
 import kotlin.math.min
+
+/**
+ * Factory interface for creating MediaCodec instances.
+ * Enables dependency injection and proper testing.
+ */
+interface MediaCodecFactory {
+    fun createEncoder(mimeType: String): MediaCodec
+}
+
+/**
+ * Factory interface for creating MediaMuxer instances.
+ * Enables dependency injection and proper testing.
+ */
+interface MediaMuxerFactory {
+    fun createMuxer(outputPath: String, format: Int): MediaMuxer
+}
+
+/**
+ * Default implementation of MediaCodecFactory.
+ */
+class DefaultMediaCodecFactory @Inject constructor() : MediaCodecFactory {
+    override fun createEncoder(mimeType: String): MediaCodec {
+        return MediaCodec.createEncoderByType(mimeType)
+    }
+}
+
+/**
+ * Default implementation of MediaMuxerFactory.
+ */
+class DefaultMediaMuxerFactory @Inject constructor() : MediaMuxerFactory {
+    override fun createMuxer(outputPath: String, format: Int): MediaMuxer {
+        return MediaMuxer(outputPath, format)
+    }
+}
 
 /**
  * Encodes PCM 16-bit mono to AAC-LC and writes into an MP4 (.m4a) container.
  * Thread-safe for single-producer usage on an audio thread.
  * 
- * Modern Kotlin implementation with null safety and proper resource management.
- * Uses Kotlin's `use` extension for automatic resource cleanup.
+ * Modern Kotlin implementation with dependency injection for testability.
+ * Uses proper resource management and error handling.
+ * 
+ * @param sampleRate Audio sample rate in Hz
+ * @param channelCount Number of audio channels
+ * @param bitRate Audio bit rate in bits per second
+ * @param outFile Output MP4 file
+ * @param codecFactory Factory for creating MediaCodec instances (injectable for testing)
+ * @param muxerFactory Factory for creating MediaMuxer instances (injectable for testing)
  */
 class AacMp4Writer(
     private val sampleRate: Int,
     private val channelCount: Int,
     bitRate: Int,
-    outFile: File
+    outFile: File,
+    private val codecFactory: MediaCodecFactory = DefaultMediaCodecFactory(),
+    private val muxerFactory: MediaMuxerFactory = DefaultMediaMuxerFactory()
 ) : Closeable {
     
     companion object {
@@ -49,12 +93,12 @@ class AacMp4Writer(
                 setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 16384)
             }
 
-            encoder = MediaCodec.createEncoderByType(MIME_TYPE).apply {
+            encoder = codecFactory.createEncoder(MIME_TYPE).apply {
                 configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
                 start()
             }
 
-            muxer = MediaMuxer(outFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            muxer = muxerFactory.createMuxer(outFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
         } catch (e: Exception) {
             // Ensure cleanup if initialization fails
             runCatching { encoder.release() }

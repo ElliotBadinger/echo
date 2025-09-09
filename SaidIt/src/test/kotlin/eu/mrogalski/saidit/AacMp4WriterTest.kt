@@ -1,286 +1,324 @@
 package eu.mrogalski.saidit
 
 import android.media.MediaCodec
+import android.media.MediaFormat
+import android.media.MediaMuxer
+import org.junit.Before
 import org.junit.Test
-import org.junit.Assert.assertTrue
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import org.junit.Assert.*
+import org.junit.runner.RunWith
+import org.mockito.Mock
+import org.mockito.Mockito.*
+import org.mockito.junit.MockitoJUnitRunner
+import java.io.File
+import java.io.IOException
+import java.nio.ByteBuffer
 
 /**
- * Unit tests for AacMp4Writer Kotlin implementation.
- * Tests parameter validation, data handling logic, and error conditions.
- * 
- * Note: Does not test Android framework integration directly to avoid mocking issues.
- * Integration testing should be done separately with instrumented tests.
+ * Comprehensive unit tests for AacMp4Writer using dependency injection.
+ * Tests MediaCodec integration, resource management, and error handling
+ * through proper mocking of factory interfaces.
  */
+@RunWith(MockitoJUnitRunner::class)
 class AacMp4WriterTest {
+
+    @Mock private lateinit var mockCodecFactory: MediaCodecFactory
+    @Mock private lateinit var mockMuxerFactory: MediaMuxerFactory
+    @Mock private lateinit var mockEncoder: MediaCodec
+    @Mock private lateinit var mockMuxer: MediaMuxer
+    @Mock private lateinit var mockFormat: MediaFormat
+    @Mock private lateinit var mockInputBuffer: ByteBuffer
+    @Mock private lateinit var mockOutputBuffer: ByteBuffer
+    @Mock private lateinit var mockFile: File
 
     private val sampleRate = 44100
     private val channelCount = 1
     private val bitRate = 128000
     private val testData = ByteArray(1024) { it.toByte() }
 
-    @Test
-    fun `constructor validates parameters correctly`() {
-        // Given: Valid parameters
-        val validSampleRate = 44100
-        val validChannelCount = 1
-        val validBitRate = 128000
+    @Before
+    fun setUp() {
+        // Setup file mock
+        `when`(mockFile.absolutePath).thenReturn("/test/path/output.m4a")
         
-        // When & Then: Parameters should be within valid ranges
-        assertTrue("Sample rate should be positive", validSampleRate > 0)
-        assertTrue("Channel count should be positive", validChannelCount > 0)
-        assertTrue("Bit rate should be positive", validBitRate > 0)
+        // Setup factory mocks
+        `when`(mockCodecFactory.createEncoder(MediaFormat.MIMETYPE_AUDIO_AAC)).thenReturn(mockEncoder)
+        `when`(mockMuxerFactory.createMuxer(anyString(), anyInt())).thenReturn(mockMuxer)
         
-        // Verify reasonable audio format ranges
-        assertTrue("Sample rate should be reasonable", validSampleRate >= 8000 && validSampleRate <= 192000)
-        assertTrue("Channel count should be reasonable", validChannelCount >= 1 && validChannelCount <= 8)
-        assertTrue("Bit rate should be reasonable", validBitRate >= 32000 && validBitRate <= 320000)
+        // Setup encoder behavior
+        `when`(mockEncoder.outputFormat).thenReturn(mockFormat)
+        `when`(mockEncoder.getInputBuffer(anyInt())).thenReturn(mockInputBuffer)
+        `when`(mockEncoder.getOutputBuffer(anyInt())).thenReturn(mockOutputBuffer)
+        
+        // Setup buffer behavior
+        `when`(mockInputBuffer.remaining()).thenReturn(1024)
+        `when`(mockOutputBuffer.remaining()).thenReturn(512)
+        
+        // Setup muxer behavior
+        `when`(mockMuxer.addTrack(any())).thenReturn(0)
+        
+        // Setup successful operations by default
+        doNothing().`when`(mockEncoder).configure(any(), any(), any(), anyInt())
+        doNothing().`when`(mockEncoder).start()
+        doNothing().`when`(mockEncoder).stop()
+        doNothing().`when`(mockEncoder).release()
+        doNothing().`when`(mockMuxer).start()
+        doNothing().`when`(mockMuxer).stop()
+        doNothing().`when`(mockMuxer).release()
     }
 
     @Test
-    fun `write validates input parameters correctly`() {
-        // Given: Test data and parameters
-        val offset = 0
-        val length = testData.size
+    fun `constructor initializes encoder and muxer correctly`() {
+        // When
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
         
-        // When & Then: Verify parameter validation logic
-        assertTrue("Offset should be non-negative", offset >= 0)
-        assertTrue("Length should be non-negative", length >= 0)
-        assertTrue("Offset + length should not exceed array bounds", offset + length <= testData.size)
-        assertTrue("Data array should not be empty", testData.isNotEmpty())
+        // Then
+        verify(mockCodecFactory).createEncoder(MediaFormat.MIMETYPE_AUDIO_AAC)
+        verify(mockMuxerFactory).createMuxer("/test/path/output.m4a", MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        verify(mockEncoder).configure(any(), isNull(), isNull(), eq(MediaCodec.CONFIGURE_FLAG_ENCODE))
+        verify(mockEncoder).start()
+        
+        writer.close()
+    }
+
+    @Test(expected = IOException::class)
+    fun `constructor throws IOException when encoder creation fails`() {
+        // Given
+        `when`(mockCodecFactory.createEncoder(anyString())).thenThrow(RuntimeException("Encoder creation failed"))
+        
+        // When
+        AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
     }
 
     @Test
-    fun `MediaCodec buffer index handling works correctly`() {
-        // Given: Various buffer index scenarios
-        val validBufferIndex = 0
-        val noBufferAvailable = -1
-        val tryAgainLater = MediaCodec.INFO_TRY_AGAIN_LATER
+    fun `write processes data with available input buffer`() {
+        // Given
+        `when`(mockEncoder.dequeueInputBuffer(anyLong())).thenReturn(0)
+        `when`(mockEncoder.dequeueOutputBuffer(any(), anyLong())).thenReturn(MediaCodec.INFO_TRY_AGAIN_LATER)
         
-        // When & Then: Verify buffer index validation
-        assertTrue("Valid buffer index should be non-negative", validBufferIndex >= 0)
-        assertTrue("No buffer available should be -1", noBufferAvailable == -1)
-        assertTrue("Try again later should be handled", tryAgainLater == MediaCodec.INFO_TRY_AGAIN_LATER)
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
+        
+        // When
+        writer.write(testData, 0, testData.size)
+        
+        // Then
+        verify(mockEncoder).dequeueInputBuffer(anyLong())
+        verify(mockEncoder).getInputBuffer(0)
+        verify(mockEncoder).queueInputBuffer(eq(0), eq(0), anyInt(), anyLong(), eq(0))
+        
+        writer.close()
     }
 
     @Test
-    fun `null buffer handling works correctly`() {
-        // Given: Null buffer scenario
-        val nullBuffer: java.nio.ByteBuffer? = null
+    fun `write handles no available input buffer scenario`() {
+        // Given
+        `when`(mockEncoder.dequeueInputBuffer(anyLong())).thenReturn(-1)
+        `when`(mockEncoder.dequeueOutputBuffer(any(), anyLong())).thenReturn(MediaCodec.INFO_TRY_AGAIN_LATER)
         
-        // When & Then: Should handle null buffer gracefully
-        assertTrue("Null buffer should be detected", nullBuffer == null)
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
         
-        // Verify that null buffer handling logic would prevent crashes
-        val isNullBuffer = nullBuffer == null
-        assertTrue("Null buffer check should work", isNullBuffer)
+        // When
+        writer.write(testData, 0, testData.size)
+        
+        // Then
+        verify(mockEncoder, atLeastOnce()).dequeueInputBuffer(anyLong())
+        verify(mockEncoder, atLeastOnce()).dequeueOutputBuffer(any(), anyLong())
+        
+        writer.close()
     }
 
     @Test
-    fun `MediaCodec format change detection works correctly`() {
-        // Given: Format change scenario
-        val formatChangeResult = MediaCodec.INFO_OUTPUT_FORMAT_CHANGED
-        val tryAgainResult = MediaCodec.INFO_TRY_AGAIN_LATER
+    fun `drainEncoder handles format change correctly`() {
+        // Given
+        `when`(mockEncoder.dequeueInputBuffer(anyLong())).thenReturn(0)
+        `when`(mockEncoder.dequeueOutputBuffer(any(), anyLong()))
+            .thenReturn(MediaCodec.INFO_OUTPUT_FORMAT_CHANGED)
+            .thenReturn(MediaCodec.INFO_TRY_AGAIN_LATER)
         
-        // When & Then: Format change should be detected
-        assertEquals("Format change should be detected", MediaCodec.INFO_OUTPUT_FORMAT_CHANGED, formatChangeResult)
-        assertTrue("Format change should be handled", formatChangeResult == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED)
-        assertTrue("Try again should be different from format change", tryAgainResult != formatChangeResult)
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
+        
+        // When
+        writer.write(testData, 0, testData.size)
+        
+        // Then
+        verify(mockEncoder).outputFormat
+        verify(mockMuxer).addTrack(mockFormat)
+        verify(mockMuxer).start()
+        
+        writer.close()
+    }
+
+    @Test(expected = IllegalStateException::class)
+    fun `drainEncoder throws exception on double format change`() {
+        // Given
+        `when`(mockEncoder.dequeueInputBuffer(anyLong())).thenReturn(0)
+        `when`(mockEncoder.dequeueOutputBuffer(any(), anyLong()))
+            .thenReturn(MediaCodec.INFO_OUTPUT_FORMAT_CHANGED)
+            .thenReturn(MediaCodec.INFO_OUTPUT_FORMAT_CHANGED)
+        
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
+        
+        // When
+        writer.write(testData, 0, testData.size)
+        
+        writer.close()
     }
 
     @Test
-    fun `double format change detection logic works correctly`() {
-        // Given: Multiple format changes (error condition)
-        val firstFormatChange = MediaCodec.INFO_OUTPUT_FORMAT_CHANGED
-        val secondFormatChange = MediaCodec.INFO_OUTPUT_FORMAT_CHANGED
-        var formatChangeCount = 0
+    fun `close handles encoder errors gracefully`() {
+        // Given
+        doThrow(RuntimeException("Stop failed")).`when`(mockEncoder).stop()
         
-        // When: Simulating format change detection
-        if (firstFormatChange == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) formatChangeCount++
-        if (secondFormatChange == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) formatChangeCount++
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
+        writer.write(testData, 0, testData.size)
         
-        // Then: Double format change should be detected as error
-        assertEquals("First format change should be detected", MediaCodec.INFO_OUTPUT_FORMAT_CHANGED, firstFormatChange)
-        assertEquals("Second format change should be detected", MediaCodec.INFO_OUTPUT_FORMAT_CHANGED, secondFormatChange)
-        assertTrue("Double format change should be error condition", formatChangeCount > 1)
+        // When
+        writer.close()
+        
+        // Then - should still attempt cleanup
+        verify(mockEncoder).stop()
+        verify(mockEncoder).release()
+        verify(mockMuxer).release()
     }
 
     @Test
-    fun `error handling logic works correctly`() {
-        // Given: Error scenarios
-        val errorMessage = "Stop failed"
-        val exception = RuntimeException(errorMessage)
+    fun `close handles muxer errors gracefully`() {
+        // Given
+        doThrow(RuntimeException("Muxer stop failed")).`when`(mockMuxer).stop()
         
-        // When & Then: Should handle errors gracefully
-        assertEquals("Error message should be preserved", errorMessage, exception.message)
-        assertTrue("Exception should be RuntimeException", exception is RuntimeException)
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
+        writer.write(testData, 0, testData.size)
         
-        // Verify error handling logic
-        var errorHandled = false
-        try {
-            throw exception
-        } catch (e: RuntimeException) {
-            errorHandled = true
-        }
-        assertTrue("Error should be caught and handled", errorHandled)
+        // When
+        writer.close()
+        
+        // Then - should still attempt cleanup
+        verify(mockMuxer).stop()
+        verify(mockMuxer).release()
+        verify(mockEncoder).release()
     }
 
     @Test
-    fun `resource cleanup logic works correctly`() {
-        // Given: Resource cleanup scenario
-        var encoderClosed = false
-        var muxerClosed = false
+    fun `getTotalSampleBytesWritten tracks bytes correctly`() {
+        // Given
+        `when`(mockEncoder.dequeueInputBuffer(anyLong())).thenReturn(0)
+        `when`(mockEncoder.dequeueOutputBuffer(any(), anyLong())).thenReturn(MediaCodec.INFO_TRY_AGAIN_LATER)
         
-        // When: Simulating cleanup process
-        try {
-            // Simulate encoder cleanup
-            encoderClosed = true
-        } catch (e: Exception) {
-            // Should still attempt muxer cleanup
-        }
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
         
-        try {
-            // Simulate muxer cleanup
-            muxerClosed = true
-        } catch (e: Exception) {
-            // Cleanup attempted
-        }
+        // When
+        writer.write(testData, 0, testData.size)
         
-        // Then: Cleanup should be attempted for both resources
-        assertTrue("Encoder cleanup should be attempted", encoderClosed)
-        assertTrue("Muxer cleanup should be attempted", muxerClosed)
+        // Then
+        val totalBytes = writer.getTotalSampleBytesWritten()
+        assertEquals("Total bytes should match written data", testData.size, totalBytes)
+        
+        writer.close()
     }
 
     @Test
-    fun `byte tracking logic works correctly`() {
-        // Given: Data writing scenario
-        val dataSize = testData.size
-        var totalBytes = 0
+    fun `getTotalSampleBytesWritten initializes to zero`() {
+        // Given
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
         
-        // When: Simulating byte tracking
-        totalBytes += dataSize
+        // When
+        val initialTotal = writer.getTotalSampleBytesWritten()
         
-        // Then: Should track total bytes written
-        assertTrue("Data size should be positive", dataSize > 0)
-        assertEquals("Data size should match expected", 1024, dataSize)
-        assertEquals("Total bytes should accumulate correctly", dataSize, totalBytes)
-    }
-
-    @Test
-    fun `byte counter initialization works correctly`() {
-        // Given: Initial state
-        val initialTotal = 0
-        
-        // When & Then: Should start at zero
+        // Then
         assertEquals("Initial total should be zero", 0, initialTotal)
-        assertTrue("Initial total should be non-negative", initialTotal >= 0)
+        
+        writer.close()
     }
 
     @Test
-    fun `idempotent close behavior works correctly`() {
-        // Given: Multiple close calls scenario
-        var closeCallCount = 0
-        val maxCloseCalls = 3
+    fun `close can be called multiple times safely`() {
+        // Given
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
         
-        // When: Simulating multiple close calls
-        for (i in 1..maxCloseCalls) {
-            closeCallCount++
-        }
+        // When
+        writer.close()
+        writer.close()
+        writer.close()
         
-        // Then: Multiple close calls should be safe
-        assertEquals("Close should be called multiple times", maxCloseCalls, closeCallCount)
-        assertTrue("Multiple close calls should be handled safely", closeCallCount > 1)
+        // Then - should not throw exceptions
+        verify(mockEncoder, atLeastOnce()).release()
+        verify(mockMuxer, atLeastOnce()).release()
     }
 
     @Test
-    fun `zero length data handling works correctly`() {
-        // Given: Zero-length data
-        val emptyData = ByteArray(0)
-        val zeroLength = 0
+    fun `write validates parameters correctly`() {
+        // Given
+        `when`(mockEncoder.dequeueInputBuffer(anyLong())).thenReturn(0)
+        `when`(mockEncoder.dequeueOutputBuffer(any(), anyLong())).thenReturn(MediaCodec.INFO_TRY_AGAIN_LATER)
         
-        // When & Then: Should handle zero-length writes
-        assertEquals("Empty data should have zero length", 0, emptyData.size)
-        assertEquals("Zero length should be zero", 0, zeroLength)
-        assertTrue("Zero length should be valid", zeroLength >= 0)
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
+        
+        // When
+        writer.write(testData, 0, testData.size)
+        
+        // Then - verify buffer operations with correct parameters
+        verify(mockInputBuffer).clear()
+        verify(mockInputBuffer).put(eq(testData), eq(0), anyInt())
+        verify(mockEncoder).queueInputBuffer(eq(0), eq(0), anyInt(), anyLong(), eq(0))
+        
+        writer.close()
     }
 
     @Test
-    fun `parameter validation logic works correctly`() {
-        // Given: Various parameter combinations
-        val validData = ByteArray(100)
+    fun `MediaCodec buffer operations work correctly`() {
+        // Given
+        `when`(mockEncoder.dequeueInputBuffer(anyLong())).thenReturn(0)
+        `when`(mockEncoder.dequeueOutputBuffer(any(), anyLong()))
+            .thenReturn(0) // Valid output buffer index
+            .thenReturn(MediaCodec.INFO_TRY_AGAIN_LATER)
         
-        // When & Then: Parameter validation
-        // Valid cases
-        assertTrue("Valid offset 0 should pass", 0 >= 0 && 0 <= validData.size)
-        assertTrue("Valid length should pass", validData.size >= 0)
-        assertTrue("Valid offset+length should not exceed bounds", 0 + validData.size <= validData.size)
+        // Setup buffer info for output
+        val bufferInfo = MediaCodec.BufferInfo()
+        bufferInfo.size = 256
+        bufferInfo.offset = 0
+        bufferInfo.flags = 0
         
-        // Invalid cases detection
-        val negativeOffset = -1
-        val negativeLength = -1
-        val outOfBoundsOffset = validData.size + 1
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
         
-        assertFalse("Negative offset should be invalid", negativeOffset >= 0)
-        assertFalse("Negative length should be invalid", negativeLength >= 0)
-        assertFalse("Out-of-bounds offset should be invalid", outOfBoundsOffset <= validData.size)
+        // When
+        writer.write(testData, 0, testData.size)
+        
+        // Then
+        verify(mockEncoder).getInputBuffer(0)
+        verify(mockEncoder).getOutputBuffer(0)
+        verify(mockEncoder).releaseOutputBuffer(0, false)
+        
+        writer.close()
     }
 
     @Test
-    fun `buffer capacity validation works correctly`() {
-        // Given: Buffer capacity scenario
-        val expectedCapacity = 1024
-        val actualCapacity = 1024
+    fun `audio format configuration works correctly`() {
+        // When
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
         
-        // When & Then: Buffer operations should work
-        assertEquals("Buffer capacity should match", expectedCapacity, actualCapacity)
-        assertTrue("Buffer capacity should be positive", actualCapacity > 0)
-        assertTrue("Buffer should have reasonable capacity", actualCapacity >= 512 && actualCapacity <= 8192)
+        // Then - verify MediaFormat configuration through encoder.configure call
+        verify(mockEncoder).configure(any(), isNull(), isNull(), eq(MediaCodec.CONFIGURE_FLAG_ENCODE))
+        
+        writer.close()
     }
 
     @Test
-    fun `audio format configuration validation works correctly`() {
-        // Given: Audio format parameters
-        val configuredBitRate = bitRate
-        val configuredSampleRate = sampleRate
-        val configuredChannelCount = channelCount
+    fun `MediaMuxer track management works correctly`() {
+        // Given
+        `when`(mockEncoder.dequeueInputBuffer(anyLong())).thenReturn(0)
+        `when`(mockEncoder.dequeueOutputBuffer(any(), anyLong()))
+            .thenReturn(MediaCodec.INFO_OUTPUT_FORMAT_CHANGED)
+            .thenReturn(MediaCodec.INFO_TRY_AGAIN_LATER)
         
-        // When & Then: Format configuration should be valid
-        assertTrue("Bit rate should be reasonable", configuredBitRate >= 32000 && configuredBitRate <= 320000)
-        assertTrue("Sample rate should be standard", configuredSampleRate == 44100 || configuredSampleRate == 48000)
-        assertTrue("Channel count should be valid", configuredChannelCount >= 1 && configuredChannelCount <= 2)
+        val writer = AacMp4Writer(sampleRate, channelCount, bitRate, mockFile, mockCodecFactory, mockMuxerFactory)
         
-        // Verify all parameters are set
-        assertTrue("All format parameters should be positive", 
-            configuredBitRate > 0 && configuredSampleRate > 0 && configuredChannelCount > 0)
-    }
-
-    @Test
-    fun `track index validation works correctly`() {
-        // Given: Track management scenario
-        val expectedTrackIndex = 0
-        val actualTrackIndex = 0
+        // When
+        writer.write(testData, 0, testData.size)
         
-        // When & Then: Track management should work
-        assertEquals("Track index should be valid", expectedTrackIndex, actualTrackIndex)
-        assertTrue("Track index should be non-negative", actualTrackIndex >= 0)
-        assertTrue("Track index should be reasonable", actualTrackIndex < 10)
-    }
-
-    @Test
-    fun `file path validation works correctly`() {
-        // Given: File path scenarios
-        val validPath = "/test/path/output.m4a"
-        val invalidPath = ""
+        // Then
+        verify(mockMuxer).addTrack(mockFormat)
+        verify(mockMuxer).start()
         
-        // When & Then: File path validation
-        assertTrue("Valid path should not be empty", validPath.isNotEmpty())
-        assertTrue("Valid path should end with .m4a", validPath.endsWith(".m4a"))
-        assertFalse("Invalid path should be empty", invalidPath.isNotEmpty())
-        
-        // Verify path components
-        val pathComponents = validPath.split("/")
-        assertTrue("Path should have multiple components", pathComponents.size > 1)
-        assertTrue("Filename should be present", pathComponents.last().isNotEmpty())
+        writer.close()
     }
 }
