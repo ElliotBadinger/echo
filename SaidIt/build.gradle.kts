@@ -78,6 +78,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
     testImplementation(libs.robolectric)
     testImplementation(libs.coroutines.test)
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
