@@ -99,15 +99,15 @@ Echo is a modern Android audio recording application featuring:
 
 ### Immediate Priorities
 1. **TIER 2 Incremental Improvements** (Choose based on current project needs):
-   - **Option A**: Continue Kotlin migration (RecordingItem.java → RecordingItem.kt)
-   - **Option B**: Architecture improvements (dependency injection, repository pattern)
-   - **Option C**: UI/UX enhancements (Material You, accessibility)
-   - **Option D**: Performance optimizations (audio processing, memory management)
+   - **Option A**: Continue Kotlin migration using **[Kotlin Migration Framework](../frameworks/kotlin-migration.md)**
+   - **Option B**: Architecture improvements using **[Research Framework](../frameworks/research-framework.md)**
+   - **Option C**: UI/UX enhancements using **[UI/UX Framework](../frameworks/ui-ux-framework.md)**
+   - **Option D**: Performance optimizations using **[Performance Framework](../frameworks/performance-framework.md)**
 
 2. **Monitor Project Health**
-   - Maintain 100% test success rate
-   - Ensure CI pipeline stability
-   - Continue incremental, well-tested improvements
+   - Maintain 100% test success rate per **[Critical Principles](../agent-workflow/critical-principles.md)**
+   - Ensure CI pipeline stability using **[GitHub MCP Guide](../mcp-integration/github-mcp-guide.md)**
+   - Continue incremental, well-tested improvements following **[Session Checklist](../agent-workflow/session-checklist.md)**
 
 ### Long-term Goals
 - Complete Kotlin migration for all utility classes
@@ -154,6 +154,27 @@ The project foundation is solid with:
 
 **Next:** Ready for TIER 2 incremental improvements - Kotlin migration, architecture enhancements, or UI improvements as prioritized.
 
+## 📚 Related Documentation
+
+### Essential Reading for All Agents
+- **[Critical Principles](../agent-workflow/critical-principles.md)** - NON-NEGOTIABLE quality standards
+- **[Complete Workflow Guide](../agent-workflow/detailed-guide.md)** - Full workflow reference
+- **[Session Checklist](../agent-workflow/session-checklist.md)** - Step-by-step process
+- **[Quick Start Guide](../agent-workflow/quick-start.md)** - 15-minute onboarding
+
+### Technical Frameworks
+- **[Research Framework](../frameworks/research-framework.md)** - Research-driven development
+- **[Kotlin Migration Framework](../frameworks/kotlin-migration.md)** - Java-to-Kotlin conversion
+- **[Performance Framework](../frameworks/performance-framework.md)** - Performance optimization
+- **[UI/UX Framework](../frameworks/ui-ux-framework.md)** - UI development
+- **[ML Strategy Framework](../frameworks/ml-strategy.md)** - ML implementation
+
+### MCP Integration
+- **[MCP Optimization](../mcp-integration/mcp-optimization.md)** - MCP server usage strategy
+- **[Context7 Guide](../mcp-integration/context7-guide.md)** - Android documentation
+- **[Brave Search Guide](../mcp-integration/brave-search-guide.md)** - Research methodology
+- **[GitHub MCP Guide](../mcp-integration/github-mcp-guide.md)** - CI/CD monitoring
+
 ---
 
-*This status document is auto-updated with each session. For detailed change history, see `docs/project-state/change-log.md`. For current priorities, see `docs/project-state/priorities.md`.*
+*This status document is auto-updated with each session. For detailed change history, see **[Change Log](change-log.md)**. For current priorities, see **[Current Priorities](priorities.md)**.*

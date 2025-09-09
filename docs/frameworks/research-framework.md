@@ -394,3 +394,34 @@ research-archive/
    - [ ] Create feedback loop from implementation back to research
 
 This framework ensures that every major technical decision is backed by thorough research while maintaining the project's commitment to incremental, well-tested improvements.
+
+---
+
+## 📚 Related Documentation
+
+### Essential Agent Workflow
+- **[Critical Principles](../agent-workflow/critical-principles.md)** - NON-NEGOTIABLE quality standards
+- **[Complete Workflow Guide](../agent-workflow/detailed-guide.md)** - Full workflow reference
+- **[Session Checklist](../agent-workflow/session-checklist.md)** - Step-by-step process
+
+### Other Technical Frameworks
+- **[Kotlin Migration Framework](kotlin-migration.md)** - Java-to-Kotlin conversion methodology
+- **[ML Strategy Framework](ml-strategy.md)** - ML research and implementation strategy
+- **[Performance Framework](performance-framework.md)** - Performance optimization research
+- **[UI/UX Framework](ui-ux-framework.md)** - Professional UI development framework
+- **[Framework Integration](framework-integration.md)** - How all frameworks work together
+
+### MCP Integration for Research
+- **[MCP Optimization](../mcp-integration/mcp-optimization.md)** - MCP server usage strategy
+- **[Brave Search Guide](../mcp-integration/brave-search-guide.md)** - Technical research methodology
+- **[Context7 Guide](../mcp-integration/context7-guide.md)** - Android documentation access
+- **[Playwright Guide](../mcp-integration/playwright-guide.md)** - Web research and extraction
+
+### Project State
+- **[Current Status](../project-state/current-status.md)** - Live project state
+- **[Current Priorities](../project-state/priorities.md)** - Development priorities
+- **[Research Findings](../project-state/research-findings.md)** - Technical insights
+
+### Documentation Templates
+- **[Research Template](../templates/research-template.md)** - Research documentation
+- **[MCP Usage Template](../templates/mcp-usage-template.md)** - MCP server usage tracking

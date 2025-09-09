@@ -593,4 +593,38 @@ const quarterlyOptimizationReview = async () => {
 
 ---
 
+---
+
+## 📚 Related Documentation
+
+### Essential Agent Workflow
+- **[Critical Principles](../agent-workflow/critical-principles.md)** - NON-NEGOTIABLE quality standards
+- **[Complete Workflow Guide](../agent-workflow/detailed-guide.md)** - Full workflow reference
+- **[Session Checklist](../agent-workflow/session-checklist.md)** - Step-by-step process
+
+### Specific MCP Integration Guides
+- **[Context7 Guide](context7-guide.md)** - Android documentation access
+- **[Brave Search Guide](brave-search-guide.md)** - Technical research methodology
+- **[GitHub MCP Guide](github-mcp-guide.md)** - CI/CD and repository management
+- **[Playwright Guide](playwright-guide.md)** - Web research and extraction
+
+### Technical Frameworks
+- **[Research Framework](../frameworks/research-framework.md)** - Research-driven development methodology
+- **[Kotlin Migration Framework](../frameworks/kotlin-migration.md)** - Java-to-Kotlin conversion methodology
+- **[Performance Framework](../frameworks/performance-framework.md)** - Performance optimization research
+- **[UI/UX Framework](../frameworks/ui-ux-framework.md)** - Professional UI development framework
+- **[Framework Integration](../frameworks/framework-integration.md)** - How all frameworks work together
+
+### Project State
+- **[Current Status](../project-state/current-status.md)** - Live project state
+- **[Current Priorities](../project-state/priorities.md)** - Development priorities
+- **[Research Findings](../project-state/research-findings.md)** - Technical insights
+
+### Documentation Templates
+- **[MCP Usage Template](../templates/mcp-usage-template.md)** - MCP server usage tracking
+- **[Research Template](../templates/research-template.md)** - Research documentation
+- **[Change Log Template](../templates/change-log-template.md)** - Standardized change documentation
+
+---
+
 *This comprehensive MCP optimization guide provides strategies for maximizing effectiveness across all MCP servers. For individual server guides, see the specific MCP integration documentation in this directory.*

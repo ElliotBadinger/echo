@@ -36,7 +36,8 @@ As an AI agent, you will:
 ```markdown
 # Read in this order:
 1. docs/README.md (2 min) - Documentation navigation
-2. docs/project-state/current-status.md (3 min) - Project state
+2. docs/agent-workflow/critical-principles.md (1 min) - NON-NEGOTIABLE quality standards
+3. docs/project-state/current-status.md (2 min) - Project state
 ```
 
 ### Key File Locations
@@ -93,14 +94,17 @@ Look at `docs/project-state/priorities.md` and pick:
 ## 🚨 EMERGENCY CONTACTS
 
 ### If You Get Stuck:
-1. **Read the detailed guide:** `docs/agent-workflow/detailed-guide.md`
-2. **Check current priorities:** `docs/project-state/priorities.md`
-3. **Review frameworks:** `docs/frameworks/` directory
+1. **Read the detailed guide:** **[Complete Workflow Guide](detailed-guide.md)**
+2. **Check current priorities:** **[Current Priorities](../project-state/priorities.md)**
+3. **Review frameworks:** **[Frameworks Directory](../frameworks/)**
+4. **Check critical principles:** **[Critical Principles](critical-principles.md)**
+5. **Use MCP integration guides:** **[MCP Integration](../mcp-integration/)**
 
 ### Common First Issues:
-- **Build fails:** Check `docs/project-state/current-status.md`
-- **Tests fail:** Look at CI logs in GitHub Actions
-- **MCP issues:** Check `docs/mcp-integration/` guides
+- **Build fails:** Check **[Current Status](../project-state/current-status.md)**
+- **Tests fail:** Look at CI logs in GitHub Actions using **[GitHub MCP Guide](../mcp-integration/github-mcp-guide.md)**
+- **MCP issues:** Check **[MCP Integration Guides](../mcp-integration/)**
+- **Quality violations:** Review **[Critical Principles](critical-principles.md)**
 
 ---
 
@@ -112,5 +116,7 @@ You're now ready to contribute to Echo Android project. Remember:
 - **Document everything**
 - **Use MCP servers effectively**
 
-*For detailed workflow, see `docs/agent-workflow/detailed-guide.md`*
-*For session procedures, see `docs/agent-workflow/session-checklist.md`*
+*For detailed workflow, see **[Complete Workflow Guide](detailed-guide.md)***
+*For session procedures, see **[Session Checklist](session-checklist.md)***
+*For quality standards, see **[Critical Principles](critical-principles.md)***
+*For current project state, see **[Current Status](../project-state/current-status.md)***

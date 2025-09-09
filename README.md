@@ -52,72 +52,94 @@ echo "sdk.dir=/path/to/your/android/sdk" > local.properties
 
 **IMPORTANT:** This project uses AI agents for development assistance and has comprehensive MCP server integration. The documentation system has been refactored into a unified structure for better navigation and maintenance.
 
-### 📋 **FIRST TIME OR NEW CONVERSATION: Read This Guide**
-👉 **[Complete Agent Workflow Guide](docs/agent-workflow/detailed-guide.md)** - Essential reading for AI-assisted development
+### 📋 **MANDATORY READING FOR ALL AI AGENTS**
 
-### 🎯 **Quick Reference for AI Agents**
+**🚨 CRITICAL: Every AI agent MUST read these files in this exact order before making ANY changes:**
 
-#### Essential Documentation Structure (In Order):
-1. **`docs/project-state/current-status.md`** - Current project state and critical issues
-2. **`docs/agent-workflow/session-checklist.md`** - Step-by-step session workflow
-3. **`docs/project-state/priorities.md`** - Current development priorities
-4. **`docs/frameworks/research-framework.md`** - Research-driven development methodology
-5. **`docs/frameworks/ml-strategy.md`** - ML research and implementation strategy
-6. **`docs/frameworks/performance-framework.md`** - Performance optimization research
-7. **`docs/frameworks/ui-ux-framework.md`** - Professional UI development framework
-8. **`docs/frameworks/kotlin-migration.md`** - Java-to-Kotlin conversion methodology
-9. **`docs/project-state/change-log.md`** - Historical changes and research findings
-10. **`docs/mcp-integration/mcp-optimization.md`** - MCP server usage optimization
+#### Phase 1: Core Workflow Understanding (MANDATORY - 10 minutes)
+1. **[Critical Principles](docs/agent-workflow/critical-principles.md)** - ⚠️ NON-NEGOTIABLE quality standards (READ FIRST)
+2. **[Complete Agent Workflow Guide](docs/agent-workflow/detailed-guide.md)** - Essential reading for AI-assisted development
+3. **[Session Checklist](docs/agent-workflow/session-checklist.md)** - Step-by-step session workflow
+4. **[Quick Start Guide](docs/agent-workflow/quick-start.md)** - 15-minute agent onboarding
+
+#### Phase 2: Project State Assessment (MANDATORY - 5 minutes)
+5. **[Current Status](docs/project-state/current-status.md)** - Current project state and critical issues
+6. **[Current Priorities](docs/project-state/priorities.md)** - Current development priorities
+7. **[Change Log](docs/project-state/change-log.md)** - Historical changes and research findings
+
+#### Phase 3: Technical Framework Reference (AS NEEDED)
+8. **[Research Framework](docs/frameworks/research-framework.md)** - Research-driven development methodology
+9. **[Kotlin Migration Framework](docs/frameworks/kotlin-migration.md)** - Java-to-Kotlin conversion methodology
+10. **[ML Strategy Framework](docs/frameworks/ml-strategy.md)** - ML research and implementation strategy
+11. **[Performance Framework](docs/frameworks/performance-framework.md)** - Performance optimization research
+12. **[UI/UX Framework](docs/frameworks/ui-ux-framework.md)** - Professional UI development framework
+13. **[Framework Integration](docs/frameworks/framework-integration.md)** - How frameworks work together
+
+#### Phase 4: MCP Server Integration (AS NEEDED)
+14. **[MCP Optimization](docs/mcp-integration/mcp-optimization.md)** - MCP server usage optimization
+15. **[Context7 Guide](docs/mcp-integration/context7-guide.md)** - Android documentation access
+16. **[Brave Search Guide](docs/mcp-integration/brave-search-guide.md)** - Technical research methodology
+17. **[GitHub MCP Guide](docs/mcp-integration/github-mcp-guide.md)** - CI/CD and repository management
+18. **[Playwright Guide](docs/mcp-integration/playwright-guide.md)** - Web research and extraction
+
+#### Phase 5: Templates and Automation (WHEN DOCUMENTING)
+19. **[Templates Directory](docs/templates/)** - Standardized documentation templates
+20. **[Automation Directory](docs/automation/)** - Documentation automation scripts
 
 #### **COPY THIS PROMPT for New AI Sessions:**
 ```
-I'm continuing work on the Echo Android project. Please:
+I'm continuing work on the Echo Android project. Please follow this EXACT workflow:
 
-1. Read the docs/agent-workflow/detailed-guide.md file completely - this contains all essential instructions including research tools and CI integration
-2. Follow the docs/agent-workflow/session-checklist.md for proper workflow with error-first prioritization  
-3. Read docs/project-state/current-status.md to understand current project state and research-enhanced development process
-4. Check current build status with: cd echo && ./gradlew clean
-5. Focus on ERROR FIXES FIRST - any failing tests, build errors, or crashes take absolute priority
-6. Use available MCP servers for enhanced development:
-   - GitHub MCP (available): CI/CD workflow monitoring, artifact analysis
-   - Brave Search MCP (if installed): SOTA algorithm research, scientific papers  
-   - Context7 MCP (if installed): Current Android API documentation
-7. Use research frameworks for technical decisions:
-   - RESEARCH_FRAMEWORK.md for overall methodology
-   - ML_STRATEGY_FRAMEWORK.md for ML/AI decisions
-   - PERFORMANCE_RESEARCH_FRAMEWORK.md for optimization
-   - UI_UX_ENHANCEMENT_FRAMEWORK.md for UI work
-   - KOTLIN_MIGRATION_FRAMEWORK.md for Java conversion
-7. Use GitHub MCP server functions ONLY for read-only operations (list_workflow_runs, get_job_logs) - NEVER for commits due to synchronization conflicts
-8. Never attempt large architectural changes - focus on small, well-tested, incremental improvements
-9. Every change must include comprehensive testing (unit, integration, error handling, performance)
-10. For UI changes, follow expert Android design principles with Material You and accessibility
+🚨 PHASE 1: MANDATORY READING (15 minutes - DO NOT SKIP)
+1. Read docs/agent-workflow/critical-principles.md COMPLETELY - Non-negotiable quality standards
+2. Read docs/agent-workflow/detailed-guide.md COMPLETELY - Contains all essential instructions
+3. Read docs/agent-workflow/session-checklist.md - Your step-by-step workflow
+4. Read docs/project-state/current-status.md - Current project state and priorities
 
-Current status: Build success rate is 100%, RecordingViewModelTest fixed. 
+🔍 PHASE 2: PROJECT ASSESSMENT (5 minutes)
+5. Check current build status: cd echo && ./gradlew clean
+6. Review docs/project-state/priorities.md for current focus areas
+7. Check docs/project-state/change-log.md for recent changes
 
-PRIORITY SYSTEM:
-- TIER 1: Fix any failing tests, build errors, crashes (ABSOLUTE PRIORITY)
+⚡ PHASE 3: ERROR-FIRST PRIORITIZATION (ABSOLUTE PRIORITY)
+- TIER 1: Fix any failing tests, build errors, crashes (MUST FIX FIRST)
 - TIER 2: Research-informed incremental improvements with comprehensive testing
 - TIER 3: Architecture enhancements only if Tiers 1-2 complete
 
-RESEARCH WORKFLOW:
+🔬 PHASE 4: RESEARCH-DRIVEN DEVELOPMENT
+When encountering technical decisions or errors:
 - Use Brave Search MCP for SOTA algorithms and scientific research
-- Use Context7 MCP for Android API documentation and implementation guidance  
-- Use GitHub Actions CI for faster testing and comprehensive validation
-- Document all research findings and their application to implementation
+- Use Context7 MCP for Android API documentation and implementation guidance
+- Consult relevant framework docs:
+  - docs/frameworks/research-framework.md for overall methodology
+  - docs/frameworks/kotlin-migration.md for Java-to-Kotlin conversion
+  - docs/frameworks/ml-strategy.md for ML/AI decisions
+  - docs/frameworks/performance-framework.md for optimization
+  - docs/frameworks/ui-ux-framework.md for UI work
+- Document all research findings in change logs
 
-Follow the incremental change methodology and comprehensive testing requirements documented in the guides.
+🛠️ PHASE 5: IMPLEMENTATION RULES
+- Use GitHub MCP server functions ONLY for read-only operations (list_workflow_runs, get_job_logs)
+- NEVER use GitHub MCP for commits (causes synchronization conflicts)
+- Use manual git commands for ALL commits: git add . && git commit -m "..." && git push
+- Make small, incremental changes with immediate testing
+- Every change must include comprehensive testing (unit, integration, error handling)
+- Follow critical-principles.md - NEVER simplify tests to avoid complexity
 
-The current TIER 1 priority is resolving the ClassNotFoundException in AudioMemoryTest.kt (Clock class missing from test classpath). Local testing hasn't resolved it, so shift to GitHub Actions CI for validation in a clean environment. 
-- If no workflow exists, create a basic .github/workflows/android-test.yml file to run './gradlew test' on push/pull_request.
-- Use push_files to commit and push the workflow file (or any code fixes).
-- Trigger a workflow run by pushing a small change.
-- Monitor with list_workflow_runs and get_job_logs (focus on failed_only: true).
-- Download artifacts if needed with download_workflow_run_artifact for detailed test reports.
-- Do not proceed until CI tests pass or the failure is analyzed/documented in docs/project-state/current-status.md.
-- If CI passes but local fails, document it as a potential local environment issue.
+📊 CURRENT PROJECT STATUS
+- Build success rate: 100% (all TIER 1 errors resolved)
+- Test compilation: 100% successful
+- Current focus: TIER 2 incremental improvements (Kotlin migration, architecture, UI)
+- MCP optimization: Target 15-20 Context7 uses/week for Android documentation
 
-When encountering errors or issues (especially TIER 1 build/test failures), always research fixes using available MCP tools and frameworks before attempting changes. Use Brave Search MCP for state-of-the-art (SOTA) solutions and scientific papers, Context7 MCP for Android API documentation, and integrate findings from RESEARCH_FRAMEWORK.md or specific frameworks like KOTLIN_MIGRATION_FRAMEWORK.md. Document all research in docs/project-state/current-status.md, including sources and how they apply to the fix. Examples: For ClassNotFoundException, search "Android Kotlin Kapt stub conflicts 2025" via Brave Search MCP; for test classpath issues, query Context7 MCP for "Android Gradle test classpath configuration best practices".
+🎯 SUCCESS CRITERIA
+- Fix issues properly (not with shortcuts)
+- Maintain comprehensive test coverage
+- Document all changes using templates in docs/templates/
+- Use MCP servers effectively for research and monitoring
+- Leave clear instructions for next session
+
+REMEMBER: Quality is non-negotiable. Read critical-principles.md to understand what NOT to do.
 ```
 
 
@@ -125,27 +147,42 @@ When encountering errors or issues (especially TIER 1 build/test failures), alwa
 ```
 I just completed [describe what you implemented/fixed] on the Echo Android project. Please:
 
-1. Read docs/project-state/current-status.md to understand current state and recent changes with research integration
-2. Verify the completed work is properly documented in the change log with research findings
-3. Check if there are any follow-up issues or improvements needed using available MCP tools
-4. Use GitHub MCP server ONLY for read-only operations:
-   - Check CI status with list_workflow_runs  
+🔍 PHASE 1: MANDATORY VERIFICATION (10 minutes)
+1. Read docs/agent-workflow/critical-principles.md - Ensure no quality violations occurred
+2. Read docs/project-state/current-status.md - Understand current state and recent changes
+3. Verify completed work follows all documentation requirements
+4. Check that comprehensive tests exist and pass for all changes
+
+📊 PHASE 2: WORK VALIDATION (5 minutes)
+5. Use GitHub MCP server ONLY for read-only operations:
+   - Check CI status with list_workflow_runs
    - Analyze any test failures with get_job_logs and download_workflow_run_artifact
    - NEVER use push_files or create_or_update_file (causes git sync conflicts)
-5. If needed, conduct research using:
+6. Verify all claims in change log are accurate and verifiable
+7. Ensure no technical debt was introduced (no test simplification, no shortcuts)
+
+🔬 PHASE 3: RESEARCH INTEGRATION (AS NEEDED)
+8. If technical decisions were made, verify they're backed by research:
    - Brave Search MCP for SOTA techniques and performance optimization
    - Context7 MCP for Android API best practices and implementation patterns
-6. Identify and start the next highest priority goal from the Error-First Priority System
-7. Update the "Next Agent Should Focus On" section with clear next steps and research directions
+   - Framework documentation for methodology compliance
 
-Current focus should be: [check documentation for current priorities - always ERROR FIXES FIRST]
+🎯 PHASE 4: NEXT STEPS PLANNING
+9. Identify next highest priority goal from Error-First Priority System:
+   - TIER 1: Any failing tests, build errors, crashes (ABSOLUTE PRIORITY)
+   - TIER 2: Research-informed incremental improvements
+   - TIER 3: Architecture enhancements
+10. Update docs/project-state/priorities.md with clear next steps
+11. Document any research directions or MCP optimization opportunities
 
-REMEMBER: 
-- Always prioritize failing tests, build errors, and crashes before any other work
-- Every change needs comprehensive testing (unit, integration, error, performance, UI)
-- Use research tools to make informed decisions about optimizations and implementations
-- Leverage GitHub Actions CI for faster, more comprehensive testing
-- Make incremental improvements that don't break existing functionality
+✅ QUALITY ASSURANCE CHECKLIST
+- [ ] All changes have comprehensive tests (not simplified validation)
+- [ ] No build errors or test failures introduced
+- [ ] Research findings documented where applicable
+- [ ] Change log entries complete and accurate
+- [ ] Next session has clear, actionable priorities
+
+REMEMBER: Never compromise on quality. Follow critical-principles.md religiously.
 ```
 
 ### 🔄 **Git Workflow for Changes**

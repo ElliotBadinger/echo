@@ -8,59 +8,63 @@
 ### Phase 1: Previous Session Audit & Validation (MANDATORY)
 *Before assessing the overall project state, you must first verify the claims of the last session. This prevents building on a faulty foundation.*
 
-- [ ] **Identify the Last Change:** Open `docs/project-state/change-log.md` and locate the most recent entry.
-- [ ] **List the Claims:** Read the "Result" and "Files Modified" sections of the last change log. Note the specific claims made.
-- [ ] **Verify Modified Files:** Get the list of files changed in the last commit and compare it to the documentation.
+- [ ] **Read Critical Standards:** Review **[Critical Principles](critical-principles.md)** to understand quality requirements
+- [ ] **Identify the Last Change:** Open **[Change Log](../project-state/change-log.md)** and locate the most recent entry
+- [ ] **List the Claims:** Read the "Result" and "Files Modified" sections of the last change log. Note the specific claims made
+- [ ] **Verify Modified Files:** Get the list of files changed in the last commit and compare it to the documentation
     ```bash
     # See the actual files changed in the last commit
     git show --name-only HEAD
     ```
-- [ ] **Audit Test Coverage for Changes:** For every non-test file that was added or modified, verify that a corresponding test file exists and is meaningful.
+- [ ] **Audit Test Coverage for Changes:** For every non-test file that was added or modified, verify that a corresponding test file exists and is meaningful
     *   **Existence Check:** For a changed `src/main/.../Foo.kt`, does `src/test/.../FooTest.kt` exist?
     *   **Content Sanity Check:** Read the contents of the test file. Does it contain `@Test` annotations? Does it import testing libraries (`junit`, `mockito`)?
-    *   **Run Specific Tests:** Run the tests related *only* to the last change. This isolates the validation.
+    *   **Quality Check:** Ensure tests follow **[Critical Principles](critical-principles.md)** - no simplified tests to avoid complexity
+    *   **Run Specific Tests:** Run the tests related *only* to the last change. This isolates the validation
         ```bash
         # Example for the Clock change
         ./gradlew :SaidIt:test --tests "*Clock*Test"
         ```
-- [ ] **Verify Full Regression Test:** Run the entire test suite to ensure the last change didn't break anything unexpectedly.
+- [ ] **Verify Full Regression Test:** Run the entire test suite to ensure the last change didn't break anything unexpectedly
     ```bash
     ./gradlew test
     ```
 - [ ] **Make the Audit Verdict:**
-    *   [ ] **✅ PASS:** The previous session's documented work is verified and meets the project's testing standards. You may proceed to the next phase.
-    *   [ ] **❌ FAIL:** The previous session's work is incomplete, untested, or violates the project's "Error-First" principles.
+    *   [ ] **✅ PASS:** The previous session's documented work is verified and meets the project's testing standards per **[Critical Principles](critical-principles.md)**. You may proceed to the next phase
+    *   [ ] **❌ FAIL:** The previous session's work is incomplete, untested, or violates the project's "Error-First" principles
 - [ ] **Act on the Verdict:**
     *   **If the verdict is FAIL:**
-        1.  **Your session's first goal is now to fix the discrepancy.** Create a new Change Log entry.
-        2.  Document your findings from the audit.
-        3.  Do not proceed with any other goals until the tests are reinstated and passing.
+        1.  **Your session's first goal is now to fix the discrepancy.** Create a new Change Log entry using **[Change Log Template](../templates/change-log-template.md)**
+        2.  Document your findings from the audit
+        3.  Do not proceed with any other goals until the tests are reinstated and passing per **[Critical Principles](critical-principles.md)**
 
 ### Phase 2: Orientation & State Assessment (5-10 minutes)
 *(Only proceed to this phase if the Audit Verdict was PASS)*
 
-- [ ] Read `docs/project-state/current-status.md` completely.
-- [ ] Check current project state: `./gradlew --version` and basic build status.
+- [ ] Read **[Current Status](../project-state/current-status.md)** completely
+- [ ] Check current project state: `./gradlew --version` and basic build status
 - [ ] Run: `./gradlew clean`
-- [ ] Review last 3 entries in `docs/project-state/change-log.md` to understand recent history.
-- [ ] Check `docs/mcp-integration/mcp-optimization.md` for current MCP usage targets.
+- [ ] Review last 3 entries in **[Change Log](../project-state/change-log.md)** to understand recent history
+- [ ] Check **[MCP Optimization](../mcp-integration/mcp-optimization.md)** for current MCP usage targets
+- [ ] Review **[Current Priorities](../project-state/priorities.md)** for focus areas
 
 ## 🎯 PLANNING PHASE (Before making ANY changes)
 
 ### 3. Goal Selection (10 minutes)
-- [ ] Review the "Current Priority Goals" list in `docs/project-state/priorities.md`
+- [ ] Review the "Current Priority Goals" list in **[Current Priorities](../project-state/priorities.md)**
 - [ ] Select the SMALLEST possible goal that can be completed in this session
 - [ ] Write down exactly what success looks like for this goal
 - [ ] Plan how you will verify the change works
 - [ ] Consider what could go wrong and how to rollback
+- [ ] Ensure goal aligns with **[Critical Principles](critical-principles.md)** - no shortcuts or test simplification
 
 ### 4. Pre-Change Documentation
 - [ ] **USE TIME MCP**: Call `get_current_time({timezone: "UTC"})` for accurate timestamps
-- [ ] Create new Change Log entry using template from `docs/templates/change-log-template.md`
+- [ ] Create new Change Log entry using **[Change Log Template](../templates/change-log-template.md)**
 - [ ] Document exactly what you plan to change
 - [ ] List all files you expect to modify
 - [ ] Note current state of those files
-- [ ] Plan MCP server usage for research and implementation
+- [ ] Plan MCP server usage for research and implementation (see **[MCP Optimization](../mcp-integration/mcp-optimization.md)**)
 
 ### 4.1 Error-First Decision Framework
 Before making ANY changes, prioritize in this exact order:
@@ -90,11 +94,12 @@ Before making ANY changes, prioritize in this exact order:
 
 #### Step 4: Use Research Frameworks for Technical Decisions
 For any significant technical work, consult the appropriate framework:
-- [ ] `docs/frameworks/research-framework.md` - Overall research-driven development methodology
-- [ ] `docs/frameworks/ml-strategy.md` - ML research and implementation strategy  
-- [ ] `docs/frameworks/performance-framework.md` - Performance optimization research
-- [ ] `docs/frameworks/ui-ux-framework.md` - Professional UI development framework
-- [ ] `docs/frameworks/kotlin-migration.md` - Java-to-Kotlin conversion methodology
+- [ ] **[Research Framework](../frameworks/research-framework.md)** - Overall research-driven development methodology
+- [ ] **[ML Strategy Framework](../frameworks/ml-strategy.md)** - ML research and implementation strategy  
+- [ ] **[Performance Framework](../frameworks/performance-framework.md)** - Performance optimization research
+- [ ] **[UI/UX Framework](../frameworks/ui-ux-framework.md)** - Professional UI development framework
+- [ ] **[Kotlin Migration Framework](../frameworks/kotlin-migration.md)** - Java-to-Kotlin conversion methodology
+- [ ] **[Framework Integration](../frameworks/framework-integration.md)** - How all frameworks work together
 
 #### Step 5: Apply Incremental Improvement Strategy
 - [ ] **Build Errors**: Are there any compilation failures?
@@ -123,13 +128,13 @@ For any significant technical work, consult the appropriate framework:
 **For any significant change (threading, performance, UI, ML), conduct research FIRST:**
 
 **STEP 1 - Discovery (Brave Search MCP):**
-- [ ] Search for SOTA techniques: `brave_web_search({query: "...", summary: true})`
+- [ ] Search for SOTA techniques: `brave_web_search({query: "...", summary: true})` (see **[Brave Search Guide](../mcp-integration/brave-search-guide.md)**)
 - [ ] Find performance benchmarks: Include "benchmarks", "optimization", current year
 - [ ] Locate implementation guides: Search official documentation sites
 - [ ] Document source quality: Academic papers > official docs > blog posts
 
 **STEP 2 - Deep Extraction (Playwright MCP):**
-- [ ] Extract complete research papers: `browser_navigate()` → `browser_pdf_save()`
+- [ ] Extract complete research papers: `browser_navigate()` → `browser_pdf_save()` (see **[Playwright Guide](../mcp-integration/playwright-guide.md)**)
 - [ ] Get full documentation: `browser_snapshot()` for structured content
 - [ ] Collect code examples: Extract implementation patterns
 - [ ] Gather performance data: Benchmarks, optimization techniques, constraints
@@ -141,15 +146,15 @@ For any significant technical work, consult the appropriate framework:
 - [ ] Plan validation strategy: How to measure success with GitHub MCP
 
 **STEP 4 - Implementation with CI Validation (GitHub MCP):**
-- [ ] Apply research findings incrementally: Small, testable changes
-- [ ] Monitor CI performance: `list_workflow_runs()` for benchmark tracking
+- [ ] Apply research findings incrementally: Small, testable changes per **[Critical Principles](critical-principles.md)**
+- [ ] Monitor CI performance: `list_workflow_runs()` for benchmark tracking (see **[GitHub MCP Guide](../mcp-integration/github-mcp-guide.md)**)
 - [ ] Compare to research predictions: Measured vs. expected improvements
-- [ ] Document accuracy: How well research predicted actual results
+- [ ] Document accuracy: How well research predicted actual results using **[Research Template](../templates/research-template.md)**
 
 ### 4.3 MCP Server Optimization Strategy
 
 #### Context7 Usage Optimization
-**Target**: 15-20 tool uses per week
+**Target**: 15-20 tool uses per week (see **[Context7 Guide](../mcp-integration/context7-guide.md)**)
 **Focus Areas**:
 - Android API documentation access
 - Library implementation guidance
@@ -170,7 +175,7 @@ get_library_docs({
 ```
 
 #### Brave Search Usage Optimization
-**Target**: 10-15 tool uses per week
+**Target**: 10-15 tool uses per week (see **[Brave Search Guide](../mcp-integration/brave-search-guide.md)**)
 **Research Areas**:
 - Android UI best practices
 - Mobile performance optimization
@@ -188,7 +193,7 @@ brave_web_search({
 ```
 
 #### GitHub MCP Usage Optimization
-**Maintain Current High Usage**
+**Maintain Current High Usage** (see **[GitHub MCP Guide](../mcp-integration/github-mcp-guide.md)**)
 **Focus Areas**:
 - CI monitoring and validation
 - Test artifact analysis
@@ -358,19 +363,21 @@ For each MCP server usage, document:
 
 ### 7. Documentation Updates
 - [ ] **USE TIME MCP**: Call `get_current_time({timezone: "UTC"})` for completion timestamp
-- [ ] Complete the Change Log entry using MCP usage template from `docs/templates/mcp-usage-template.md`
+- [ ] Complete the Change Log entry using **[MCP Usage Template](../templates/mcp-usage-template.md)**
 - [ ] Update issue statuses if anything was resolved
-- [ ] Update "Current Status" section in `docs/project-state/current-status.md` if project state changed
-- [ ] Move completed goals from priority list in `docs/project-state/priorities.md`
+- [ ] Update "Current Status" section in **[Current Status](../project-state/current-status.md)** if project state changed
+- [ ] Move completed goals from priority list in **[Current Priorities](../project-state/priorities.md)**
 - [ ] Add any newly discovered issues to the issue list
-- [ ] Document MCP server usage effectiveness and optimization opportunities
+- [ ] Document MCP server usage effectiveness and optimization opportunities in **[MCP Optimization](../mcp-integration/mcp-optimization.md)**
+- [ ] Ensure all changes comply with **[Critical Principles](critical-principles.md)**
 
 ### 8. Handoff Preparation
-- [ ] Fill in "Next Agent Should Focus On" section in `docs/project-state/priorities.md`
+- [ ] Fill in "Next Agent Should Focus On" section in **[Current Priorities](../project-state/priorities.md)**
 - [ ] Highlight any partially completed work
 - [ ] Note any new insights about persistent issues
-- [ ] Update MCP usage statistics and recommendations
-- [ ] Document any research findings that should be preserved
+- [ ] Update MCP usage statistics and recommendations in **[MCP Optimization](../mcp-integration/mcp-optimization.md)**
+- [ ] Document any research findings that should be preserved in **[Research Findings](../project-state/research-findings.md)**
+- [ ] Ensure handoff follows **[Critical Principles](critical-principles.md)** for quality standards
 
 ### 9. Git Operations (Manual Commands Required)
 **⚠️ CRITICAL: Use manual git commands to avoid synchronization conflicts**
@@ -394,11 +401,12 @@ git push origin HEAD
 **⚠️ NEVER use GitHub MCP push_files() for routine commits** - it creates synchronization conflicts with local git.
 
 ### 10. MCP Usage Reporting
-- [ ] Document all MCP server usage in change log using template
+- [ ] Document all MCP server usage in change log using **[MCP Usage Template](../templates/mcp-usage-template.md)**
 - [ ] Rate effectiveness of each MCP tool used (1-10 scale)
 - [ ] Note time saved through MCP research
 - [ ] Identify MCP optimization opportunities for future sessions
-- [ ] Update `docs/mcp-integration/mcp-optimization.md` with usage statistics
+- [ ] Update **[MCP Optimization](../mcp-integration/mcp-optimization.md)** with usage statistics
+- [ ] Cross-reference with specific MCP guides for improvement opportunities
 
 ## ⚠️ CRITICAL WARNINGS
 

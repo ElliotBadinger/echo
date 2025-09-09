@@ -11,16 +11,43 @@
 
 ## 🎯 ESSENTIAL READING - START HERE
 
-### If this is your FIRST conversation or a NEW Claude session:
+### 🚨 MANDATORY READING ORDER (Every AI Agent MUST Follow)
 
-1. **Read this entire guide** (15-20 minutes) - DO NOT skip sections
-2. **Read `docs/project-state/current-status.md`** completely - Current project state and change tracking
-3. **Read `docs/agent-workflow/session-checklist.md`** - Your step-by-step workflow
-4. **Follow the "New Session Startup" process below** - Every single time
+**Phase 1: Core Principles & Workflow (MANDATORY - 15 minutes)**
+1. **[🚨 Critical Principles](critical-principles.md)** - NON-NEGOTIABLE quality standards (READ FIRST)
+2. **This guide** (detailed-guide.md) - Complete workflow reference (15-20 minutes)
+3. **[Session Checklist](session-checklist.md)** - Step-by-step executable workflow
+4. **[Quick Start Guide](quick-start.md)** - 15-minute agent onboarding
+
+**Phase 2: Project State Assessment (MANDATORY - 5 minutes)**
+5. **[Current Status](../project-state/current-status.md)** - Live project state and critical issues
+6. **[Current Priorities](../project-state/priorities.md)** - Current development priorities
+7. **[Change Log](../project-state/change-log.md)** - Historical changes and research findings
+
+**Phase 3: Technical Framework Reference (AS NEEDED)**
+- **[Research Framework](../frameworks/research-framework.md)** - Research-driven development methodology
+- **[Kotlin Migration Framework](../frameworks/kotlin-migration.md)** - Java-to-Kotlin conversion methodology
+- **[ML Strategy Framework](../frameworks/ml-strategy.md)** - ML research and implementation strategy
+- **[Performance Framework](../frameworks/performance-framework.md)** - Performance optimization research
+- **[UI/UX Framework](../frameworks/ui-ux-framework.md)** - Professional UI development framework
+- **[Framework Integration](../frameworks/framework-integration.md)** - How all frameworks work together
+
+**Phase 4: MCP Server Integration (AS NEEDED)**
+- **[MCP Optimization](../mcp-integration/mcp-optimization.md)** - Overall MCP server usage strategy
+- **[Context7 Guide](../mcp-integration/context7-guide.md)** - Android documentation access
+- **[Brave Search Guide](../mcp-integration/brave-search-guide.md)** - Technical research methodology
+- **[GitHub MCP Guide](../mcp-integration/github-mcp-guide.md)** - CI/CD and repository management
+- **[Playwright Guide](../mcp-integration/playwright-guide.md)** - Web research and extraction
+
+**Phase 5: Templates & Documentation (WHEN DOCUMENTING)**
+- **[Templates Directory](../templates/)** - Standardized documentation templates
+- **[Automation Directory](../automation/)** - Documentation automation scripts
 
 ### If you're continuing from a previous session in the SAME conversation:
+- Still read [Critical Principles](critical-principles.md) to ensure compliance
+- Check [Current Status](../project-state/current-status.md) for any changes
 - Skip to "Making Changes Workflow" section
-- Still check current project state with `./gradlew clean`
+- Still verify current project state with `./gradlew clean`
 
 ---
 
@@ -108,11 +135,12 @@ Rollback Plan: [How to undo if it breaks things]
 #### Step 2: Research Fixes (Mandatory for Errors/Fixes)
 - **When Applicable**: Always for TIER 1 issues (e.g., build errors, test failures like ClassNotFoundException) or any non-trivial fix.
 - **Process**:
-  - Use Brave Search MCP: `brave_web_search({query: "specific error + Android Kotlin 2025", summary: true})` for SOTA fixes.
-  - Use Context7 MCP: For Android-specific guidance, e.g., "Kapt configuration for Kotlin test classpath".
-  - Cross-reference with frameworks: e.g., docs/frameworks/kotlin-migration.md for migration-related issues.
-  - Document: Summarize findings, sources, and rationale in the pre-change log using docs/templates/mcp-usage-template.md.
-- **Know This Well**: Research is not optional—it's the foundation for informed, error-free changes. Avoid guessing; base fixes on documented best practices.
+  - Use **[Brave Search MCP](../mcp-integration/brave-search-guide.md)**: `brave_web_search({query: "specific error + Android Kotlin 2025", summary: true})` for SOTA fixes.
+  - Use **[Context7 MCP](../mcp-integration/context7-guide.md)**: For Android-specific guidance, e.g., "Kapt configuration for Kotlin test classpath".
+  - Cross-reference with frameworks: e.g., **[Kotlin Migration Framework](../frameworks/kotlin-migration.md)** for migration-related issues.
+  - Consult **[Research Framework](../frameworks/research-framework.md)** for overall research methodology.
+  - Document: Summarize findings, sources, and rationale in the pre-change log using **[MCP Usage Template](../templates/mcp-usage-template.md)**.
+- **Know This Well**: Research is not optional—it's the foundation for informed, error-free changes. Avoid guessing; base fixes on documented best practices from **[Critical Principles](critical-principles.md)**.
 
 #### Step 3: Make ONE Small Change
 - Edit one file or fix one specific issue
@@ -132,11 +160,15 @@ Rollback Plan: [How to undo if it breaks things]
 ```
 
 #### Step 5: Document MCP Usage
-Use the template from `docs/templates/mcp-usage-template.md` to track:
-- Which MCP servers were used
+Use the **[MCP Usage Template](../templates/mcp-usage-template.md)** to track:
+- Which MCP servers were used (see **[MCP Optimization Guide](../mcp-integration/mcp-optimization.md)**)
 - Effectiveness of each tool
 - Time saved through research
 - Implementation success rate
+- Cross-reference with specific MCP guides:
+  - **[Context7 Guide](../mcp-integration/context7-guide.md)** for Android documentation
+  - **[Brave Search Guide](../mcp-integration/brave-search-guide.md)** for research
+  - **[GitHub MCP Guide](../mcp-integration/github-mcp-guide.md)** for CI/CD monitoring
 
 #### Step 6: Commit and Push Changes
 - **Preferred Method**: Use manual git commands for commits (see GitHub MCP synchronization warning below)
@@ -186,17 +218,31 @@ Complete the change log entry:
 ## 📁 KEY FILE LOCATIONS & WHAT THEY CONTAIN
 
 ### MUST-READ Documentation Files:
-- **`docs/project-state/current-status.md`** - Your primary reference, current state tracker
-- **`docs/agent-workflow/session-checklist.md`** - Step-by-step workflow checklist
-- **`docs/project-state/priorities.md`** - Current priority goals and next steps
-- **`docs/mcp-integration/mcp-optimization.md`** - MCP server usage optimization
+- **[Current Status](../project-state/current-status.md)** - Your primary reference, current state tracker
+- **[Session Checklist](session-checklist.md)** - Step-by-step workflow checklist
+- **[Current Priorities](../project-state/priorities.md)** - Current priority goals and next steps
+- **[MCP Optimization](../mcp-integration/mcp-optimization.md)** - MCP server usage optimization
 
-### Framework Documentation:
-- **`docs/frameworks/kotlin-migration.md`** - Java-to-Kotlin conversion methodology
-- **`docs/frameworks/research-framework.md`** - Research-driven development
-- **`docs/frameworks/ml-strategy.md`** - ML implementation guide
-- **`docs/frameworks/performance-framework.md`** - Performance optimization
-- **`docs/frameworks/ui-ux-framework.md`** - UI/UX development
+### Framework Documentation (Consult When Needed):
+- **[Kotlin Migration Framework](../frameworks/kotlin-migration.md)** - Java-to-Kotlin conversion methodology
+- **[Research Framework](../frameworks/research-framework.md)** - Research-driven development methodology
+- **[ML Strategy Framework](../frameworks/ml-strategy.md)** - ML implementation guide
+- **[Performance Framework](../frameworks/performance-framework.md)** - Performance optimization
+- **[UI/UX Framework](../frameworks/ui-ux-framework.md)** - UI/UX development
+- **[Framework Integration](../frameworks/framework-integration.md)** - How all frameworks work together
+
+### MCP Integration Guides (Use for Research & Automation):
+- **[Context7 Guide](../mcp-integration/context7-guide.md)** - Android documentation access
+- **[Brave Search Guide](../mcp-integration/brave-search-guide.md)** - Technical research methodology
+- **[GitHub MCP Guide](../mcp-integration/github-mcp-guide.md)** - CI/CD and repository management
+- **[Playwright Guide](../mcp-integration/playwright-guide.md)** - Web research and extraction
+
+### Documentation Templates (Use When Documenting):
+- **[Change Log Template](../templates/change-log-template.md)** - Standardized change documentation
+- **[MCP Usage Template](../templates/mcp-usage-template.md)** - MCP server usage tracking
+- **[Research Template](../templates/research-template.md)** - Research documentation
+- **[Session Report Template](../templates/session-report-template.md)** - Session documentation
+- **[Testing Template](../templates/testing-template.md)** - Testing documentation
 
 ### Common Code Locations:
 - **`build.gradle.kts`** - Root project configuration
@@ -334,16 +380,17 @@ When implementing features or optimizing performance, use available MCP servers 
 ### ALWAYS Update These Files:
 
 #### Change Log Entry:
-Use the template from `docs/templates/change-log-template.md` which includes:
-- MCP server usage tracking
-- Research findings documentation
+Use the **[Change Log Template](../templates/change-log-template.md)** which includes:
+- MCP server usage tracking (see **[MCP Usage Template](../templates/mcp-usage-template.md)**)
+- Research findings documentation (see **[Research Template](../templates/research-template.md)**)
 - Implementation success metrics
 - Time savings analysis
 
 #### Project State Documentation:
-- Update `docs/project-state/current-status.md` with current build status
-- Update `docs/project-state/priorities.md` with completed/moved goals
-- Add research findings to `docs/project-state/research-findings.md`
+- Update **[Current Status](../project-state/current-status.md)** with current build status
+- Update **[Current Priorities](../project-state/priorities.md)** with completed/moved goals
+- Add research findings to **[Research Findings](../project-state/research-findings.md)**
+- Follow **[Critical Principles](critical-principles.md)** for quality standards
 
 ---
 
@@ -352,12 +399,14 @@ Use the template from `docs/templates/change-log-template.md` which includes:
 ### Before Ending Your Session:
 
 #### Update Documentation:
-1. Complete your change log entry using the MCP usage template
-2. Update "Next Agent Should Focus On" section with:
+1. Complete your change log entry using the **[MCP Usage Template](../templates/mcp-usage-template.md)**
+2. Update "Next Agent Should Focus On" section in **[Current Priorities](../project-state/priorities.md)** with:
    - Specific next task
    - Files that need attention
    - Expected challenges
    - Success criteria
+3. Ensure compliance with **[Critical Principles](critical-principles.md)**
+4. Update **[Current Status](../project-state/current-status.md)** if project state changed
 
 #### Clean Up:
 1. Ensure all changes are committed and pushed

@@ -57,21 +57,24 @@
 Before starting ANY new work, agents MUST:
 
 1. **Verify Previous Claims:**
-   - Read the last change log entry
+   - Read the last change log entry in **[Change Log](../project-state/change-log.md)**
    - Check that claimed files actually exist and work
    - Run tests to verify claimed functionality
    - Validate that "completed" conversions have proper tests
+   - Follow the audit process in **[Session Checklist](session-checklist.md)**
 
 2. **Test Coverage Audit:**
    - For every converted `.kt` file, verify corresponding test file exists
    - Check that test files contain `@Test` annotations and meaningful assertions
    - Verify tests actually compile and run
    - Ensure tests cover error cases, not just happy path
+   - Use **[Testing Template](../templates/testing-template.md)** for documentation
 
 3. **Build Health Verification:**
    - Run `./gradlew clean build` to verify current state
    - Check that ALL tests compile (not just pass, but compile)
    - Verify no regressions from previous sessions
+   - Update **[Current Status](../project-state/current-status.md)** with findings
 
 ## 📋 DOCUMENTATION REQUIREMENTS
 
@@ -81,12 +84,15 @@ Before starting ANY new work, agents MUST:
 - **Verification Steps:** How the change was validated
 - **Rollback Plan:** Exact steps to undo if issues arise
 - **Technical Debt Assessment:** Any shortcuts taken and why they're temporary
+- **MCP Usage:** Document research conducted using **[MCP Usage Template](../templates/mcp-usage-template.md)**
+- Use **[Change Log Template](../templates/change-log-template.md)** for consistency
 
 ### Status Updates MUST Include:
 - **Honest Assessment:** Don't claim completion without proper verification
 - **Test Coverage Status:** Percentage of converted files with comprehensive tests
 - **Known Issues:** Any problems discovered during audit
 - **Next Steps:** Specific, actionable items for next session
+- Update **[Current Status](../project-state/current-status.md)** and **[Current Priorities](../project-state/priorities.md)**
 
 ## 🎯 QUALITY GATES
 
@@ -124,26 +130,34 @@ Before starting ANY new work, agents MUST:
 ## 📖 REQUIRED READING FOR ALL AGENTS
 
 Every AI agent working on this project MUST:
-1. Read this document completely before making ANY changes
-2. Understand that these principles are non-negotiable
-3. Apply these principles consistently throughout the session
-4. Update documentation honestly and completely
-5. Never compromise on quality for speed
+1. **Read this document completely** before making ANY changes
+2. **Read the complete workflow** in **[Detailed Guide](detailed-guide.md)**
+3. **Follow the session process** in **[Session Checklist](session-checklist.md)**
+4. **Understand that these principles are non-negotiable**
+5. **Apply these principles consistently** throughout the session
+6. **Update documentation honestly** using templates in **[Templates Directory](../templates/)**
+7. **Never compromise on quality for speed**
+8. **Use research frameworks** in **[Frameworks Directory](../frameworks/)** for technical decisions
+9. **Leverage MCP tools** per **[MCP Integration Guides](../mcp-integration/)** for research and automation
 
 ## 🔄 CONTINUOUS IMPROVEMENT
 
 ### When Encountering Difficult Testing Scenarios:
-1. **Research proper solutions** using available MCP tools
+1. **Research proper solutions** using available MCP tools:
+   - **[Brave Search Guide](../mcp-integration/brave-search-guide.md)** for SOTA testing approaches
+   - **[Context7 Guide](../mcp-integration/context7-guide.md)** for Android testing documentation
+   - **[Research Framework](../frameworks/research-framework.md)** for methodology
 2. **Invest time in proper setup** rather than taking shortcuts
-3. **Document the solution** for future reference
+3. **Document the solution** using **[Research Template](../templates/research-template.md)** for future reference
 4. **Ask for clarification** if requirements are unclear
 5. **Never assume simple tests are acceptable**
 
 ### When Previous Sessions Have Issues:
 1. **Fix the issues properly** before proceeding
-2. **Document what was wrong** and how it was fixed
-3. **Update status honestly** to reflect actual state
+2. **Document what was wrong** and how it was fixed using **[Change Log Template](../templates/change-log-template.md)**
+3. **Update status honestly** in **[Current Status](../project-state/current-status.md)** to reflect actual state
 4. **Don't hide or minimize problems**
+5. **Follow the audit process** in **[Session Checklist](session-checklist.md)**
 
 ---
 
