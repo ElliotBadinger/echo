@@ -98,7 +98,7 @@ jobs:
           ram-size: 4096
           disk-size: 8G
           cores: 3
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none -no-snapshot -no-snapshot-save -wipe-data
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none -no-snapshot -no-snapshot-save -wipe-data -skip-adb-auth -ports 5556,5557
           script: |
             adb kill-server || true
             adb start-server || true
