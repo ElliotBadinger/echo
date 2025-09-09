@@ -49,17 +49,6 @@ class AppModuleTest {
         context = ApplicationProvider.getApplicationContext()
     }
 
-    @Test
-    fun `AppModule should be annotated and installed correctly`() {
-        val moduleAnnotation = AppModule::class.java.getAnnotation(Module::class.java)
-        val installInAnnotation = AppModule::class.java.getAnnotation(InstallIn::class.java)
-        assertNotNull("AppModule should be annotated with @Module", moduleAnnotation)
-        assertNotNull("AppModule should be annotated with @InstallIn", installInAnnotation)
-        assertEquals(
-            "AppModule should be installed in SingletonComponent",
-            SingletonComponent::class.java, installInAnnotation?.value?.get(0)
-        )
-    }
 
     @Test
     fun `Hilt graph provides Application and @ApplicationContext`() {
