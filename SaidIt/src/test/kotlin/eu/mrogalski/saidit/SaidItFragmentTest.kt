@@ -41,7 +41,7 @@ import org.robolectric.annotation.Config
  * - Error handling and edge cases
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [28])
+@Config(sdk = [34])
 class SaidItFragmentTest {
 
     @Mock
@@ -258,6 +258,9 @@ class SaidItFragmentTest {
         val appContext = RuntimeEnvironment.getApplication()
         val mockUri = mock(Uri::class.java)
         val receiver = fragment.NotifyFileReceiver(appContext)
+
+        // Grant POST_NOTIFICATIONS permission so NotificationManagerCompat.notify() is reachable
+        org.robolectric.Shadows.shadowOf(appContext).grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
         
         // Mock static method using Mockito
         mockStatic(NotificationManagerCompat::class.java).use { mockedStatic ->
