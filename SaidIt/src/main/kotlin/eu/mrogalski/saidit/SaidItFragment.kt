@@ -16,6 +16,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import androidx.annotation.NonNull
+import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
@@ -54,7 +55,8 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
         private const val UI_UPDATE_DELAY = 100L
     }
 
-    private var echo: SaidItService? = null
+    @VisibleForTesting
+    internal var echo: SaidItService? = null
 
     // UI Elements
     private var recordingGroup: View? = null
@@ -72,7 +74,8 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
         view?.postOnAnimation(updater)
     }
 
-    private val listeningToggleListener = MaterialButtonToggleGroup.OnButtonCheckedListener { _, checkedId, isChecked ->
+    @VisibleForTesting
+    internal val listeningToggleListener = MaterialButtonToggleGroup.OnButtonCheckedListener { _, checkedId, isChecked ->
         if (isChecked) {
             when (checkedId) {
                 R.id.listening_button -> echo?.enableListening()
@@ -156,7 +159,8 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
         }
     }
 
-    private val serviceStateCallback = object : SaidItService.StateCallback {
+    @VisibleForTesting
+    internal val serviceStateCallback = object : SaidItService.StateCallback {
         override fun state(
             listeningEnabled: Boolean,
             recording: Boolean,
@@ -235,7 +239,8 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
 
     // --- File Receiver and Notification Logic ---
 
-    private fun buildNotificationForFile(context: Context, fileUri: Uri, fileName: String): Notification {
+    @VisibleForTesting
+    internal fun buildNotificationForFile(context: Context, fileUri: Uri, fileName: String): Notification {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(fileUri, "audio/mp4")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
