@@ -10,6 +10,38 @@ Echo is a modern Android application for continuous background audio recording w
 - Main package: `com.siya.epistemophile`
 - Legacy package: `eu.mrogalski.saidit` (gradually migrating)
 
+## Agent Onboarding System
+
+**🚨 CRITICAL FOR NEW AGENTS: Run health check FIRST before any development work!**
+
+### Quick Start (< 2 minutes)
+```bash
+# Essential first command - validates environment and core functionality
+bash scripts/agent/healthcheck.sh
+
+# Or just environment validation if time critical
+bash scripts/agent/healthcheck.sh --tier 0
+```
+
+### Health Check Tiers
+- **Tier 0**: Environment validation (Java, Gradle, Android SDK, network)
+- **Tier 1**: Quick compile check (fail-fast feedback)
+- **Tier 2**: Core unit tests (domain, data, core modules)
+- **Tier 3**: Android tests (optional with `--with-android`)
+- **Tier 4**: Coverage and lint (optional with `--with-full`)
+
+### Key Agent Resources
+- `docs/agent-workflow/quick-start-guide.md`: Immediate steps for new agents
+- `docs/project-state/health-dashboard.md`: Real-time project status
+- `scripts/agent/healthcheck.sh`: Tiered validation tool
+
+### Agent Success Pattern
+1. **Validate**: `bash scripts/agent/healthcheck.sh --tier 0-1` (30s)
+2. **Develop**: Make focused changes
+3. **Test**: `bash scripts/agent/healthcheck.sh --tier 2` (2 min)
+4. **Commit**: Manual git commands only
+5. **Monitor**: Check CI results
+
 ## Essential Development Commands
 
 ### Build Commands
@@ -45,7 +77,13 @@ Echo is a modern Android application for continuous background audio recording w
 
 ### Project Health Commands
 ```bash
-# Verify Gradle and environment
+# 🚨 PREFERRED: Agent health check (comprehensive validation)
+bash scripts/agent/healthcheck.sh
+
+# Quick environment check only
+bash scripts/agent/healthcheck.sh --tier 0
+
+# Traditional Gradle verification
 ./gradlew --version
 
 # Check dependencies
@@ -233,6 +271,8 @@ The project has extensive documentation in `docs/` directory:
 - `docs/agent-workflow/session-checklist.md`: Development workflow
 
 ### For AI Agents
+- **FIRST STEP**: Run `bash scripts/agent/healthcheck.sh` for validation
+- Check `docs/project-state/health-dashboard.md` for current status
 - Read core principles before making changes
 - Use manual git commands only
 - Focus on small, testable changes
