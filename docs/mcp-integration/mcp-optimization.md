@@ -10,11 +10,6 @@
 
 This guide provides comprehensive strategies for optimizing MCP server usage across the Echo Android project. The goal is to maximize research efficiency, development velocity, and implementation quality through strategic MCP integration.
 
-### Current MCP Usage Statistics
-- **GitHub MCP**: 90 uses (90% of total) - CI/CD and repository management
-- **Playwright**: 21 uses (21% of total) - Web research and documentation extraction
-- **Brave Search**: 6 uses (6% of total) - UNDERUTILIZED - Technical research
-- **Context7**: 2 uses (2% of total) - SEVERELY UNDERUTILIZED - Android documentation
 
 ### Optimization Targets
 - **Context7 Usage**: Increase from 2 to 15-20 uses per week
