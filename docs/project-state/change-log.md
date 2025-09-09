@@ -1,7 +1,7 @@
 # Project Change Log
 
-**Version:** 2.5 - RecordingsActivity Kotlin Migration Complete
-**Last Updated:** 2025-09-09 19:02 UTC
+**Version:** 2.6 - SaveClipBottomSheet Kotlin Migration Complete
+**Last Updated:** 2025-09-09 19:08 UTC
 **Format:** Research-driven change documentation with MCP integration
 
 ---
@@ -76,6 +76,106 @@
 - RecordingsAdapter.java (258 lines)
 - SaveClipBottomSheet.java (102 lines)
 - Audio processing classes in simplesound package
+
+---
+
+## Change [2025-09-09 19:08] - TIER2_SAVE_CLIP_BOTTOM_SHEET_MIGRATION_COMPLETE
+
+### Goal
+- Continue TIER 2 Kotlin migration with SaveClipBottomSheet
+- Apply comprehensive behavioral testing for UI components
+- Maintain fragment lifecycle and listener pattern integrity
+- Follow quality standards with meaningful business logic conversion
+
+### What Changed
+- **CONVERTED**: SaveClipBottomSheet.java → SaveClipBottomSheet.kt (102 → 124 lines)
+- **ADDED**: SaveClipBottomSheetTest.kt with 14 comprehensive behavioral tests
+- **DELETED**: Original SaveClipBottomSheet.java file
+- **IMPROVED**: Kotlin patterns for fragment arguments and UI handling
+
+### Technical Improvements
+**Kotlin Patterns Applied:**
+- Fun interface for SaveClipListener (SAM conversion support)
+- `bundleOf()` for cleaner argument creation
+- `buildString` for efficient string concatenation
+- Null safety with Elvis operator (`?:`) for argument retrieval
+- Method extraction (`setupViews()`, `handleSaveClick()`, `getDurationFromChipSelection()`)
+- `when` expression for duration selection logic
+- `@JvmStatic` for Java interoperability on companion object method
+
+**Comprehensive Tests Added (14 test cases):**
+- Fragment instance creation with arguments
+- Duration retrieval from bundle arguments
+- Layout inflation verification
+- All memory chip duration display
+- Default duration selection (1 minute)
+- Empty file name validation with Toast
+- Save listener callbacks for all duration options (1m, 5m, 30m, all)
+- File name trimming before validation
+- Fragment dismissal after successful save
+- Duration selection logic for each chip option
+
+### Kotlin Improvements
+1. **Fragment Arguments Pattern**:
+   ```kotlin
+   // Before (Java)
+   Bundle args = new Bundle();
+   args.putFloat(ARG_MEMORIZED_DURATION, memorizedDuration);
+   fragment.setArguments(args);
+   
+   // After (Kotlin)
+   arguments = bundleOf(ARG_MEMORIZED_DURATION to memorizedDuration)
+   ```
+
+2. **String Building**:
+   ```kotlin
+   // Before (Java)
+   getString(R.string.all_memory) + " (" + TimeFormat.shortTimer(memorizedDuration) + ")"
+   
+   // After (Kotlin)
+   buildString {
+       append(getString(R.string.all_memory))
+       append(" (")
+       append(TimeFormat.shortTimer(memorizedDuration))
+       append(")")
+   }
+   ```
+
+3. **Duration Selection**:
+   ```kotlin
+   // Clean when expression instead of if-else chain
+   return when (checkedChipId) {
+       R.id.duration_1m -> 60f
+       R.id.duration_5m -> 300f
+       R.id.duration_30m -> 1800f
+       R.id.duration_all -> memorizedDuration
+       else -> 0f
+   }
+   ```
+
+### Result
+✅ **MIGRATION SUCCESS**: SaveClipBottomSheet fully converted with quality standards met
+✅ **BEHAVIORAL TESTS**: All 14 tests covering real UI behavior and listener callbacks
+✅ **FRAGMENT LIFECYCLE**: Proper handling of arguments and view lifecycle
+✅ **UI VALIDATION**: Toast messages and input validation working correctly
+✅ **KOTLIN PATTERNS**: Modern patterns applied while maintaining functionality
+
+### Migration Progress Update
+**Completed Kotlin Conversions** (as of this change):
+- ✅ SaveClipBottomSheet.java → SaveClipBottomSheet.kt (THIS SESSION)
+- ✅ RecordingsActivity.java → RecordingsActivity.kt (THIS SESSION)
+- ✅ EchoApp.java → EchoApp.kt
+- ✅ AppModule.java → AppModule.kt
+- ✅ SaidItFragment.java → SaidItFragment.kt
+- ✅ Multiple utility classes
+
+**Remaining Major Java Files:**
+- SaidItActivity.java (195 lines)
+- SettingsActivity.java (243 lines)
+- RecordingsAdapter.java (258 lines)
+- HowToPageFragment.java (52 lines)
+- PromptFileReceiver.java (67 lines)
+- NotifyFileReceiver.java (52 lines)
 
 ---
 
