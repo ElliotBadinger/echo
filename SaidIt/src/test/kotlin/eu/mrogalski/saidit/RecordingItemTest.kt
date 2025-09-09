@@ -187,12 +187,13 @@ class RecordingItemTest {
 
     @Test
     fun `isRecent returns true for recording exactly at 24 hour boundary`() {
-        // Given
-        val boundaryTime = System.currentTimeMillis() - (24 * 60 * 60 * 1000) + 1 // Just under 24 hours
+        // Given - Use a fixed current time to avoid timing precision issues
+        val currentTime = System.currentTimeMillis()
+        val boundaryTime = currentTime - (24 * 60 * 60 * 1000) + 1000 // Just under 24 hours (1 second buffer)
         val item = RecordingItem(mockUri, "Test", boundaryTime, 120000L)
 
         // When/Then
-        assertTrue(item.isRecent())
+        assertTrue("Recording just under 24 hours should be recent", item.isRecent())
     }
 
     @Test
