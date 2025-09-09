@@ -1,78 +1,93 @@
 package eu.mrogalski.saidit.di
 
+import android.app.Application
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import dagger.Module
-import dagger.Provides
+import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.components.SingletonComponent
 import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
-import javax.inject.Singleton
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+/**
+ * Integration tests for AppModule.
+ *
+ * Note: AudioConfig was removed from AppModule because audio configuration
+ * is user-configurable via SettingsActivity and stored in SharedPreferences.
+ * See docs/architecture/audio-config-decision.md for details.
+ */
+@RunWith(RobolectricTestRunner::class)
+@HiltAndroidTest
+@Config(application = HiltTestApplication::class)
 class AppModuleTest {
 
-    @Test
-    fun `AppModule should be annotated with Module`() {
-        val annotation = AppModule::class.java.getAnnotation(Module::class.java)
-        assertNotNull("AppModule should be annotated with @Module", annotation)
+    @dagger.hilt.EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface AppEntryPoint {
+        fun application(): Application
+        @ApplicationContext fun appContext(): Context
+    }
+
+    @get:Rule
+    var hiltRule = HiltAndroidRule(this)
+
+    private lateinit var context: Context
+
+    @Before
+    fun setUp() {
+        hiltRule.inject()
+        context = ApplicationProvider.getApplicationContext()
     }
 
     @Test
-    fun `AppModule should be annotated with InstallIn SingletonComponent`() {
-        val annotation = AppModule::class.java.getAnnotation(InstallIn::class.java)
-        assertNotNull("AppModule should be annotated with @InstallIn", annotation)
-        assertEquals("AppModule should be installed in SingletonComponent", 
-            SingletonComponent::class.java, annotation?.value?.get(0))
+    fun `AppModule should be annotated and installed correctly`() {
+        val moduleAnnotation = AppModule::class.java.getAnnotation(Module::class.java)
+        val installInAnnotation = AppModule::class.java.getAnnotation(InstallIn::class.java)
+        assertNotNull("AppModule should be annotated with @Module", moduleAnnotation)
+        assertNotNull("AppModule should be annotated with @InstallIn", installInAnnotation)
+        assertEquals(
+            "AppModule should be installed in SingletonComponent",
+            SingletonComponent::class.java, installInAnnotation?.value?.get(0)
+        )
     }
 
     @Test
-    fun `provideAudioConfig should be annotated with Provides`() {
-        val method = AppModule::class.java.getDeclaredMethod("provideAudioConfig")
-        val annotation = method.getAnnotation(Provides::class.java)
-        assertNotNull("provideAudioConfig should be annotated with @Provides", annotation)
+    fun `Hilt graph provides Application and @ApplicationContext`() {
+        // Real DI verification via EntryPoint
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val entry = EntryPoints.get(application, AppEntryPoint::class.java)
+        assertSame("Application entry should be the test application", application, entry.application())
+        assertSame("@ApplicationContext entry should equal provider context", application, entry.appContext())
     }
 
     @Test
-    fun `provideAudioConfig should be annotated with Singleton`() {
-        val method = AppModule::class.java.getDeclaredMethod("provideAudioConfig")
-        val annotation = method.getAnnotation(Singleton::class.java)
-        assertNotNull("provideAudioConfig should be annotated with @Singleton", annotation)
+    fun `AppModule should not provide AudioConfig because it uses SharedPreferences`() {
+        val methods = AppModule::class.java.declaredMethods
+        val audioConfigMethods = methods.filter { it.name.contains("AudioConfig") }
+        assertTrue(
+            "AppModule should not have AudioConfig provider methods (uses SharedPreferences instead)",
+            audioConfigMethods.isEmpty()
+        )
     }
 
     @Test
-    fun `provideAudioConfig should return correct AudioConfig`() {
-        val audioConfig = AppModule.provideAudioConfig()
-        assertEquals("Sample rate should be 48000", 48000, audioConfig.sampleRate)
-        assertEquals("Channels should be 1", 1, audioConfig.channels)
-    }
-
-    @Test
-    fun `AudioConfig should be a data class`() {
-        val audioConfig1 = AppModule.AudioConfig(48000, 1)
-        val audioConfig2 = AppModule.AudioConfig(48000, 1)
-        val audioConfig3 = AppModule.AudioConfig(44100, 2)
-
-        // Test equality (data class behavior)
-        assertEquals("AudioConfig with same values should be equal", audioConfig1, audioConfig2)
-        assertNotEquals("AudioConfig with different values should not be equal", audioConfig1, audioConfig3)
-
-        // Test toString (data class behavior)
-        val toString = audioConfig1.toString()
-        assertTrue("AudioConfig toString should contain sampleRate", toString.contains("48000"))
-        assertTrue("AudioConfig toString should contain channels", toString.contains("1"))
-    }
-
-    @Test
-    fun `AudioConfig should have correct properties`() {
-        val audioConfig = AppModule.AudioConfig(sampleRate = 44100, channels = 2)
-        assertEquals("Sample rate should match constructor parameter", 44100, audioConfig.sampleRate)
-        assertEquals("Channels should match constructor parameter", 2, audioConfig.channels)
-    }
-
-    @Test
-    fun `AudioConfig should support component destructuring`() {
-        val audioConfig = AppModule.AudioConfig(sampleRate = 48000, channels = 1)
-        val (sampleRate, channels) = audioConfig
-        assertEquals("Destructured sample rate should match", 48000, sampleRate)
-        assertEquals("Destructured channels should match", 1, channels)
+    fun `AppModule should be an object (singleton)`() {
+        val clazz = AppModule::class.java
+        assertTrue(
+            "AppModule should be final (Kotlin object)",
+            java.lang.reflect.Modifier.isFinal(clazz.modifiers)
+        )
+        val instanceField = clazz.declaredFields.find { it.name == "INSTANCE" }
+        assertNotNull("AppModule should have INSTANCE field (Kotlin object)", instanceField)
     }
 }

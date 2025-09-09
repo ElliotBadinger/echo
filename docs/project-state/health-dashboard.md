@@ -1,8 +1,8 @@
 # Echo Project Health Dashboard
 
 **Last Updated**: 2025-09-09 12:30 UTC  
-**Status**: 🟢 **STABLE** - Core build and tests operational  
-**CI Status**: 🟢 **OPERATIONAL** - All modules passing, SaidIt tests restored  
+**Status**: 🟡 **PARTIAL** - Build OK; some Android tests failing  
+**CI Status**: 🟡 **ATTENTION** - SaidIt Robolectric tests failing  
 **Agent Readiness**: 🟢 **READY** - Health check system operational
 
 ---
@@ -22,17 +22,16 @@
 
 ### ✅ Safe to Use (Recommended)
 - **Build**: `./gradlew :SaidIt:compileDebugKotlin :domain:assemble`
-- **Test**: `./gradlew :domain:test :data:test :core:test :SaidIt:test`  
 - **Health Check**: `bash scripts/agent/healthcheck.sh --tier 0-2`
 
 ### ⚠️ Use with Caution
-- **Full Build**: `./gradlew clean build` (may have some Android-specific test failures)
-- **Android Tests**: `./gradlew :features:recorder:test` (Robolectric dependencies)
-- **Coverage**: `./gradlew jacocoAll` (depends on all tests passing)
+- **SaidIt Unit Tests**: `./gradlew :SaidIt:testDebugUnitTest` (known Robolectric failures)
+- **Full Build**: `./gradlew clean build` (Android-specific test failures expected)
+- **Coverage**: `./gradlew jacocoAll` (blocked until tests are green)
 
-### 🟢 Previously Unavailable - Now Fixed!  
-- **SaidIt Tests**: `:SaidIt:test` restored to CI (MockK compilation issues resolved)
-- **Full Test Suite**: mockkStatic references properly converted to Mockito
+### 🟡 Updates
+- **Hilt Tests**: EchoApp/AppModule Hilt tests compile and run improvements added
+- **SaidIt Tests**: Robolectric runtime failures must be addressed before proceeding
 
 ---
 
