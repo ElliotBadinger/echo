@@ -1,37 +1,80 @@
-# Agent Core Principles - Echo Project
+# Core Agent Principles - Echo Project
 
-## 🎯 The Only Rules That Matter
+**MANDATORY READING** - These 5 principles are non-negotiable for all AI agents.
 
-### 1. Error-First Priority
-- Fix build errors before anything else
-- Fix test failures before new features
-- Fix crashes before improvements
+## 🚨 The Error-First Priority System
 
-### 2. Research Before Coding
-- Use Brave Search MCP for technical problems
-- Use Context7 MCP for Android documentation
-- Document what actually helped (skip what didn't)
+**TIER 1 - Critical Errors (FIX FIRST, ALWAYS)**
+- Build failures, test compilation errors, runtime crashes
+- **Rule:** Never proceed to TIER 2 if ANY TIER 1 issues exist
 
-### 3. Small Changes Only
-- One file at a time
-- Test immediately after each change
-- Commit working changes quickly
+**TIER 2 - Incremental Improvements**  
+- Feature additions, code quality improvements, architecture enhancements
+- **Rule:** Small changes only, test immediately after each change
 
-### 4. Essential Documentation
-- Use `docs/templates/simple-change-log.md` for significant changes
-- Use `docs/templates/mcp-research-notes.md` when research helps
-- Update `docs/project-state/current-status.md` if project state changes
+**TIER 3 - Major Features**
+- Large architectural changes, new major functionality
+- **Rule:** Only attempt if TIER 1 & 2 are completely clear
 
-## 🚫 What NOT to Do
-- Don't make multiple unrelated changes at once
-- Don't skip testing after changes
-- Don't spend more time on documentation than coding
+## 🔬 Research Before Coding
 
-## 📁 Key Files
-- `docs/project-state/current-status.md` - Read this first every session
-- `docs/project-state/change-log.md` - Add entries using simple template
-- Build with: `./gradlew clean build`
-- Test with: `./gradlew test`
+**When encountering any error or technical decision:**
+1. Use **Brave Search MCP** for state-of-the-art solutions and research papers
+2. Use **Context7 MCP** for Android API documentation and implementation guidance  
+3. Document research findings in change logs with sources and rationale
+4. **Never guess** - base all fixes on documented best practices
+
+## 🔧 Small Changes & Test Immediately
+
+**The Golden Rules:**
+- Make ONE change at a time (one file, one specific issue)
+- Test immediately after each change: `./gradlew clean build` or `./gradlew test`
+- If something breaks, rollback immediately before proceeding
+- Commit frequently with descriptive messages
+
+## 📋 Session Audit Requirement
+
+**Before starting ANY new work:**
+1. Read the last entry in `docs/project-state/change-log.md`
+2. Verify the previous session's claims by running tests
+3. Check that "completed" conversions have proper comprehensive tests
+4. If previous work is incomplete/broken, fix it FIRST before new goals
+
+## ⚠️ Critical Git Warning
+
+**NEVER use GitHub MCP functions for commits** - they cause synchronization conflicts.
+
+**ALWAYS use manual git commands:**
+```bash
+git add .
+git commit -m "Agent Session [DATE]: Description"
+git push origin HEAD
+```
+
+**Safe GitHub MCP usage:** Read-only operations only (`list_workflow_runs`, `get_job_logs`)
+
+## 🎯 Quality Gates
+
+**Before claiming any work "complete":**
+- [ ] All tests compile and pass
+- [ ] No build errors introduced  
+- [ ] Comprehensive tests exist (not simplified validation)
+- [ ] Changes documented in change log
+- [ ] CI pipeline passes
+
+## 📚 Essential Files
+
+**Read these first, always:**
+- `docs/project-state/current-status.md` - Current project state
+- `docs/project-state/change-log.md` - Recent changes and claims to verify
+- `docs/templates/simple-change-log.md` - Use for documenting significant changes
+
+**Reference when needed:**
+- Framework docs in `docs/frameworks/` for technical guidance
+- MCP integration guides in `docs/mcp-integration/` for research tools
 
 ---
-*That's it. Focus on code, not process.*
+
+**Remember:** Quality is non-negotiable. Comprehensive testing is not optional. Technical shortcuts accumulate debt that hurts the project.
+
+*These principles ensure consistent, high-quality development across all AI agent sessions.*
