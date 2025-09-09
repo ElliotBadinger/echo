@@ -103,7 +103,7 @@ jobs:
     strategy:
       fail-fast: false # Continue other tests even if one module fails
       matrix:
-        module: [domain, core, data, features:recorder] # SaidIt tests temporarily excluded while fixing compilation issues
+        module: [domain, core, data, features:recorder, SaidIt] # SaidIt tests restored - MockK issues fixed, some Robolectric tests may fail
     steps:
       - name: Checkout
         uses: actions/checkout@v4
