@@ -60,6 +60,7 @@ Thumbs.db
 .claude/
 .amazonq/cli-todo-lists/
 .kilocode/
+.android-sdk/
 
 # Keep important documentation but ignore temp files
 !README.md

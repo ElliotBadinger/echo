@@ -1,35 +1,23 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.hilt.android)
-    id("kotlin-kapt")
-}
-
-android {
-    namespace = "com.siya.epistemophile.data"
-    compileSdk = 34
-
-    defaultConfig {
-        minSdk = 30
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    alias(libs.plugins.kotlin.jvm)
 }
 
 dependencies {
-    implementation(project(":core"))
     implementation(project(":domain"))
-
     implementation(libs.coroutines.core)
-    implementation(libs.coroutines.android)
+    implementation(libs.javax.inject)
 
-    implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
-    annotationProcessor(libs.hilt.compiler)
+    testImplementation(libs.junit)
+    testImplementation(libs.coroutines.test)
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
 }

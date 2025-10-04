@@ -20,6 +20,10 @@ set -euo pipefail
 # - Designed to be idempotent and fast.
 
 ROOT_DIR=$(cd "$(dirname "$0")/../.." && pwd)
+SDK_DIR="$ROOT_DIR/.android-sdk"
+CMDLINE_TOOLS_ZIP="commandlinetools-linux-11076708_latest.zip"
+CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/${CMDLINE_TOOLS_ZIP}"
+REQUIRED_SDK_PACKAGES=("platforms;android-34" "build-tools;34.0.0" "platform-tools")
 cd "$ROOT_DIR"
 
 TIER_RANGE=""
@@ -37,6 +41,95 @@ warn() { printf "[health][warn] %s\n" "$*"; }
 err() { printf "[health][error] %s\n" "$*"; }
 
 have_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+ensure_local_properties() {
+  local sdk_path="$1"
+  local props_file="$ROOT_DIR/local.properties"
+  local escaped_path="$sdk_path"
+  if [[ -f "$props_file" ]]; then
+    if grep -q '^sdk.dir=' "$props_file"; then
+      if ! grep -q "^sdk.dir=${escaped_path//\//\/}$" "$props_file"; then
+        local tmp_file
+        tmp_file=$(mktemp)
+        sed "s#^sdk.dir=.*#sdk.dir=${escaped_path//\//\/}#" "$props_file" > "$tmp_file"
+        mv "$tmp_file" "$props_file"
+        log "Updated sdk.dir in local.properties -> $escaped_path"
+      fi
+    else
+      printf '\n%s\n' "sdk.dir=${escaped_path//\//\/}" >> "$props_file"
+      log "Appended sdk.dir to existing local.properties -> $escaped_path"
+    fi
+  else
+    printf 'sdk.dir=%s\n' "$escaped_path" > "$props_file"
+    log "Generated local.properties with sdk.dir -> $escaped_path"
+  fi
+}
+
+ensure_android_licenses() {
+  local sdk_path="$1"
+  mkdir -p "$sdk_path/licenses"
+  printf 'd56f5187479451eabf01fb78af6dfcb131a6481e\n' > "$sdk_path/licenses/android-sdk-license"
+  printf '84831b9409646a918e30573bab4c9c91346d8abd\n' > "$sdk_path/licenses/android-sdk-preview-license"
+}
+
+bootstrap_cmdline_tools() {
+  local sdk_path="$1"
+  local tools_root="$sdk_path/cmdline-tools"
+  local archive_path="$tools_root/$CMDLINE_TOOLS_ZIP"
+
+  mkdir -p "$tools_root"
+  if [[ ! -x "$tools_root/latest/bin/sdkmanager" ]]; then
+    if [[ ! -f "$archive_path" ]]; then
+      log "Downloading Android command line tools..."
+      curl -sSL "$CMDLINE_TOOLS_URL" -o "$archive_path"
+    else
+      log "Reusing cached command line tools archive"
+    fi
+    rm -rf "$tools_root/latest" "$tools_root/cmdline-tools"
+    unzip -q "$archive_path" -d "$tools_root"
+    mv "$tools_root/cmdline-tools" "$tools_root/latest"
+  fi
+}
+
+install_minimal_android_sdk() {
+  local sdk_path="$1"
+  bootstrap_cmdline_tools "$sdk_path"
+  ensure_android_licenses "$sdk_path"
+  local sdkmanager="$sdk_path/cmdline-tools/latest/bin/sdkmanager"
+  if [[ ! -x "$sdkmanager" ]]; then
+    err "sdkmanager not found after extracting command line tools"
+    return 1
+  fi
+  log "Installing minimal Android SDK components into $sdk_path"
+  yes | "$sdkmanager" --sdk_root="$sdk_path" "${REQUIRED_SDK_PACKAGES[@]}" >/dev/null
+}
+
+ensure_android_sdk() {
+  local sdk_root
+  if [[ -n "${ANDROID_SDK_ROOT:-}" ]]; then
+    sdk_root="$ANDROID_SDK_ROOT"
+  else
+    sdk_root="$SDK_DIR"
+    export ANDROID_SDK_ROOT="$sdk_root"
+    export ANDROID_HOME="$sdk_root"
+  fi
+
+  local platform_dir="$sdk_root/platforms/android-34"
+  local build_tools_dir="$sdk_root/build-tools/34.0.0"
+
+  if [[ ! -d "$platform_dir" || ! -d "$build_tools_dir" ]]; then
+    log "Android SDK components missing; bootstrapping local SDK at $sdk_root"
+    install_minimal_android_sdk "$sdk_root"
+  fi
+
+  if [[ -d "$sdk_root" ]]; then
+    log "Android SDK: $sdk_root"
+    ensure_android_licenses "$sdk_root"
+    ensure_local_properties "$sdk_root"
+  else
+    warn "Android SDK not found and automatic bootstrap failed"
+  fi
+}
 
 parse_args() {
   while [[ $# -gt 0 ]]; do
@@ -117,18 +210,7 @@ check_env() {
   fi
 
   # Android SDK checks (best-effort, non-fatal if missing but warned)
-  ANDROID_SDK_ROOT_DEFAULT="$HOME/Android/Sdk"
-  ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_SDK_ROOT_DEFAULT}"
-  if [[ -d "$ANDROID_SDK_ROOT" ]]; then
-    log "Android SDK: $ANDROID_SDK_ROOT"
-    if [[ -f "$ANDROID_SDK_ROOT/licenses/android-sdk-license" ]]; then
-      log "Android SDK licenses: accepted"
-    else
-      warn "Android SDK licenses not accepted. Run: yes | sdkmanager --licenses"
-    fi
-  else
-    warn "Android SDK not found at $ANDROID_SDK_ROOT. Builds may download components during CI."
-  fi
+  ensure_android_sdk
 
   # Network sanity (best-effort, short timeouts)
   if have_cmd curl; then
