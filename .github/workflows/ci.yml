@@ -51,6 +51,11 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      - name: Bootstrap Android SDK (Tier 0)
+        env:
+          TERM: dumb
+        run: bash scripts/agent/healthcheck.sh --tier 0
+
       - name: Quick Compile Test (Fail Fast)
         run: ./gradlew compileDebugKotlin compileDebugJava --stacktrace
 
@@ -88,6 +93,11 @@ jobs:
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
+
+      - name: Bootstrap Android SDK (Tier 0)
+        env:
+          TERM: dumb
+        run: bash scripts/agent/healthcheck.sh --tier 0
 
       - name: Accept Android SDK Licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
@@ -133,6 +143,11 @@ jobs:
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
+
+      - name: Bootstrap Android SDK (Tier 0)
+        env:
+          TERM: dumb
+        run: bash scripts/agent/healthcheck.sh --tier 0
 
       - name: Accept Android SDK Licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
@@ -187,6 +202,11 @@ jobs:
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
+
+      - name: Bootstrap Android SDK (Tier 0)
+        env:
+          TERM: dumb
+        run: bash scripts/agent/healthcheck.sh --tier 0
 
       - name: Accept Android SDK Licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true

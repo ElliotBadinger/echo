@@ -23,7 +23,12 @@ ROOT_DIR=$(cd "$(dirname "$0")/../.." && pwd)
 SDK_DIR="$ROOT_DIR/.android-sdk"
 CMDLINE_TOOLS_ZIP="commandlinetools-linux-11076708_latest.zip"
 CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/${CMDLINE_TOOLS_ZIP}"
-REQUIRED_SDK_PACKAGES=("platforms;android-34" "build-tools;34.0.0" "platform-tools")
+REQUIRED_SDK_PACKAGES=(
+  "platforms;android-34"
+  "platforms;android-33"
+  "build-tools;34.0.0"
+  "platform-tools"
+)
 cd "$ROOT_DIR"
 
 TIER_RANGE=""
@@ -114,10 +119,16 @@ ensure_android_sdk() {
     export ANDROID_HOME="$sdk_root"
   fi
 
-  local platform_dir="$sdk_root/platforms/android-34"
-  local build_tools_dir="$sdk_root/build-tools/34.0.0"
+  local needs_install=false
+  for pkg in "${REQUIRED_SDK_PACKAGES[@]}"; do
+    local pkg_path="${pkg//;/\/}"
+    if [[ ! -d "$sdk_root/$pkg_path" ]]; then
+      needs_install=true
+      break
+    fi
+  done
 
-  if [[ ! -d "$platform_dir" || ! -d "$build_tools_dir" ]]; then
+  if [[ "$needs_install" == true ]]; then
     log "Android SDK components missing; bootstrapping local SDK at $sdk_root"
     install_minimal_android_sdk "$sdk_root"
   fi
