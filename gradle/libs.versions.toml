@@ -13,6 +13,7 @@ mockito = "5.11.0"
 mockito-kotlin = "5.0.0"
 robolectric = "4.11.1"
 tap-target-view = "1.13.3"
+javax-inject = "1"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
@@ -31,6 +32,7 @@ hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt"
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
 hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }
 tap-target-view = { module = "com.getkeepsafe.taptargetview:taptargetview", version.ref = "tap-target-view" }
+javax-inject = { module = "javax.inject:javax.inject", version.ref = "javax-inject" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
