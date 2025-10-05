@@ -30,6 +30,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowApplication
+import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowNotificationManager
 
 /**
@@ -78,7 +79,7 @@ class NotifyFileReceiverTest {
         receiver.onSuccess(testUri)
         
         // Then
-        val shadowNotificationManager = ShadowNotificationManager.shadowOf(
+        val shadowNotificationManager = Shadows.shadowOf(
             context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         )
         val notifications = shadowNotificationManager.allNotifications
@@ -97,7 +98,7 @@ class NotifyFileReceiverTest {
         receiver.onSuccess(testUri)
         
         // Then
-        val shadowNotificationManager = ShadowNotificationManager.shadowOf(
+        val shadowNotificationManager = Shadows.shadowOf(
             context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         )
         val notifications = shadowNotificationManager.allNotifications
@@ -117,7 +118,7 @@ class NotifyFileReceiverTest {
         receiver.onSuccess(testUri)
         
         // Then
-        val shadowNotificationManager = ShadowNotificationManager.shadowOf(
+        val shadowNotificationManager = Shadows.shadowOf(
             context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         )
         val notification = shadowNotificationManager.getNotification(43)
@@ -134,7 +135,7 @@ class NotifyFileReceiverTest {
         receiver.onFailure(exception)
         
         // Then - no exception thrown, no notification posted
-        val shadowNotificationManager = ShadowNotificationManager.shadowOf(
+        val shadowNotificationManager = Shadows.shadowOf(
             context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         )
         val notifications = shadowNotificationManager.allNotifications
@@ -224,7 +225,7 @@ class NotifyFileReceiverTest {
         
         // Test without permission
         receiver.onSuccess(testUri)
-        var shadowNotificationManager = ShadowNotificationManager.shadowOf(
+        var shadowNotificationManager = Shadows.shadowOf(
             context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         )
         assertEquals(0, shadowNotificationManager.allNotifications.size)
@@ -232,7 +233,7 @@ class NotifyFileReceiverTest {
         // Grant permission and test again
         ShadowApplication.getInstance().grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
         receiver.onSuccess(testUri)
-        shadowNotificationManager = ShadowNotificationManager.shadowOf(
+        shadowNotificationManager = Shadows.shadowOf(
             context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         )
         assertEquals(1, shadowNotificationManager.allNotifications.size)
@@ -279,7 +280,7 @@ class NotifyFileReceiverTest {
         receiver.onSuccess(testUri2)
         
         // Then - only one notification because same ID is used
-        val shadowNotificationManager = ShadowNotificationManager.shadowOf(
+        val shadowNotificationManager = Shadows.shadowOf(
             context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         )
         val notification = shadowNotificationManager.getNotification(43)

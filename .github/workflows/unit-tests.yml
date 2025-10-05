@@ -30,6 +30,11 @@ jobs:
           ./gradlew --version
           java -version
 
+      - name: Bootstrap Android SDK (Tier 0)
+        env:
+          TERM: dumb
+        run: bash scripts/agent/healthcheck.sh --tier 0
+
       - name: Run unit tests (no daemon)
         env:
           JAVA_TOOL_OPTIONS: -Xmx2g -Dfile.encoding=UTF-8

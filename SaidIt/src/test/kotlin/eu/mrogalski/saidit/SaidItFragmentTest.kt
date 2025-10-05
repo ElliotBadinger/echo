@@ -16,6 +16,8 @@ import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textview.MaterialTextView
 import eu.mrogalski.android.TimeFormat
+import eu.mrogalski.saidit.NotifyFileReceiver
+import eu.mrogalski.saidit.PromptFileReceiver
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,6 +28,7 @@ import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.MockedStatic
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
@@ -245,7 +248,7 @@ class SaidItFragmentTest {
         val fileName = "test_recording.mp4"
         
         // When
-        val notification = fragment.buildNotificationForFile(appContext, fileUri, fileName)
+        val notification = NotifyFileReceiver.buildNotificationForFile(appContext, fileUri, fileName)
         
         // Then
         assert(notification != null)
@@ -257,10 +260,10 @@ class SaidItFragmentTest {
         // Given - Use Robolectric's application context
         val appContext = RuntimeEnvironment.getApplication()
         val mockUri = mock(Uri::class.java)
-        val receiver = fragment.NotifyFileReceiver(appContext)
+        val receiver = NotifyFileReceiver(appContext)
 
         // Grant POST_NOTIFICATIONS permission so NotificationManagerCompat.notify() is reachable
-        org.robolectric.Shadows.shadowOf(appContext).grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
+        shadowOf(appContext).grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
         
         // Mock static method using Mockito
         mockStatic(NotificationManagerCompat::class.java).use { mockedStatic ->
@@ -278,7 +281,7 @@ class SaidItFragmentTest {
     @Test
     fun `NotifyFileReceiver onFailure does nothing`() {
         // Given
-        val receiver = fragment.NotifyFileReceiver(mockContext)
+        val receiver = NotifyFileReceiver(mockContext)
         val exception = Exception("Test failure")
         
         // When
@@ -296,7 +299,7 @@ class SaidItFragmentTest {
         `when`(mockActivity.isFinishing).thenReturn(false)
         `when`(mockDialog.isShowing).thenReturn(true)
         
-        val receiver = fragment.PromptFileReceiver(mockActivity, mockDialog)
+        val receiver = PromptFileReceiver(mockActivity, mockDialog)
         
         // Mock the dialog builder chain
         val mockBuilder = mock(MaterialAlertDialogBuilder::class.java)
@@ -320,7 +323,7 @@ class SaidItFragmentTest {
         val mockUri = mock(Uri::class.java)
         `when`(mockActivity.isFinishing).thenReturn(true)
         
-        val receiver = fragment.PromptFileReceiver(mockActivity)
+        val receiver = PromptFileReceiver(mockActivity)
         
         // When
         receiver.onSuccess(mockUri)
@@ -335,7 +338,7 @@ class SaidItFragmentTest {
         val exception = Exception("Test error")
         `when`(mockActivity.isFinishing).thenReturn(false)
         
-        val receiver = fragment.PromptFileReceiver(mockActivity)
+        val receiver = PromptFileReceiver(mockActivity)
         
         // Mock the dialog builder
         val mockBuilder = mock(MaterialAlertDialogBuilder::class.java)
