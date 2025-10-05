@@ -1,49 +1,71 @@
 package com.siya.epistemophile.audio
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
+import android.media.MediaPlayer
+import android.media.MediaRecorder
+import io.mockk.confirmVerified
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verifyOrder
+import org.junit.After
 import org.junit.Before
-import org.junit.FixMethodOrder
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.MethodSorters
-import org.robolectric.RobolectricTestRunner
 import java.io.File
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
-@RunWith(RobolectricTestRunner::class)
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class AudioPlayerRecorderTest {
 
-    private lateinit var audioRecorder: AudioRecorder
-    private lateinit var audioPlayer: AudioPlayer
+    private lateinit var outputFile: File
+    private lateinit var mediaRecorder: MediaRecorder
+    private lateinit var mediaPlayer: MediaPlayer
+
+    @Before
+    fun setUp() {
+        outputFile = kotlin.io.path.createTempFile(prefix = "test_recording", suffix = ".mp4").toFile()
+        mediaRecorder = mockk(relaxed = true)
+        mediaPlayer = mockk(relaxed = true)
+
+        every { mediaRecorder.setOutputFile(any<String>()) } returns Unit
+        every { mediaPlayer.setDataSource(any<String>()) } returns Unit
+    }
+
+    @After
+    fun tearDown() {
+        outputFile.delete()
+    }
 
     @Test
-    fun test1_recordAndPlayback() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val outputFile = File(context.cacheDir, "test_recording.mp4")
-        audioRecorder = AudioRecorder(outputFile)
-        audioPlayer = AudioPlayer(outputFile)
+    fun `start and stop recorder and player`() {
+        val recorder = AudioRecorder(outputFile) { mediaRecorder }
+        val player = AudioPlayer(outputFile) { mediaPlayer }
 
-        // Use CountDownLatch for synchronization instead of Thread.sleep()
-        val recordLatch = CountDownLatch(1)
-        val playbackLatch = CountDownLatch(1)
+        recorder.start()
+        verifyOrder {
+            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            mediaRecorder.setOutputFile(outputFile.absolutePath)
+            mediaRecorder.prepare()
+            mediaRecorder.start()
+        }
 
-        audioRecorder.start()
-        // Let recording run for a short time
-        Thread.sleep(100)
-        audioRecorder.stop()
-        recordLatch.countDown()
+        recorder.stop()
+        verifyOrder {
+            mediaRecorder.stop()
+            mediaRecorder.release()
+        }
+        confirmVerified(mediaRecorder)
 
-        audioPlayer.start()
-        // Let playback run for a short time
-        Thread.sleep(100)
-        audioPlayer.stop()
-        playbackLatch.countDown()
+        player.start()
+        verifyOrder {
+            mediaPlayer.setDataSource(outputFile.absolutePath)
+            mediaPlayer.prepare()
+            mediaPlayer.start()
+        }
 
-        // Verify that the operations completed
-        recordLatch.await(1, TimeUnit.SECONDS)
-        playbackLatch.await(1, TimeUnit.SECONDS)
+        player.stop()
+        verifyOrder {
+            mediaPlayer.stop()
+            mediaPlayer.release()
+        }
+        confirmVerified(mediaPlayer)
     }
 }

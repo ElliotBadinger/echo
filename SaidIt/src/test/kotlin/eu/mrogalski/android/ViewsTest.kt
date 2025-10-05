@@ -8,12 +8,17 @@ import android.widget.TextView
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.Mockito.*
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * Comprehensive unit tests for Views utility functions.
  * Tests both legacy Java-compatible methods and modern Kotlin extensions.
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class ViewsTest {
     
     private lateinit var rootViewGroup: ViewGroup

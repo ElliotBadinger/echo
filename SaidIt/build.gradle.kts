@@ -81,6 +81,7 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.robolectric)
+    testRuntimeOnly(libs.robolectric.android.all)
     testImplementation(libs.coroutines.test)
     // Hilt testing for Robolectric/JUnit
     testImplementation(libs.hilt.android.testing)
