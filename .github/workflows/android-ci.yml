@@ -1,0 +1,162 @@
+name: Android CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ '**' ]
+  pull_request:
+
+concurrency:
+  group: android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Unit tests (Robolectric)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Show versions
+        run: |
+          ./gradlew --version
+          java -version
+
+      - name: Bootstrap Android SDK (Tier 0)
+        env:
+          TERM: dumb
+        run: bash scripts/agent/healthcheck.sh --tier 0
+
+      - name: Run unit tests
+        env:
+          JAVA_TOOL_OPTIONS: -Xmx2g -Dfile.encoding=UTF-8
+        run: |
+          ./gradlew test --no-daemon --continue
+
+      - name: Coverage (Jacoco)
+        run: |
+          ./gradlew jacocoAll --no-daemon || echo 'jacocoAll task not found, skipping'
+
+      - name: Upload unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-tests-reports
+          path: |
+            **/build/test-results/test/**/*
+            **/build/reports/tests/**/*
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-reports
+          path: |
+            **/build/reports/jacoco/**/*
+            **/build/reports/jacocoTestReport/**/*
+
+  android-instrumented:
+    name: Instrumentation tests (API 34 ATD)
+    runs-on: macos-13
+    timeout-minutes: 50
+    needs: unit-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Bootstrap Android SDK (Tier 0)
+        env:
+          TERM: dumb
+        run: bash scripts/agent/healthcheck.sh --tier 0
+
+      - name: Build debug & androidTest APKs
+        env:
+          JAVA_TOOL_OPTIONS: -Xmx2g -Dfile.encoding=UTF-8
+        run: |
+          ./gradlew :SaidIt:assembleDebug :SaidIt:assembleAndroidTest --no-daemon
+
+      - name: Run instrumented tests on emulator (ATD, macOS Intel)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: aosp_atd
+          arch: x86_64
+          avd-name: atd-api-34
+          force-avd-creation: true
+          disable-animations: true
+          emulator-boot-timeout: 1500
+          ram-size: 4096
+          disk-size: 8G
+          cores: 3
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none -no-snapshot -no-snapshot-save -wipe-data -skip-adb-auth -ports 5556,5557
+          script: |
+            adb kill-server || true
+            adb start-server || true
+            adb devices -l
+            ./gradlew :SaidIt:connectedDebugAndroidTest --no-daemon
+
+      - name: Upload android test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-instrumented-reports
+          path: |
+            SaidIt/build/reports/androidTests/connected/**/*
+            SaidIt/build/outputs/androidTest-results/connected/**/*
+
+  lint:
+    name: Android Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: unit-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Bootstrap Android SDK (Tier 0)
+        env:
+          TERM: dumb
+        run: bash scripts/agent/healthcheck.sh --tier 0
+
+      - name: Run lint
+        env:
+          JAVA_TOOL_OPTIONS: -Xmx2g -Dfile.encoding=UTF-8
+        run: |
+          ./gradlew lint --no-daemon --continue
+
+      - name: Upload lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: |
+            **/build/reports/lint-results*.*

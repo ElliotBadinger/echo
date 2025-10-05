@@ -1,0 +1,33 @@
+sync_to_github:
+  stage: sync
+  image: alpine/git:latest
+  script:
+    - echo "Debug - checking environment"
+    - which git
+    - git --version
+    - pwd
+    - ls -la
+    - echo "Current branch info:"
+    - git branch -a
+    - git remote -v
+    - echo "Setting up git config"
+    - git config --global user.email "ci@gitlab.com"
+    - git config --global user.name "GitLab CI"
+    - echo "Validating GITHUB_TOKEN..."
+    - |
+      if [ -z "$GITHUB_TOKEN" ]; then
+        echo "ERROR: GITHUB_TOKEN variable is not set"
+        exit 1
+      fi
+    - echo "Adding GitHub remote with token authentication"
+    - git remote add github https://x-access-token:$GITHUB_TOKEN@github.com/ElliotBadinger/echo.git
+    - echo "Checking remotes"
+    - git remote -v
+    - echo "Pushing to GitHub..."
+    - git push github HEAD:refactor/phase1-modularization-kts-hilt
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == "refactor/phase1-modularization-kts-hilt"
+    - if: $CI_PIPELINE_SOURCE == "web"
+  variables:
+    GIT_STRATEGY: clone
+    GIT_DEPTH: 0

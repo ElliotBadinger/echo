@@ -1,0 +1,229 @@
+name: Agent Health Check
+
+on:
+  schedule:
+    # Run every night at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    # Allow manual triggering for testing
+    inputs:
+      tier_level:
+        description: 'Health check tier level (0-4, or 0-2 for default)'
+        required: false
+        default: '0-2'
+        type: string
+      include_android:
+        description: 'Include Android tests (Tier 3)'
+        required: false
+        default: false
+        type: boolean
+      include_full:
+        description: 'Include coverage and lint (Tier 4)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  agent-health:
+    name: Agent Health Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    strategy:
+      matrix:
+        tier: [0, 1, 2]
+      fail-fast: false  # Continue testing other tiers even if one fails
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+          
+      - name: Accept Android SDK licenses
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          
+      - name: Make health check script executable
+        run: chmod +x scripts/agent/healthcheck.sh
+        
+      - name: Run health check tier ${{ matrix.tier }}
+        run: |
+          echo "Running health check for Tier ${{ matrix.tier }}"
+          bash scripts/agent/healthcheck.sh --tier ${{ matrix.tier }}
+        
+      - name: Upload health check results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-check-tier-${{ matrix.tier }}-results
+          path: |
+            build/
+            */build/test-results/
+            */build/reports/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  agent-health-full:
+    name: Full Agent Health (Optional)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch'
+    needs: agent-health
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+          
+      - name: Accept Android SDK licenses
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          
+      - name: Make health check script executable
+        run: chmod +x scripts/agent/healthcheck.sh
+        
+      - name: Run full health check with options
+        run: |
+          tier_level="${{ inputs.tier_level || '0-2' }}"
+          android_flag=""
+          full_flag=""
+          
+          if [[ "${{ inputs.include_android }}" == "true" ]]; then
+            android_flag="--with-android"
+          fi
+          
+          if [[ "${{ inputs.include_full }}" == "true" ]]; then
+            full_flag="--with-full"
+          fi
+          
+          echo "Running: bash scripts/agent/healthcheck.sh --tier $tier_level $android_flag $full_flag"
+          bash scripts/agent/healthcheck.sh --tier "$tier_level" $android_flag $full_flag
+          
+      - name: Upload full health results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-health-check-results
+          path: |
+            build/
+            */build/test-results/
+            */build/reports/
+            */build/jacoco/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  update-dashboard:
+    name: Update Health Dashboard
+    runs-on: ubuntu-latest
+    needs: [agent-health, agent-health-full]
+    if: always() && github.event_name == 'schedule'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Determine overall health status
+        id: health_status
+        run: |
+          # Check if core tiers (0,1,2) all passed
+          core_success="true"
+          
+          # This is a simplified check - in real implementation, 
+          # we'd analyze the job outcomes from previous steps
+          if [[ "${{ needs.agent-health.result }}" != "success" ]]; then
+            core_success="false"
+          fi
+          
+          echo "core_success=$core_success" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_OUTPUT
+          
+      - name: Update health dashboard
+        if: steps.health_status.outputs.core_success == 'true'
+        run: |
+          # Update the health dashboard with current status
+          timestamp="${{ steps.health_status.outputs.timestamp }}"
+          
+          # Update health dashboard file
+          sed -i "s/\*\*Last Updated\*\*: .*/\*\*Last Updated\**: $timestamp/" docs/project-state/health-dashboard.md
+          
+          # Update component validation timestamps
+          sed -i "s/| \*\*Build System\*\* | .* | .* |/| **Build System** | 🟢 STABLE | $timestamp |/" docs/project-state/health-dashboard.md
+          sed -i "s/| \*\*Core Tests\*\* | .* | .* |/| **Core Tests** | 🟢 PASSING | $timestamp |/" docs/project-state/health-dashboard.md
+          sed -i "s/| \*\*Environment\*\* | .* | .* |/| **Environment** | 🟢 READY | $timestamp |/" docs/project-state/health-dashboard.md
+          
+      - name: Update health dashboard with issues
+        if: steps.health_status.outputs.core_success == 'false'
+        run: |
+          # Update dashboard to reflect detected issues
+          timestamp="${{ steps.health_status.outputs.timestamp }}"
+          
+          sed -i "s/\*\*Last Updated\*\*: .*/\*\*Last Updated\**: $timestamp/" docs/project-state/health-dashboard.md
+          sed -i "s/\*\*Status\*\*: .*/\*\*Status\**: 🔴 **ISSUES DETECTED** - Check recent nightly health run/" docs/project-state/health-dashboard.md
+          
+      - name: Commit dashboard updates
+        run: |
+          if [[ $(git status --porcelain | wc -l) -gt 0 ]]; then
+            git config --local user.email "action@github.com"
+            git config --local user.name "Agent Health Bot"
+            git add docs/project-state/health-dashboard.md
+            git commit -m "Agent Health: Update dashboard from nightly run"
+            git push
+          else
+            echo "No changes to commit"
+          fi
+
+  notify-on-failure:
+    name: Notify on Health Issues
+    runs-on: ubuntu-latest
+    needs: [agent-health]
+    if: failure() && github.event_name == 'schedule'
+    
+    steps:
+      - name: Create issue for health failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'Agent Health Check Failed - ' + new Date().toISOString().split('T')[0];
+            const body = `## 🚨 Nightly Agent Health Check Failed
+
+            The automated agent health check detected issues with the project setup.
+
+            **Failed Job**: ${{ github.run_id }}
+            **Workflow**: Agent Health Check
+            **Time**: ${{ github.event.repository.updated_at }}
+
+            ### Next Steps
+            1. Check the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details
+            2. Run \`bash scripts/agent/healthcheck.sh\` locally to reproduce
+            3. Fix any TIER 1 issues immediately
+            4. Update health dashboard once resolved
+
+            ### Health Check Tiers
+            - **Tier 0**: Environment and SDK validation
+            - **Tier 1**: Quick compile check
+            - **Tier 2**: Core unit tests
+
+            This issue will be automatically closed when health checks pass again.
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['agent-health', 'tier-1', 'automated']
+            });

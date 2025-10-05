@@ -1,0 +1,172 @@
+include:
+  - local: '.gitlab-cii.yml'
+
+image: gradle:8.7.0-jdk17
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .gradle/
+    - android-sdk/
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2g -Dorg.gradle.workers.max=2"
+  ANDROID_SDK_URL: "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+  JAVA_TOOL_OPTIONS: "-Xmx2g"
+
+stages: [sync, verify, build, test]
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "refactor/phase1-modularization-kts-hilt"'
+
+.before_android: &before_android
+  - export GRADLE_USER_HOME="$CI_PROJECT_DIR/.gradle"
+  - export ANDROID_SDK_ROOT="$CI_PROJECT_DIR/android-sdk"
+  - export ANDROID_HOME="$ANDROID_SDK_ROOT"
+  - export JAVA_HOME="${JAVA_HOME:-/opt/java/openjdk}"
+  - export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
+  - chmod +x ./gradlew || true
+  - |
+    set -euo pipefail
+    if [ ! -f "$ANDROID_SDK_ROOT/platforms/android-34/android.jar" ]; then
+      echo "Installing Android SDK (cmdline-tools, platform-tools, platforms;android-34, build-tools;34.0.0)"
+      apt-get update -yq && apt-get install -y --no-install-recommends unzip wget ca-certificates && rm -rf /var/lib/apt/lists/*
+      mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools" "$HOME/.android"
+      touch "$HOME/.android/repositories.cfg"
+      wget -q "$ANDROID_SDK_URL" -O /tmp/cmdline-tools.zip
+      unzip -q /tmp/cmdline-tools.zip -d "$ANDROID_SDK_ROOT/cmdline-tools"
+      mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+      "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --version || true
+      yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_SDK_ROOT" --licenses || true
+      yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_SDK_ROOT" --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" --verbose
+    else
+      echo "Android SDK already present in cache"
+    fi
+
+verify-gradle:
+  stage: verify
+  before_script:
+    - export GRADLE_USER_HOME="$CI_PROJECT_DIR/.gradle"
+    - chmod +x ./gradlew || true
+  script:
+    - ./gradlew --version
+    - ./gradlew help --no-daemon --stacktrace
+  retry: 1
+
+assemble-modules:
+  stage: build
+  before_script:
+    - *before_android
+  script:
+    - ./gradlew :core:assembleDebug :data:assembleDebug :features:recorder:assembleDebug :SaidIt:assembleDebug :domain:build --no-daemon --stacktrace
+  retry: 1
+
+android-lint:
+  stage: test
+  before_script:
+    - *before_android
+  script:
+    - ./gradlew :SaidIt:lint :core:lint :data:lint :features:recorder:lint --no-daemon --stacktrace
+  allow_failure: true
+  retry: 1
+
+# Per-module unit test jobs for clearer isolation
+unit-test-domain:
+  stage: test
+  before_script:
+    - *before_android
+  script:
+    - ./gradlew :domain:test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+  artifacts:
+    when: always
+    paths:
+      - "domain/build/reports/tests/"
+  retry: 1
+
+unit-test-core:
+  stage: test
+  before_script:
+    - *before_android
+  script:
+    - ./gradlew :core:test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+  artifacts:
+    when: always
+    paths:
+      - "core/build/reports/tests/"
+  retry: 1
+
+unit-test-data:
+  stage: test
+  before_script:
+    - *before_android
+  script:
+    - ./gradlew :data:test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+  artifacts:
+    when: always
+    paths:
+      - "data/build/reports/tests/"
+  retry: 1
+
+unit-test-recorder:
+  stage: test
+  before_script:
+    - *before_android
+  script:
+    - ./gradlew :features:recorder:test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+  artifacts:
+    when: always
+    paths:
+      - "features/recorder/build/reports/tests/"
+  retry: 1
+
+unit-test-saidit:
+  stage: test
+  before_script:
+    - *before_android
+  script:
+    - ./gradlew :SaidIt:test --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+  artifacts:
+    when: always
+    paths:
+      - "SaidIt/build/reports/tests/"
+  retry: 1
+
+coverage:
+  stage: test
+  before_script:
+    - *before_android
+  script:
+    - ./gradlew jacocoTestReport --no-daemon --stacktrace -Dorg.gradle.workers.max=2
+  artifacts:
+    when: always
+    paths:
+      - "**/reports/jacoco/"
+      - "**/jacoco/*.exec"
+  retry: 1
+
+# Fixed sync job with proper GitHub token authentication
+sync_to_github:
+  stage: sync
+  image: debian:bullseye-slim
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq git curl
+  script:
+    - git config --global user.email "ci@gitlab.com"
+    - git config --global user.name "GitLab CI"
+    - echo "Cross-platform CI: Testing GitHub API connectivity..."
+    - 'curl -s -f -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/user || echo "GitHub API test failed - check token validity and permissions"'
+    - echo "Cross-platform CI: Setting up GitHub remote with token authentication..."
+    - git remote add github https://x-access-token:$GITHUB_TOKEN@github.com/ElliotBadinger/echo.git
+    - echo "Cross-platform CI: Pushing to GitHub..."
+    - git push github HEAD:refactor/phase1-modularization-kts-hilt
+    - echo "Cross-platform sync completed successfully!"
+  only:
+    refs:
+      - refactor/phase1-modularization-kts-hilt
+    variables:
+      - $CI_COMMIT_REF_NAME == "refactor/phase1-modularization-kts-hilt"
+  retry: 1

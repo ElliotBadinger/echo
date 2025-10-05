@@ -28,3 +28,42 @@ proguard/
 # IDEs
 .idea/
 .vscode/
+
+# Python virtual environments (CRITICAL: These create thousands of files)
+docs/automation/scripts/docs-automation-env/
+docs/automation/scripts/venv/
+docs/venv/
+docs/automation/scripts/__pycache__/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Temporary files
+*.tmp
+*.temp
+nul
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Firebase configuration
+**/google-services.json
+
+# Agent temporary files
+.claude/
+.amazonq/cli-todo-lists/
+.kilocode/
+.android-sdk/
+
+# Keep important documentation but ignore temp files
+!README.md
+!docs/**/*.md
+!documentation/**/*.md
+docs/archive/automation/scripts/docs-automation-env/

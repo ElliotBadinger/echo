@@ -1,0 +1,17 @@
+🤖 Echo Project - New Agent Session
+
+STEP 1: Validate Environment & Project Health
+bash scripts/agent/healthcheck.sh
+
+STEP 2: Check Current Status  
+cat docs/project-state/health-dashboard.md
+
+STEP 3: Review Quick Start Guide
+cat docs/agent-workflow/quick-start-guide.md
+
+🎯 Ready to develop! Always run health check first before making changes.
+
+⚡ Quick commands:
+- Environment only: bash scripts/agent/healthcheck.sh --tier 0
+- Fast validation: bash scripts/agent/healthcheck.sh --tier 0-2  
+- Help: bash scripts/agent/healthcheck.sh --help

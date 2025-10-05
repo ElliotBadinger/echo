@@ -1,0 +1,51 @@
+name: unit-tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ refactor/phase1-modularization-kts-hilt ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-disabled: false
+
+      - name: Show versions
+        run: |
+          ./gradlew --version
+          java -version
+
+      - name: Bootstrap Android SDK (Tier 0)
+        env:
+          TERM: dumb
+        run: bash scripts/agent/healthcheck.sh --tier 0
+
+      - name: Run unit tests (no daemon)
+        env:
+          JAVA_TOOL_OPTIONS: -Xmx2g -Dfile.encoding=UTF-8
+        run: |
+          ./gradlew test --no-daemon --continue
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-reports
+          path: |
+            **/build/test-results/test/**/*
+            **/build/reports/tests/**/*
