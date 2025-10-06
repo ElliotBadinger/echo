@@ -67,9 +67,9 @@ jobs:
             **/build/reports/jacocoTestReport/**/*
 
   android-instrumented:
-    name: Instrumentation tests (API 34 ATD)
-    runs-on: macos-13
-    timeout-minutes: 50
+    name: Instrumentation tests (Managed Device)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
     needs: unit-tests
     steps:
       - name: Checkout
@@ -89,31 +89,11 @@ jobs:
           TERM: dumb
         run: bash scripts/agent/healthcheck.sh --tier 0
 
-      - name: Build debug & androidTest APKs
+      - name: Run managed device instrumentation tests
         env:
-          JAVA_TOOL_OPTIONS: -Xmx2g -Dfile.encoding=UTF-8
+          JAVA_TOOL_OPTIONS: -Xmx3g -Dfile.encoding=UTF-8
         run: |
-          ./gradlew :SaidIt:assembleDebug :SaidIt:assembleAndroidTest --no-daemon
-
-      - name: Run instrumented tests on emulator (ATD, macOS Intel)
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 34
-          target: aosp_atd
-          arch: x86_64
-          avd-name: atd-api-34
-          force-avd-creation: true
-          disable-animations: true
-          emulator-boot-timeout: 1500
-          ram-size: 4096
-          disk-size: 8G
-          cores: 3
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none -no-snapshot -no-snapshot-save -wipe-data -skip-adb-auth -ports 5556,5557
-          script: |
-            adb kill-server || true
-            adb start-server || true
-            adb devices -l
-            ./gradlew :SaidIt:connectedDebugAndroidTest --no-daemon
+          ./gradlew :SaidIt:pixel6Api34DebugAndroidTest --no-daemon
 
       - name: Upload android test reports
         if: always()
@@ -121,8 +101,12 @@ jobs:
         with:
           name: android-instrumented-reports
           path: |
-            SaidIt/build/reports/androidTests/connected/**/*
-            SaidIt/build/outputs/androidTest-results/connected/**/*
+            SaidIt/build/reports/androidTests/pixel6Api34DebugAndroidTest/**/*
+            SaidIt/build/outputs/androidTest-results/pixel6Api34DebugAndroidTest/**/*
+
+      - name: Cleanup managed devices
+        if: always()
+        run: ./gradlew :SaidIt:managedDeviceCleanUp --no-daemon
 
   lint:
     name: Android Lint
