@@ -1,5 +1,6 @@
 package eu.mrogalski.saidit;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +10,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.rule.GrantPermissionRule;
 import androidx.test.rule.ServiceTestRule;
 import org.junit.After;
 import org.junit.Before;
@@ -25,6 +27,14 @@ public class SaidItServiceAutoSaveTest {
 
     @Rule
     public final ServiceTestRule serviceRule = new ServiceTestRule();
+
+    @Rule
+    public final GrantPermissionRule permissionRule = GrantPermissionRule.grant(
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.POST_NOTIFICATIONS,
+            Manifest.permission.FOREGROUND_SERVICE,
+            Manifest.permission.FOREGROUND_SERVICE_MICROPHONE
+    );
 
     private Context context;
     private SharedPreferences sharedPreferences;
