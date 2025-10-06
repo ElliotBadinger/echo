@@ -148,8 +148,6 @@ class RecordingsAdapter @JvmOverloads constructor(
             playingPosition = null
         }
 
-        playbackSession = null
-
         items.removeAt(position)
         notifyItemRemoved(position)
         adjustPlayingPositionAfterRemoval(position)
