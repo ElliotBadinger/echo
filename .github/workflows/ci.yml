@@ -103,7 +103,7 @@ jobs:
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Build All Android Modules (Parallel)
-        run: ./gradlew :core:assembleDebug :data:assembleDebug :features:recorder:assembleDebug :SaidIt:assembleDebug :domain:build --stacktrace --parallel --build-cache
+        run: ./gradlew :SaidIt:assembleDebug :core:assembleDebug :audio:assembleDebug :domain:build :data:build :features:recorder:build --stacktrace --parallel --build-cache
 
   # Optimized unit testing
   test:

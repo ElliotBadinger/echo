@@ -10,12 +10,10 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.any
-import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
@@ -25,6 +23,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowAlertDialog
 import org.robolectric.shadows.ShadowLooper
+import org.robolectric.Shadows.shadowOf
 
 /**
  * Comprehensive unit tests for PromptFileReceiver that verify actual behavior.
@@ -224,23 +223,21 @@ class PromptFileReceiverTest {
     @Test
     fun `open button creates correct intent`() {
         // Given
-        val spyActivity = spy(activity)
-        receiver = PromptFileReceiver(spyActivity)
+        receiver = PromptFileReceiver(activity)
+        val shadowActivity = shadowOf(activity)
         val testUri = Uri.parse("content://test/file.mp4")
-        
+
         // When
         receiver.onSuccess(testUri)
         ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
-        
-        // Get the dialog and click open button
+
         val dialog = ShadowAlertDialog.getLatestDialog() as AlertDialog
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
-        
-        // Then
-        val intentCaptor = argumentCaptor<Intent>()
-        verify(spyActivity).startActivity(intentCaptor.capture())
-        
-        val capturedIntent = intentCaptor.firstValue
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        val capturedIntent = shadowActivity.nextStartedActivity
+        assertNotNull(capturedIntent)
+        requireNotNull(capturedIntent)
         assertEquals(Intent.ACTION_VIEW, capturedIntent.action)
         assertEquals(testUri, capturedIntent.data)
         assertEquals("audio/mp4", capturedIntent.type)
@@ -250,74 +247,75 @@ class PromptFileReceiverTest {
     @Test
     fun `share button creates correct intent`() {
         // Given
-        val spyActivity = spy(activity)
-        receiver = PromptFileReceiver(spyActivity)
+        receiver = PromptFileReceiver(activity)
+        val shadowActivity = shadowOf(activity)
         val testUri = Uri.parse("content://test/file.mp4")
-        
+
         // When
         receiver.onSuccess(testUri)
         ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
-        
-        // Get the dialog and click share button
+
         val dialog = ShadowAlertDialog.getLatestDialog() as AlertDialog
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL).performClick()
-        
-        // Then
-        val intentCaptor = argumentCaptor<Intent>()
-        verify(spyActivity).startActivity(intentCaptor.capture())
-        
-        // The captured intent is the chooser, we need to check the target intent
-        val capturedIntent = intentCaptor.firstValue
-        assertEquals(Intent.ACTION_CHOOSER, capturedIntent.action)
-        
-        val targetIntent = capturedIntent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        val chooserIntent = shadowActivity.nextStartedActivity
+        assertNotNull(chooserIntent)
+        requireNotNull(chooserIntent)
+        assertEquals(Intent.ACTION_CHOOSER, chooserIntent.action)
+
+        val targetIntent = chooserIntent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
         assertNotNull(targetIntent)
-        assertEquals(Intent.ACTION_SEND, targetIntent?.action)
-        assertEquals("audio/mp4", targetIntent?.type)
-        assertEquals(testUri, targetIntent?.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))
-        assertTrue(targetIntent?.flags?.and(Intent.FLAG_GRANT_READ_URI_PERMISSION) != 0)
+        requireNotNull(targetIntent)
+        assertEquals(Intent.ACTION_SEND, targetIntent.action)
+        assertEquals("audio/mp4", targetIntent.type)
+        assertEquals(testUri, targetIntent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))
+        assertTrue(targetIntent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
     }
 
     @Test
     fun `dismiss button closes dialog without action`() {
         // Given
-        val spyActivity = spy(activity)
-        receiver = PromptFileReceiver(spyActivity)
-        
+        receiver = PromptFileReceiver(activity)
+        val shadowActivity = shadowOf(activity)
+
         // When
         receiver.onSuccess(mockUri)
         ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
-        
-        // Get the dialog and click dismiss button
+
         val dialog = ShadowAlertDialog.getLatestDialog() as AlertDialog
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick()
-        
-        // Then
-        verify(spyActivity, never()).startActivity(any())
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
+
+        assertNull(shadowActivity.nextStartedActivity)
         assertFalse(dialog.isShowing)
     }
 
     @Test
     fun `UI operations run on UI thread`() {
         // Given
-        val mockActivity = mock(Activity::class.java)
-        val runnableCaptor = argumentCaptor<Runnable>()
-        
-        whenever(mockActivity.isFinishing).thenReturn(false)
+        val realActivity = Robolectric.buildActivity(Activity::class.java)
+            .create()
+            .start()
+            .resume()
+            .get()
+        val spyActivity = spy(realActivity)
+
+        whenever(spyActivity.isFinishing).thenReturn(false)
         doAnswer { invocation ->
             val runnable = invocation.getArgument<Runnable>(0)
             runnable.run()
             null
-        }.whenever(mockActivity).runOnUiThread(runnableCaptor.capture())
-        
-        receiver = PromptFileReceiver(mockActivity, mockProgressDialog)
+        }.whenever(spyActivity).runOnUiThread(any())
+
+        receiver = PromptFileReceiver(spyActivity, mockProgressDialog)
         whenever(mockProgressDialog.isShowing).thenReturn(true)
-        
+
         // When
         receiver.onSuccess(mockUri)
-        
+
         // Then
-        verify(mockActivity).runOnUiThread(any())
+        verify(spyActivity).runOnUiThread(any())
         verify(mockProgressDialog).dismiss()
     }
 }
