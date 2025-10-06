@@ -24,7 +24,7 @@
    - Remove Java-only build flags, shrink unused kapt configuration, and enable lint checks once Kotlin-only.
 
 ## Proposed Tickets
-1. **ECHO-201 – Convert Legacy Activities to Kotlin**
+1. **ECHO-201 – Convert Legacy Activities to Kotlin** *(In progress)*
    - Scope: `SaidItActivity`, `SettingsActivity`, onboarding fragments/pager, adapter wiring.
    - Definition of done: Kotlin replacements with equivalent behaviour, tests updated, Java files removed.
 2. **ECHO-202 – Port Recording Recycler Adapter & UI Helpers**
@@ -49,3 +49,10 @@
 - DSP migration (ECHO-203) should land before adapter refactors rely on Kotlin-only audio APIs.
 - Ensure Hilt modules are updated when activities move to Kotlin to avoid classpath mismatches.
 - Watch for behavioural drift in autosave/background service; keep instrumentation tests green during each step.
+
+## ECHO-203 Detailed Plan
+- **Inventory & Ownership**: Catalogue every class under `SaidIt/src/main/java/simplesound/**` with notes on current consumers (service, tests, adapters). Confirm whether any code in other modules relies on Java-specific APIs.
+- **Modulo Conversion Batches**: Port helpers in logical batches (e.g., DSP math, PCM streams, WAV IO) to keep reviews tight and allow incremental verification.
+- **API Surface Cleanup**: While converting, replace mutable arrays with Kotlin collections where safe, introduce inline value classes for sample frames, and document public APIs under `audio/`.
+- **Test Strategy**: Add targeted property-based tests for windowing, plus golden-file tests for WAV read/write accuracy. Wire them into `audio` module JVM tests so they run with tier-2 health checks.
+- **Adoption Steps**: Once Kotlin utilities land, update repositories/adapters to consume the new APIs, then delete the legacy Java package and update documentation.
