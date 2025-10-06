@@ -2,10 +2,11 @@ package com.siya.epistemophile.audio
 
 import android.media.MediaPlayer
 import android.media.MediaRecorder
-import io.mockk.confirmVerified
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verifyOrder
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doNothing
+import org.mockito.kotlin.inOrder
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verifyNoMoreInteractions
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -20,11 +21,11 @@ class AudioPlayerRecorderTest {
     @Before
     fun setUp() {
         outputFile = kotlin.io.path.createTempFile(prefix = "test_recording", suffix = ".mp4").toFile()
-        mediaRecorder = mockk(relaxed = true)
-        mediaPlayer = mockk(relaxed = true)
+        mediaRecorder = mock()
+        mediaPlayer = mock()
 
-        every { mediaRecorder.setOutputFile(any<String>()) } returns Unit
-        every { mediaPlayer.setDataSource(any<String>()) } returns Unit
+        doNothing().`when`(mediaRecorder).setOutputFile(any<String>())
+        doNothing().`when`(mediaPlayer).setDataSource(any<String>())
     }
 
     @After
@@ -38,34 +39,28 @@ class AudioPlayerRecorderTest {
         val player = AudioPlayer(outputFile) { mediaPlayer }
 
         recorder.start()
-        verifyOrder {
-            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
-            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            mediaRecorder.setOutputFile(outputFile.absolutePath)
-            mediaRecorder.prepare()
-            mediaRecorder.start()
-        }
+        val recorderOrder = inOrder(mediaRecorder)
+        recorderOrder.verify(mediaRecorder).setAudioSource(MediaRecorder.AudioSource.MIC)
+        recorderOrder.verify(mediaRecorder).setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+        recorderOrder.verify(mediaRecorder).setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+        recorderOrder.verify(mediaRecorder).setOutputFile(outputFile.absolutePath)
+        recorderOrder.verify(mediaRecorder).prepare()
+        recorderOrder.verify(mediaRecorder).start()
 
         recorder.stop()
-        verifyOrder {
-            mediaRecorder.stop()
-            mediaRecorder.release()
-        }
-        confirmVerified(mediaRecorder)
+        recorderOrder.verify(mediaRecorder).stop()
+        recorderOrder.verify(mediaRecorder).release()
+        verifyNoMoreInteractions(mediaRecorder)
 
         player.start()
-        verifyOrder {
-            mediaPlayer.setDataSource(outputFile.absolutePath)
-            mediaPlayer.prepare()
-            mediaPlayer.start()
-        }
+        val playerOrder = inOrder(mediaPlayer)
+        playerOrder.verify(mediaPlayer).setDataSource(outputFile.absolutePath)
+        playerOrder.verify(mediaPlayer).prepare()
+        playerOrder.verify(mediaPlayer).start()
 
         player.stop()
-        verifyOrder {
-            mediaPlayer.stop()
-            mediaPlayer.release()
-        }
-        confirmVerified(mediaPlayer)
+        playerOrder.verify(mediaPlayer).stop()
+        playerOrder.verify(mediaPlayer).release()
+        verifyNoMoreInteractions(mediaPlayer)
     }
 }

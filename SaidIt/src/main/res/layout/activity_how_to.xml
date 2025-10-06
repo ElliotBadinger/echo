@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:navigationIcon="@drawable/ic_arrow_back"
-        app:title="How To Use" />
+        app:title="@string/how_to_guide" />
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout"
