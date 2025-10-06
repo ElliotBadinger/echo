@@ -28,6 +28,8 @@ class RecordingsAdapter @JvmOverloads constructor(
     }
 ) : RecyclerView.Adapter<RecordingsAdapter.BaseViewHolder>() {
 
+    private val dateFormatter = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+
     private val items: MutableList<RecordingListItem> = buildItems(recordings)
 
     @VisibleForTesting
@@ -37,8 +39,6 @@ class RecordingsAdapter @JvmOverloads constructor(
             is RecordingListItem.Entry -> "R:${it.recording.name}"
         }
     }
-
-    private val dateFormatter = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
 
     private var playbackSession: PlaybackSession? = null
     private var playingPosition: Int? = null
@@ -135,6 +135,12 @@ class RecordingsAdapter @JvmOverloads constructor(
                 removeEntry(position, entry)
             }
             .show()
+    }
+
+    @VisibleForTesting
+    internal fun removeEntryForTesting(position: Int) {
+        val entry = items.getOrNull(position) as? RecordingListItem.Entry ?: return
+        removeEntry(position, entry)
     }
 
     private fun removeEntry(position: Int, entry: RecordingListItem.Entry) {

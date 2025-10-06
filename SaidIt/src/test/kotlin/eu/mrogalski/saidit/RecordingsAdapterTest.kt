@@ -2,8 +2,10 @@ package eu.mrogalski.saidit
 
 import android.content.Context
 import android.net.Uri
-import android.widget.FrameLayout
-import androidx.test.core.app.ApplicationProvider
+import android.view.View
+import androidx.fragment.app.FragmentActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.siya.epistemophile.R
 import org.junit.Assert.assertEquals
@@ -13,7 +15,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.shadows.ShadowAlertDialog
+import org.robolectric.Robolectric
+import org.robolectric.shadows.ShadowLooper
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -23,7 +26,8 @@ import java.util.concurrent.TimeUnit
 @Config(sdk = [34])
 class RecordingsAdapterTest {
 
-    private val context: Context = ApplicationProvider.getApplicationContext()
+    private val activityController = Robolectric.buildActivity(FragmentActivity::class.java).setup()
+    private val context: Context = activityController.get().apply { setTheme(R.style.SaidIt) }
     private val fixedNowMillis = 1705320000000L // 2024-01-15T12:00:00Z
 
     @Test
@@ -86,16 +90,7 @@ class RecordingsAdapterTest {
             }
         )
 
-        val parent = FrameLayout(context)
-        val viewType = adapter.getItemViewType(1)
-        val holder = adapter.onCreateViewHolder(parent, viewType)
-        adapter.onBindViewHolder(holder, 1)
-
-        val deleteButton = holder.itemView.findViewById<MaterialButton>(R.id.delete_button)
-        deleteButton.performClick()
-
-        val dialog = checkNotNull(ShadowAlertDialog.getLatestAlertDialog())
-        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick()
+        adapter.removeEntryForTesting(position = 1)
 
         assertEquals(listOf(uri), deletedUris)
         assertTrue(adapter.snapshotLabels().isEmpty())
@@ -117,24 +112,38 @@ class RecordingsAdapterTest {
             nowProvider = { fixedNowMillis }
         )
 
-        val parent = FrameLayout(context)
-        val viewType = adapter.getItemViewType(1)
-        val holder = adapter.onCreateViewHolder(parent, viewType)
+        val recyclerView = createRecyclerView(adapter)
+        val holder = checkNotNull(recyclerView.findViewHolderForAdapterPosition(1)) as RecordingsAdapter.BaseViewHolder
         adapter.onBindViewHolder(holder, 1)
 
         val playButton = holder.itemView.findViewById<MaterialButton>(R.id.play_button)
         playButton.performClick()
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
 
         assertTrue(fakeSession.started)
         assertTrue(fakeSession.isPlaying)
 
         playButton.performClick()
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
         assertTrue(fakeSession.paused)
         assertFalse(fakeSession.isPlaying)
 
         fakeSession.complete()
         playButton.performClick()
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
         assertEquals(2, fakeSession.startCount)
+    }
+
+    private fun createRecyclerView(adapter: RecordingsAdapter): RecyclerView {
+        return RecyclerView(context).apply {
+            layoutManager = LinearLayoutManager(context)
+            this.adapter = adapter
+            measure(
+                View.MeasureSpec.makeMeasureSpec(800, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1200, View.MeasureSpec.AT_MOST)
+            )
+            layout(0, 0, measuredWidth, measuredHeight)
+        }
     }
 
     private class FakePlaybackSession : RecordingsAdapter.PlaybackSession {

@@ -1,6 +1,8 @@
 package eu.mrogalski
 
 import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 import kotlin.math.log10
 import kotlin.math.pow
 
@@ -23,7 +25,7 @@ object StringFormat {
         val units = arrayOf("B", "KB", "MB", "GB", "TB")
         val digitGroups = (log10(size.toDouble()) / log10(1024.0)).toInt()
         val formattedSize = size / 1024.0.pow(digitGroups)
-        
-        return DecimalFormat("#,##0.#").format(formattedSize) + " " + units[digitGroups]
+        val symbols = DecimalFormatSymbols(Locale.US)
+        return DecimalFormat("#,##0.#", symbols).format(formattedSize) + " " + units[digitGroups]
     }
 }

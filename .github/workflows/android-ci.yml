@@ -151,7 +151,7 @@ jobs:
         env:
           JAVA_TOOL_OPTIONS: -Xmx2g -Dfile.encoding=UTF-8
         run: |
-          ./gradlew lint --no-daemon --continue
+          ./gradlew :SaidIt:lint :core:lint :audio:lint --no-daemon --continue
 
       - name: Upload lint reports
         if: always()
