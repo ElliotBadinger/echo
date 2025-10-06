@@ -67,9 +67,9 @@ jobs:
             **/build/reports/jacocoTestReport/**/*
 
   android-instrumented:
-    name: Instrumentation tests (Managed Device)
+    name: Instrumentation tests (AVD Linux)
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     needs: unit-tests
     steps:
       - name: Checkout
@@ -96,13 +96,20 @@ jobs:
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "emulator" \
-            "system-images;android-34;default;x86_64"
+            "system-images;android-34;google_apis;x86_64"
 
-      - name: Run managed device instrumentation tests
-        env:
-          JAVA_TOOL_OPTIONS: -Xmx3g -Dfile.encoding=UTF-8
-        run: |
-          ./gradlew :SaidIt:pixel6Api34DebugAndroidTest --no-daemon
+      - name: Run instrumentation tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -shell -no-snapshot-save
+          disable-animations: true
+          script: |
+            adb wait-for-device
+            ./gradlew :SaidIt:connectedDebugAndroidTest --no-daemon
 
       - name: Upload android test reports
         if: always()
@@ -110,12 +117,8 @@ jobs:
         with:
           name: android-instrumented-reports
           path: |
-            SaidIt/build/reports/androidTests/pixel6Api34DebugAndroidTest/**/*
-            SaidIt/build/outputs/androidTest-results/pixel6Api34DebugAndroidTest/**/*
-
-      - name: Cleanup managed devices
-        if: always()
-        run: ./gradlew :SaidIt:managedDeviceCleanUp --no-daemon
+            SaidIt/build/reports/androidTests/connected/**/*
+            SaidIt/build/outputs/androidTest-results/connected/**/*
 
   lint:
     name: Android Lint

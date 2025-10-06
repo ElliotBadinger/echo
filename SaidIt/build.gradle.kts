@@ -1,5 +1,3 @@
-import com.android.build.api.dsl.ManagedVirtualDevice
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -49,18 +47,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    testOptions {
-        unitTests.isIncludeAndroidResources = true
-        managedDevices {
-            devices {
-                maybeCreate<ManagedVirtualDevice>("pixel6Api34").apply {
-                    device = "Pixel 6"
-                    apiLevel = 34
-                    systemImageSource = "aosp"
-                }
-            }
-        }
-    }
+    testOptions { unitTests.isIncludeAndroidResources = true }
 }
 
 // Kapt configuration to fix CI annotation processing issues
