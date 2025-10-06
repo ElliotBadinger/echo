@@ -102,4 +102,26 @@ class RecordingViewModelTest {
         viewModel.clearError()
         assertNull(viewModel.uiState.value.error)
     }
+
+    @Test
+    fun `toggling listening off stops recording`() = runTest(dispatcher) {
+        viewModel.startRecording()
+        advanceUntilIdle()
+
+        viewModel.toggleListening(false)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isListening)
+        assertFalse(state.isRecording)
+    }
+
+    @Test
+    fun `saving without pending clip emits error`() = runTest(dispatcher) {
+        viewModel.saveRecording(memorySeconds = 10f, newFileName = "clip")
+        advanceUntilIdle()
+
+        val error = viewModel.uiState.value.error
+        assertTrue(error is RecordingError.NothingToSave)
+    }
 }

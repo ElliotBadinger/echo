@@ -111,4 +111,18 @@ class RecordingRepositoryImplTest {
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull() is RecordingError.NothingToSave)
     }
+
+    @Test
+    fun `dump recording normalizes blank filenames`() = scope.runTest {
+        repository.enableListening()
+        repository.startRecording()
+        repository.stopRecording()
+
+        val result = repository.dumpRecording(memorySeconds = 5f, newFileName = "   ")
+
+        assertTrue(result.isSuccess)
+        val state = repository.recorderState.value
+        assertFalse(state.hasUnsavedRecording)
+        assertNull(state.lastSavedFileName)
+    }
 }
