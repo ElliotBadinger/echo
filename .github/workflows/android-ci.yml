@@ -89,6 +89,15 @@ jobs:
           TERM: dumb
         run: bash scripts/agent/healthcheck.sh --tier 0
 
+      - name: Accept SDK licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null
+
+      - name: Install emulator image
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "emulator" \
+            "system-images;android-34;default;x86_64"
+
       - name: Run managed device instrumentation tests
         env:
           JAVA_TOOL_OPTIONS: -Xmx3g -Dfile.encoding=UTF-8
