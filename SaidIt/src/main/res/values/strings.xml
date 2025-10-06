@@ -161,6 +161,12 @@
     <string name="dismiss">Dismiss</string>
     <string name="save">Save</string>
     <string name="saved_recordings">Saved Recordings</string>
+    <string name="recordings_header_today">Today</string>
+    <string name="recordings_header_yesterday">Yesterday</string>
+    <string name="recording_info_format">%1$s | %2$s</string>
+    <string name="recordings_delete_title">Delete Recording</string>
+    <string name="recordings_delete_message">Are you sure you want to permanently delete this file?</string>
+    <string name="recordings_delete_confirm">Delete</string>
 
     <string name="error_title">Error</string>
     <string name="error_saving_failed">Failed to save the recording. Please try again.</string>
@@ -173,6 +179,7 @@
     <string name="how_to_desc_2">When you want to save something, tap the \'Save Clip\' button. You can choose how much of the recent history to save to a permanent file.</string>
     <string name="how_to_title_3">Managing Recordings</string>
     <string name="how_to_desc_3">You can access, play, and delete your saved recordings from the \'Saved Recordings\' screen.</string>
+    <string name="how_to_step_tab_title">Step %1$d</string>
     <string name="got_it">Got It</string>
 
     <!-- Interactive Tour -->
