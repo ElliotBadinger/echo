@@ -105,6 +105,10 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
+          force-avd-creation: true
+          emulator-boot-timeout: 1500
+          ram-size: 4096
+          disk-size: 8G
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -shell -no-snapshot-save
           disable-animations: true
           script: |
