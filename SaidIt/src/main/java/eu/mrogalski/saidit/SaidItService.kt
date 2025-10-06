@@ -13,7 +13,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
-import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioRecord
@@ -27,6 +26,7 @@ import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ActivityCompat
@@ -100,13 +100,7 @@ class SaidItService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_AUTO_SAVE) {
             val preferences = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
-            if (preferences.getBoolean("auto_save_enabled", false)) {
-                Log.d(TAG, "Executing auto-save...")
-                val timestamp = java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", java.util.Locale.US).format(java.util.Date())
-                val autoName = "Auto-save_$timestamp"
-                val autoSaveDurationSeconds = preferences.getInt("auto_save_duration", 300)
-                dumpRecording(autoSaveDurationSeconds.toFloat(), NotifyFileReceiver(this), autoName)
-            }
+            handleAutoSave(preferences)
             return START_STICKY
         }
         startForeground(FOREGROUND_NOTIFICATION_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
@@ -353,6 +347,21 @@ class SaidItService : Service() {
             Log.d(TAG, "Scheduling auto-save for every ${durationMillis / 1000} seconds.")
             alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + durationMillis, durationMillis, pendingIntent)
         }
+    }
+
+    private fun handleAutoSave(preferences: SharedPreferences) {
+        if (!preferences.getBoolean("auto_save_enabled", false)) return
+        Log.d(TAG, "Executing auto-save...")
+        val timestamp = java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", java.util.Locale.US).format(java.util.Date())
+        val autoName = "Auto-save_$timestamp"
+        val autoSaveDurationSeconds = preferences.getInt("auto_save_duration", 300)
+        dumpRecording(autoSaveDurationSeconds.toFloat(), NotifyFileReceiver(this), autoName)
+    }
+
+    @VisibleForTesting
+    fun triggerAutoSaveForTest(durationSeconds: Int, receiver: WavFileReceiver? = null) {
+        val autoName = "Auto-save_test_${System.currentTimeMillis()}"
+        dumpRecording(durationSeconds.toFloat(), receiver ?: NotifyFileReceiver(this), autoName)
     }
 
     fun cancelAutoSave() {
