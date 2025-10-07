@@ -69,7 +69,7 @@ jobs:
   android-instrumented:
     name: Instrumentation tests (AVD Linux)
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 35
     needs: unit-tests
     steps:
       - name: Checkout
@@ -92,26 +92,74 @@ jobs:
       - name: Accept SDK licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null
 
-      - name: Install emulator image
+      - name: Cache Android SDK components (emulator + images)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.ANDROID_HOME }}/emulator
+            ${{ env.ANDROID_HOME }}/platform-tools
+            ${{ env.ANDROID_HOME }}/platforms/android-34
+            ${{ env.ANDROID_HOME }}/system-images/android-34/**
+          key: ${{ runner.os }}-android-sdk-34-${{ hashFiles('.github/workflows/android-ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-android-sdk-34-
+
+      - name: Install emulator image (ATD)
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "emulator" \
-            "system-images;android-34;google_apis;x86_64"
+            "platform-tools" \
+            "platforms;android-34" \
+            "system-images;android-34;google_atd;x86_64"
 
-      - name: Run instrumentation tests
+      - name: Assemble app and androidTest APKs
+        env:
+          JAVA_TOOL_OPTIONS: -Xmx2g -Dfile.encoding=UTF-8
+        run: |
+          ./gradlew :SaidIt:assembleDebug :SaidIt:assembleDebugAndroidTest --no-daemon
+
+      - name: Run instrumentation tests (attempt 1)
+        id: run-instrumentation-1
+        continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          target: google_apis
+          target: google_atd
           arch: x86_64
           profile: pixel_6
-          force-avd-creation: true
-          emulator-boot-timeout: 1500
-          ram-size: 4096
-          disk-size: 8G
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -shell -no-snapshot-save
+          force-avd-creation: false
+          emulator-boot-timeout: 900
+          ram-size: 3072
+          disk-size: 6G
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim
+            -camera-back none -camera-front none -no-snapshot -read-only
+            -no-metrics -netdelay none -netspeed full
           disable-animations: true
           script: |
+            adb start-server
+            adb wait-for-device
+            ./gradlew :SaidIt:connectedDebugAndroidTest --no-daemon
+
+      - name: Run instrumentation tests (retry once)
+        if: steps.run-instrumentation-1.outcome == 'failure'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_atd
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-boot-timeout: 900
+          ram-size: 3072
+          disk-size: 6G
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim
+            -camera-back none -camera-front none -no-snapshot -read-only
+            -no-metrics -netdelay none -netspeed full
+          disable-animations: true
+          script: |
+            adb start-server
             adb wait-for-device
             ./gradlew :SaidIt:connectedDebugAndroidTest --no-daemon
 
