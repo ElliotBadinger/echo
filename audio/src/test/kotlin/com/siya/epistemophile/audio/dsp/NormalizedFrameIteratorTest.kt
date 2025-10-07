@@ -26,7 +26,7 @@ class NormalizedFrameIteratorTest {
         assertEquals(2, frames.size)
         val normalization = 0x7fff.toDouble()
         val expectedFirst = doubleArrayOf(0.0, 1000 / normalization, 2000 / normalization, 3000 / normalization)
-        val expectedSecond = doubleArrayOf(0.0, 1000 / normalization, 4000 / normalization, 5000 / normalization)
+        val expectedSecond = doubleArrayOf(2000 / normalization, 3000 / normalization, 4000 / normalization, 5000 / normalization)
         frames[0].forEachIndexed { index, value ->
             assertEquals(expectedFirst[index], value, 1e-3)
         }
@@ -50,5 +50,13 @@ class NormalizedFrameIteratorTest {
         assertEquals(2000 / 0x7fff.toDouble(), first[1], 1e-3)
         assertEquals(3000 / 0x7fff.toDouble(), first[2], 1e-3)
         assertEquals(0.0, first[3], 1e-6)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `iterator rejects shift larger than frame size`() {
+        val format = PcmAudioFormat.mono16BitSignedLittleEndian(8000)
+        val stream = PcmMonoInputStream(format, ByteArrayInputStream(ByteArray(0)))
+
+        NormalizedFrameIterator(stream, frameSize = 2, shiftAmount = 3, applyPadding = false)
     }
 }
