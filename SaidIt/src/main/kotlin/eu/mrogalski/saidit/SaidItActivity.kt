@@ -19,6 +19,7 @@ import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.siya.epistemophile.R
 
 /**
@@ -82,7 +83,7 @@ class SaidItActivity : AppCompatActivity() {
     }
 
     private fun requestPermissions() {
-        if (testSkipPermissionRequest) {
+        if (isTestSkipPermissionRequest()) {
             ensureServiceBound()
             showFragmentIfNeeded()
             return
@@ -124,7 +125,11 @@ class SaidItActivity : AppCompatActivity() {
         if (isBound) return
 
         val serviceIntent = Intent(this, SaidItService::class.java)
-        startService(serviceIntent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ContextCompat.startForegroundService(this, serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
@@ -178,6 +183,11 @@ class SaidItActivity : AppCompatActivity() {
     @VisibleForTesting
     fun getEchoService(): SaidItService? = echoService
 
+    @VisibleForTesting
+    fun ensureServiceBoundForTest() {
+        ensureServiceBound()
+    }
+
     companion object {
         private const val PERMISSION_REQUEST_CODE = 5465
         private const val PREFS_NAME = "eu.mrogalski.saidit"
@@ -185,8 +195,17 @@ class SaidItActivity : AppCompatActivity() {
         private const val KEY_TOUR_ON_NEXT_LAUNCH = "show_tour_on_next_launch"
         private const val MAIN_FRAGMENT_TAG = "main-fragment"
 
-        @VisibleForTesting
+        @Volatile
+        private var internalTestSkipPermissionRequest: Boolean = false
+
         @JvmStatic
-        var testSkipPermissionRequest: Boolean = false
+        @VisibleForTesting
+        fun setTestSkipPermissionRequest(skip: Boolean) {
+            internalTestSkipPermissionRequest = skip
+        }
+
+        @JvmStatic
+        @VisibleForTesting
+        fun isTestSkipPermissionRequest(): Boolean = internalTestSkipPermissionRequest
     }
 }

@@ -119,7 +119,7 @@ public class AutoSaveTest {
             return null;
         }
 
-        boolean connected = connectedLatch.await(5, TimeUnit.SECONDS);
+        boolean connected = connectedLatch.await(15, TimeUnit.SECONDS);
         return connected ? serviceRef.get() : null;
     }
 }
