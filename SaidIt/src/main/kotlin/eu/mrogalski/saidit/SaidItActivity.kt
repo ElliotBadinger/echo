@@ -82,6 +82,11 @@ class SaidItActivity : AppCompatActivity() {
     }
 
     private fun requestPermissions() {
+        if (testSkipPermissionRequest) {
+            ensureServiceBound()
+            showFragmentIfNeeded()
+            return
+        }
         val permissions = mutableListOf(
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.FOREGROUND_SERVICE
@@ -179,5 +184,9 @@ class SaidItActivity : AppCompatActivity() {
         private const val KEY_FIRST_RUN = "is_first_run"
         private const val KEY_TOUR_ON_NEXT_LAUNCH = "show_tour_on_next_launch"
         private const val MAIN_FRAGMENT_TAG = "main-fragment"
+
+        @VisibleForTesting
+        @JvmStatic
+        var testSkipPermissionRequest: Boolean = false
     }
 }

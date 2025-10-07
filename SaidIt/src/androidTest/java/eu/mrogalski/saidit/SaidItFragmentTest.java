@@ -9,6 +9,7 @@ import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.GrantPermissionRule;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,6 +49,12 @@ public class SaidItFragmentTest {
                 .putBoolean(PREF_FIRST_RUN, false)
                 .putBoolean(PREF_TOUR_NEXT, false)
                 .apply();
+        SaidItActivity.setTestSkipPermissionRequest(true);
+    }
+
+    @After
+    public void resetFlags() {
+        SaidItActivity.setTestSkipPermissionRequest(false);
     }
 
     @Test
