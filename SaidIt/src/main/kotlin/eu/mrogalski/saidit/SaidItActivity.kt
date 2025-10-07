@@ -16,6 +16,7 @@ import android.provider.Settings
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
+import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.siya.epistemophile.R
@@ -169,7 +170,8 @@ class SaidItActivity : AppCompatActivity() {
             .setTitle(titleRes)
             .setMessage(messageRes)
 
-    internal fun getEchoService(): SaidItService? = echoService
+    @VisibleForTesting
+    fun getEchoService(): SaidItService? = echoService
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 5465

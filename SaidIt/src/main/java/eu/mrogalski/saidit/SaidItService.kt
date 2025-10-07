@@ -56,8 +56,11 @@ class SaidItService : Service() {
     @Volatile
     private var fillRate: Int = 0
     
-    // Test environment flag
+    // Test environment flag and configuration hooks
     var isTestEnvironment = false
+
+    @VisibleForTesting
+    var testAutoSaveDelayMs: Long = 0L
 
     private var mediaFile: File? = null
     private var audioRecord: AudioRecord? = null
@@ -295,6 +298,9 @@ class SaidItService : Service() {
             var dumpFile: File? = null
             try {
                 if (isTestEnvironment) {
+                    if (testAutoSaveDelayMs > 0) {
+                        delay(testAutoSaveDelayMs)
+                    }
                     withContext(Dispatchers.Main) {
                         wavFileReceiver?.onSuccess(Uri.EMPTY)
                     }

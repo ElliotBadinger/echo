@@ -1,40 +1,89 @@
 package eu.mrogalski.saidit;
 
-import androidx.test.espresso.action.ViewActions;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import android.Manifest;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.SystemClock;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
+import androidx.test.rule.GrantPermissionRule;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
+import java.util.concurrent.atomic.AtomicReference;
 import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
+import static androidx.test.espresso.action.ViewActions.replaceText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static org.junit.Assert.assertNotNull;
 
 import com.siya.epistemophile.R;
 
 @RunWith(AndroidJUnit4.class)
 public class SaidItFragmentTest {
 
+    private static final String PREF_FIRST_RUN = "is_first_run";
+    private static final String PREF_TOUR_NEXT = "show_tour_on_next_launch";
+
     @Rule
-    public ActivityScenarioRule<SaidItActivity> activityRule =
-            new ActivityScenarioRule<>(SaidItActivity.class);
+    public final GrantPermissionRule permissionRule = GrantPermissionRule.grant(
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.POST_NOTIFICATIONS,
+            Manifest.permission.FOREGROUND_SERVICE,
+            Manifest.permission.FOREGROUND_SERVICE_MICROPHONE
+    );
+
+    @Before
+    public void configurePreferences() {
+        Context context = ApplicationProvider.getApplicationContext();
+        SharedPreferences preferences = context.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE);
+        preferences.edit()
+                .putBoolean(PREF_FIRST_RUN, false)
+                .putBoolean(PREF_TOUR_NEXT, false)
+                .apply();
+    }
 
     @Test
     public void testSaveClipFlow_showsProgressDialog() {
-        // 1. Click the "Save Clip" button to show the bottom sheet
-        onView(withId(R.id.save_clip_button)).perform(ViewActions.click());
+        ActivityScenario<SaidItActivity> scenario = ActivityScenario.launch(SaidItActivity.class);
+        SaidItService service = awaitBoundService(scenario);
+        service.setTestEnvironment(true);
+        service.setTestAutoSaveDelayMs(400L);
+        service.enableListening();
 
-        // 2. In the bottom sheet, click a duration button.
-        // We'll assume the layout for the bottom sheet has buttons with text like "15 seconds"
-        // Let's click a common one, like "30 seconds"
-        onView(withText("30 seconds")).perform(ViewActions.click());
+        onView(withId(R.id.save_clip_button)).perform(click());
+        onView(withId(R.id.recording_name)).perform(replaceText("Test clip"), closeSoftKeyboard());
+        onView(withId(R.id.save_button)).perform(click());
 
-        // 3. Verify that the "Saving Recording" progress dialog appears.
-        // The dialog is a system window, so we check for the title text.
-        onView(withText("Saving Recording")).check(matches(isDisplayed()));
+        onView(withText("Saving Recording"))
+                .inRoot(RootMatchers.isDialog())
+                .check(matches(isDisplayed()));
+
+        scenario.close();
+    }
+
+    private SaidItService awaitBoundService(ActivityScenario<SaidItActivity> scenario) {
+        AtomicReference<SaidItService> reference = new AtomicReference<>();
+        long start = SystemClock.uptimeMillis();
+        long timeout = 5_000L;
+
+        while (reference.get() == null && SystemClock.uptimeMillis() - start < timeout) {
+            scenario.onActivity(activity -> reference.set(activity.getEchoService()));
+            if (reference.get() != null) {
+                break;
+            }
+            SystemClock.sleep(50);
+        }
+
+        SaidItService service = reference.get();
+        assertNotNull("Service should be bound before interacting with UI", service);
+        return service;
     }
 }

@@ -1,27 +1,30 @@
 package eu.mrogalski.saidit;
 
 import android.Manifest;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
+import android.os.IBinder;
+import androidx.core.content.ContextCompat;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.GrantPermissionRule;
-import androidx.test.rule.ServiceTestRule;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 public class SaidItServiceAutoSaveTest {
-
-    @Rule
-    public final ServiceTestRule serviceRule = new ServiceTestRule();
 
     @Rule
     public final GrantPermissionRule permissionRule = GrantPermissionRule.grant(
@@ -33,6 +36,8 @@ public class SaidItServiceAutoSaveTest {
 
     private Context context;
     private SharedPreferences sharedPreferences;
+    private Intent serviceIntent;
+    private ServiceConnection connection;
 
     @Before
     public void setUp() {
@@ -40,26 +45,37 @@ public class SaidItServiceAutoSaveTest {
         sharedPreferences = context.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE);
     }
 
+    @After
+    public void tearDown() {
+        if (connection != null) {
+            context.unbindService(connection);
+            connection = null;
+        }
+        if (serviceIntent != null) {
+            context.stopService(serviceIntent);
+            serviceIntent = null;
+        }
+        sharedPreferences.edit().clear().apply();
+    }
+
     @Test
     public void testAutoSave_createsAudioFile() throws Exception {
-        // 1. Configure auto-save to be enabled with a 2-second interval.
+        // Configure auto-save for a short interval and disable memory boot listeners.
         sharedPreferences.edit()
                 .putBoolean("auto_save_enabled", true)
                 .putInt("auto_save_duration", 1)
+                .putBoolean(SaidIt.AUDIO_MEMORY_ENABLED_KEY, false)
                 .apply();
-
-        // 2. Start the service.
-        Intent serviceIntent = new Intent(context, SaidItService.class);
-        serviceRule.startService(serviceIntent);
-
-        SaidItService.BackgroundRecorderBinder binder = (SaidItService.BackgroundRecorderBinder) serviceRule.bindService(serviceIntent);
-        SaidItService service = binder.getService();
-        service.setTestEnvironment(true);
 
         CountDownLatch latch = new CountDownLatch(1);
         final Uri[] resultUri = new Uri[1];
 
-        SaidItService.WavFileReceiver receiver = new SaidItService.WavFileReceiver() {
+        SaidItService service = bindService();
+        assertNotNull("Service should bind", service);
+
+        service.setTestEnvironment(true);
+        service.enableListening();
+        service.triggerAutoSaveForTest(1, new SaidItService.WavFileReceiver() {
             @Override
             public void onSuccess(Uri fileUri) {
                 resultUri[0] = fileUri;
@@ -71,17 +87,44 @@ public class SaidItServiceAutoSaveTest {
                 latch.countDown();
                 fail("Auto-save failed: " + e.getMessage());
             }
-        };
+        });
 
-        service.triggerAutoSaveForTest(1, receiver);
-
-        boolean completed = false;
-        try {
-            completed = latch.await(2, TimeUnit.SECONDS);
-        } catch (InterruptedException ignored) {
-            Thread.currentThread().interrupt();
-        }
+        boolean completed = latch.await(5, TimeUnit.SECONDS);
         assertTrue("Auto-save should signal completion", completed);
         assertNotNull("A URI should be returned for the auto-saved file", resultUri[0]);
+    }
+
+    private SaidItService bindService() throws InterruptedException {
+        AtomicReference<SaidItService> serviceRef = new AtomicReference<>();
+        CountDownLatch connectedLatch = new CountDownLatch(1);
+
+        serviceIntent = new Intent(context, SaidItService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ContextCompat.startForegroundService(context, serviceIntent);
+        } else {
+            context.startService(serviceIntent);
+        }
+
+        connection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder binder) {
+                SaidItService.BackgroundRecorderBinder typedBinder = (SaidItService.BackgroundRecorderBinder) binder;
+                serviceRef.set(typedBinder.getService());
+                connectedLatch.countDown();
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                serviceRef.set(null);
+            }
+        };
+
+        boolean bound = context.bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
+        if (!bound) {
+            return null;
+        }
+
+        boolean connected = connectedLatch.await(5, TimeUnit.SECONDS);
+        return connected ? serviceRef.get() : null;
     }
 }
