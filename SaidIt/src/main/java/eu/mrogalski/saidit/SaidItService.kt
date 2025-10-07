@@ -74,6 +74,8 @@ class SaidItService : Service() {
     @Volatile
     private var state = STATE_READY
 
+    private var foregroundStarted = false
+
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Reading native sample rate")
@@ -82,6 +84,9 @@ class SaidItService : Service() {
         sampleRate = preferences.getInt(SaidIt.SAMPLE_RATE_KEY, AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC))
         Log.d(TAG, "Sample rate: $sampleRate")
         fillRate = 2 * sampleRate
+
+        // Ensure we satisfy Android's requirement to enter foreground promptly
+        ensureForegroundStarted()
 
         if (preferences.getBoolean(SaidIt.AUDIO_MEMORY_ENABLED_KEY, true)) {
             innerStartListening()
@@ -101,13 +106,28 @@ class SaidItService : Service() {
     override fun onUnbind(intent: Intent): Boolean = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Be defensive: start foreground immediately to avoid timing issues
+        ensureForegroundStarted()
         if (intent?.action == ACTION_AUTO_SAVE) {
             val preferences = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
             handleAutoSave(preferences)
             return START_STICKY
         }
-        startForeground(FOREGROUND_NOTIFICATION_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
         return START_STICKY
+    }
+
+    private fun ensureForegroundStarted() {
+        if (foregroundStarted) return
+        try {
+            startForeground(
+                FOREGROUND_NOTIFICATION_ID,
+                buildNotification(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+            )
+            foregroundStarted = true
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to enter foreground yet, will retry in onStartCommand", e)
+        }
     }
 
     private fun innerStartListening() {
