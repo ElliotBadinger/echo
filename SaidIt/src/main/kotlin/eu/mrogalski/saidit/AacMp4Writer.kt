@@ -5,7 +5,6 @@ import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.util.Log
-import java.io.Closeable
 import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -67,7 +66,7 @@ class AacMp4Writer(
     outFile: File,
     private val codecFactory: MediaCodecFactory = DefaultMediaCodecFactory(),
     private val muxerFactory: MediaMuxerFactory = DefaultMediaMuxerFactory()
-) : Closeable {
+) : AudioSampleWriter {
     
     companion object {
         private const val TAG = "AacMp4Writer"
@@ -116,7 +115,7 @@ class AacMp4Writer(
      * @throws IOException if encoding or muxing fails
      */
     @Throws(IOException::class)
-    fun write(data: ByteArray, offset: Int, length: Int) {
+    override fun write(data: ByteArray, offset: Int, length: Int) {
         var remaining = length
         var off = offset
         
@@ -232,7 +231,7 @@ class AacMp4Writer(
      * Returns the total number of PCM sample bytes written.
      * Safe cast for typical audio file sizes.
      */
-    fun getTotalSampleBytesWritten(): Int {
+    override fun getTotalSampleBytesWritten(): Int {
         return minOf(Int.MAX_VALUE.toLong(), totalPcmBytesWritten).toInt()
     }
 }

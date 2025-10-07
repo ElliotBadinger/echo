@@ -8,7 +8,7 @@ import java.nio.ByteBuffer
  * Modern Kotlin implementation of AudioMemory with Result<T> error handling.
  * Manages a ring buffer for audio data with improved error handling and thread safety.
  */
-class AudioMemory(private val clock: Clock) {
+open class AudioMemory(private val clock: Clock) {
 
     companion object {
         // Keep chunk size as allocation granularity (20s @ 48kHz mono 16-bit)
@@ -54,7 +54,7 @@ class AudioMemory(private val clock: Clock) {
      * @return Result<Unit> indicating success or failure
      */
     @Synchronized
-    fun allocate(sizeToEnsure: Long): Result<Unit> {
+    open fun allocate(sizeToEnsure: Long): Result<Unit> {
         return try {
             var required = 0
             while (required < sizeToEnsure) required += CHUNK_SIZE
@@ -215,7 +215,7 @@ class AudioMemory(private val clock: Clock) {
      * @return Result<Unit> indicating success or failure
      */
     @Synchronized
-    fun dump(consumer: Consumer, bytesToDump: Int): Result<Unit> {
+    open fun dump(consumer: Consumer, bytesToDump: Int): Result<Unit> {
         if (capacity == 0 || ring == null || size == 0 || bytesToDump <= 0) {
             return Result.success(Unit)
         }

@@ -64,11 +64,36 @@ class SaidItService : Service() {
 
     private var mediaFile: File? = null
     private var audioRecord: AudioRecord? = null
-    private var aacWriter: AacMp4Writer? = null
-    private val audioMemory = AudioMemory(SystemClockWrapper())
+    private var audioWriter: AudioSampleWriter? = null
+    private var audioMemory: AudioMemory = AudioMemory(SystemClockWrapper())
 
     // Coroutine scope for audio operations
-    private val audioScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private var audioDispatcher: CoroutineDispatcher = Dispatchers.Default
+    private var audioScope = CoroutineScope(audioDispatcher + SupervisorJob())
+
+    @VisibleForTesting
+    internal var audioSampleWriterFactory: (Int, Int, Int, File) -> AudioSampleWriter =
+        { sampleRate, channels, bitRate, file ->
+            AacMp4Writer(sampleRate, channels, bitRate, file)
+        }
+
+    @VisibleForTesting
+    internal fun overrideAudioMemoryForTest(memory: AudioMemory) {
+        audioMemory = memory
+    }
+
+    @VisibleForTesting
+    internal fun audioMemoryForTest(): AudioMemory = audioMemory
+
+    @VisibleForTesting
+    internal fun overrideAudioDispatcherForTest(dispatcher: CoroutineDispatcher) {
+        audioScope.cancel()
+        audioDispatcher = dispatcher
+        audioScope = CoroutineScope(audioDispatcher + SupervisorJob())
+    }
+
+    @VisibleForTesting
+    internal fun stateForTest(): Int = state
     private var audioJob: Job? = null
     
     @Volatile
@@ -188,8 +213,8 @@ class SaidItService : Service() {
                     Log.e(TAG, "AUDIO RECORD ERROR: $read")
                     return@Consumer Result.success(0)
                 }
-                if (aacWriter != null && read > 0) {
-                    aacWriter?.write(array, offset, read)
+                if (audioWriter != null && read > 0) {
+                    audioWriter?.write(array, offset, read)
                 }
                 Result.success(read)
             } ?: Result.success(0)
@@ -263,19 +288,19 @@ class SaidItService : Service() {
             try {
                 if (isTestEnvironment) {
                     mediaFile = null
-                    aacWriter = null
+                    audioWriter = null
                     return@launch
                 }
-                
+
                 mediaFile = File.createTempFile("saidit", ".m4a", cacheDir)
-                aacWriter = AacMp4Writer(sampleRate, 1, 96_000, mediaFile!!)
+                audioWriter = audioSampleWriterFactory(sampleRate, 1, 96_000, mediaFile!!)
                 Log.d(TAG, "Recording to: ${mediaFile!!.absolutePath}")
 
                 if (prependedMemorySeconds > 0) {
                     val bytesPerSecond = (1f / getBytesToSeconds()).toInt()
                     val bytesToDump = (prependedMemorySeconds * bytesPerSecond).toInt()
                     audioMemory.dump(AudioMemory.LegacyConsumer { array, offset, count ->
-                        aacWriter?.write(array, offset, count)
+                        audioWriter?.write(array, offset, count)
                         count
                     }, bytesToDump)
                 }
@@ -295,18 +320,18 @@ class SaidItService : Service() {
 
         audioScope.launch {
             flushAudioRecord()
-            aacWriter?.let { writer ->
+            audioWriter?.let { writer ->
                 try {
                     writer.close()
                 } catch (e: IOException) {
                     Log.e(TAG, "CLOSING ERROR", e)
                 }
             }
-            
+
             if (wavFileReceiver != null && mediaFile != null) {
                 saveFileToMediaStore(mediaFile!!, mediaFile!!.name, wavFileReceiver)
             }
-            aacWriter = null
+            audioWriter = null
         }
     }
 
@@ -329,7 +354,7 @@ class SaidItService : Service() {
                 
                 val fileName = newFileName?.replace("[^a-zA-Z0-9.-]".toRegex(), "_") ?: "SaidIt_dump"
                 dumpFile = File(cacheDir, "$fileName.m4a")
-                val dumper = AacMp4Writer(sampleRate, 1, 96_000, dumpFile)
+                val dumper = audioSampleWriterFactory(sampleRate, 1, 96_000, dumpFile)
                 Log.d(TAG, "Dumping to: ${dumpFile.absolutePath}")
                 
                 val bytesPerSecond = (1f / getBytesToSeconds()).toInt()
@@ -461,7 +486,7 @@ class SaidItService : Service() {
             val stats = audioMemory.getStats(fillRate)
 
             var recorded = 0
-            aacWriter?.let { writer ->
+            audioWriter?.let { writer ->
                 recorded += writer.getTotalSampleBytesWritten()
                 recorded += stats.estimation
             }
