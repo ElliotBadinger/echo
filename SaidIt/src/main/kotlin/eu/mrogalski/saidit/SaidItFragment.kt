@@ -69,6 +69,9 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
     private var isRecording = false
     private var memorizedDuration = 0f
 
+    @VisibleForTesting
+    internal var progressDialogForTest: AlertDialog? = null
+
     fun setService(service: SaidItService?) {
         this.echo = service
         view?.postOnAnimation(updater)
@@ -153,7 +156,9 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
                 .setMessage("Please wait...")
                 .setCancelable(false)
                 .create()
+            progressDialog.setOnDismissListener { progressDialogForTest = null }
             progressDialog.show()
+            progressDialogForTest = progressDialog
 
             service.dumpRecording(durationInSeconds, PromptFileReceiver(requireActivity(), progressDialog), fileName)
         }
@@ -194,8 +199,14 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
             listeningToggleGroup?.addOnButtonCheckedListener(listeningToggleListener)
 
             view?.postOnAnimationDelayed(updater, UI_UPDATE_DELAY)
-        }
     }
+
+    @VisibleForTesting
+    fun isProgressDialogShowingForTest(): Boolean = progressDialogForTest?.isShowing == true
+
+    @VisibleForTesting
+    fun getProgressDialogForTest(): AlertDialog? = progressDialogForTest
+}
 
     override fun onStart() {
         super.onStart()

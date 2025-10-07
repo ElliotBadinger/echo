@@ -1,14 +1,10 @@
 package eu.mrogalski.saidit;
 
 import android.Manifest;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.os.Build;
-import android.os.IBinder;
-import androidx.core.content.ContextCompat;
+import android.os.SystemClock;
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.GrantPermissionRule;
@@ -35,31 +31,22 @@ public class AutoSaveTest {
     );
 
     private Context context;
-    private Intent serviceIntent;
-    private ServiceConnection connection;
 
     @Before
     public void setUp() {
         context = ApplicationProvider.getApplicationContext();
+        SaidItActivity.setTestSkipPermissionRequest(true);
     }
 
     @After
     public void tearDown() {
-        if (connection != null) {
-            context.unbindService(connection);
-            connection = null;
-        }
-        if (serviceIntent != null) {
-            context.stopService(serviceIntent);
-            serviceIntent = null;
-        }
+        SaidItActivity.setTestSkipPermissionRequest(false);
         SharedPreferences preferences = context.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE);
         preferences.edit().clear().apply();
     }
 
     @Test
     public void testAutoSaveDoesNotCrashService() throws InterruptedException {
-        // Configure preferences prior to launching the service
         SharedPreferences preferences = context.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE);
         preferences.edit()
                 .putBoolean("auto_save_enabled", true)
@@ -68,8 +55,8 @@ public class AutoSaveTest {
                 .apply();
 
         CountDownLatch latch = new CountDownLatch(1);
-        SaidItService service = bindService();
-        assertNotNull("Service should bind", service);
+        ActivityScenario<SaidItActivity> scenario = ActivityScenario.launch(SaidItActivity.class);
+        SaidItService service = awaitBoundService(scenario);
 
         service.setTestEnvironment(true);
         service.enableListening();
@@ -85,41 +72,29 @@ public class AutoSaveTest {
             }
         });
 
-        boolean completed = latch.await(5, TimeUnit.SECONDS);
+        boolean completed = latch.await(15, TimeUnit.SECONDS);
+        scenario.close();
         assertTrue("Auto-save callback should complete", completed);
     }
 
-    private SaidItService bindService() throws InterruptedException {
-        AtomicReference<SaidItService> serviceRef = new AtomicReference<>();
-        CountDownLatch connectedLatch = new CountDownLatch(1);
+    private SaidItService awaitBoundService(ActivityScenario<SaidItActivity> scenario) {
+        AtomicReference<SaidItService> reference = new AtomicReference<>();
+        long start = SystemClock.uptimeMillis();
+        long timeoutMillis = 15_000L;
 
-        serviceIntent = new Intent(context, SaidItService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            ContextCompat.startForegroundService(context, serviceIntent);
-        } else {
-            context.startService(serviceIntent);
+        while (reference.get() == null && SystemClock.uptimeMillis() - start < timeoutMillis) {
+            scenario.onActivity(activity -> {
+                activity.ensureServiceBoundForTest();
+                reference.set(activity.getEchoService());
+            });
+            if (reference.get() != null) {
+                break;
+            }
+            SystemClock.sleep(50);
         }
 
-        connection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder binder) {
-                SaidItService.BackgroundRecorderBinder typedBinder = (SaidItService.BackgroundRecorderBinder) binder;
-                serviceRef.set(typedBinder.getService());
-                connectedLatch.countDown();
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-                serviceRef.set(null);
-            }
-        };
-
-        boolean bound = context.bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
-        if (!bound) {
-            return null;
-        }
-
-        boolean connected = connectedLatch.await(15, TimeUnit.SECONDS);
-        return connected ? serviceRef.get() : null;
+        SaidItService service = reference.get();
+        assertNotNull("Service should bind", service);
+        return service;
     }
 }

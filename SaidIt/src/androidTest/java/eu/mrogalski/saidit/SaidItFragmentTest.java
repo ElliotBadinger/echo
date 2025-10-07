@@ -5,30 +5,29 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.SystemClock;
 import android.view.View;
-import androidx.test.core.app.ApplicationProvider;
+import androidx.appcompat.app.AlertDialog;
 import androidx.test.core.app.ActivityScenario;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.UiController;
 import androidx.test.espresso.ViewAction;
-import androidx.test.espresso.matcher.RootMatchers;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.GrantPermissionRule;
+import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicReference;
-import org.hamcrest.Matcher;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static androidx.test.espresso.action.ViewActions.replaceText;
-import static androidx.test.espresso.assertion.ViewAssertions.matches;
-import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isRoot;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
-import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import com.siya.epistemophile.R;
 
@@ -73,11 +72,17 @@ public class SaidItFragmentTest {
         onView(withId(R.id.save_clip_button)).perform(click());
         onView(withId(R.id.recording_name)).perform(replaceText("Test clip"), closeSoftKeyboard());
         onView(withId(R.id.save_button)).perform(click());
-        onView(isRoot()).perform(waitFor(250));
+        onView(isRoot()).perform(waitFor(300));
 
-        onView(withText("Saving Recording"))
-                .inRoot(RootMatchers.isDialog())
-                .check(matches(isDisplayed()));
+        scenario.onActivity(activity -> {
+            SaidItFragment fragment = (SaidItFragment) activity
+                    .getSupportFragmentManager()
+                    .findFragmentById(R.id.container);
+            assertNotNull("SaidItFragment should be attached", fragment);
+            AlertDialog dialog = findProgressDialog(fragment);
+            assertNotNull("Progress dialog should exist", dialog);
+            assertTrue("Progress dialog should be showing", dialog.isShowing());
+        });
 
         scenario.close();
     }
@@ -120,5 +125,25 @@ public class SaidItFragmentTest {
                 uiController.loopMainThreadForAtLeast(millis);
             }
         };
+    }
+
+    private AlertDialog findProgressDialog(SaidItFragment fragment) {
+        String[] candidates = {
+                "getProgressDialogForTest",
+                "getProgressDialogForTest$SaidIt_debug",
+                "getProgressDialogForTest$SaidIt_release"
+        };
+        for (String methodName : candidates) {
+            try {
+                Method method = fragment.getClass().getMethod(methodName);
+                Object result = method.invoke(fragment);
+                if (result instanceof AlertDialog) {
+                    return (AlertDialog) result;
+                }
+            } catch (Exception ignored) {
+                // Try next candidate name
+            }
+        }
+        return null;
     }
 }
