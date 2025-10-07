@@ -16,6 +16,7 @@ class NormalizedFrameIterator(
     init {
         require(frameSize > 0) { "Frame size must be larger than zero." }
         require(shiftAmount > 0) { "Shift size must be larger than zero." }
+        require(shiftAmount <= frameSize) { "Shift size cannot exceed frame size." }
     }
 
     override fun hasNext(): Boolean {
@@ -51,7 +52,11 @@ class NormalizedFrameIterator(
             DoubleVector(data)
         } else {
             val previous = currentFrame!!.data.clone()
-            System.arraycopy(data, 0, previous, previous.size - shiftAmount, shiftAmount)
+            val preserved = previous.size - shiftAmount
+            if (preserved > 0) {
+                System.arraycopy(previous, shiftAmount, previous, 0, preserved)
+            }
+            System.arraycopy(data, 0, previous, preserved, data.size)
             DoubleVector(previous)
         }
         frameCounter++
