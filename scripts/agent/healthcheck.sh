@@ -38,9 +38,6 @@ INCLUDE_ANDROID_T3=false
 INCLUDE_FULL_T4=false
 GRADLEW="./gradlew"
 
-# Known temporarily excluded tests (can be toggled later)
-EXCLUDED_TEST_TASKS=(":SaidIt:test")
-
 log() { printf "[health] %s\n" "$*"; }
 warn() { printf "[health][warn] %s\n" "$*"; }
 err() { printf "[health][error] %s\n" "$*"; }
@@ -183,7 +180,7 @@ Tiers:
   0  Environment checks (Java/Kotlin/Gradle), Android SDK + licenses, network sanity, project layout
   1  Quick compile tasks (fail-fast): :SaidIt:compileDebugKotlin and a small assemble in :domain
   2  Core unit tests (fast): :domain:test :data:test :core:test
-  3  Android/Robolectric (optional): :features:recorder:test and :SaidIt:test (currently excluded by default)
+  3  Android/Robolectric (optional): :features:recorder:test and :SaidIt:test
   4  Coverage + lint (optional): jacocoAll, lint where available
 
 Examples:
@@ -267,12 +264,13 @@ android_tests() {
     return 0
   fi
   local args=("--no-daemon" "--stacktrace" "--continue")
-  # Temporarily exclude SaidIt tests if in excluded list
-  local tasks=(":features:recorder:test")
-  for t in "${EXCLUDED_TEST_TASKS[@]}"; do
-    warn "Temporarily excluding $t (can re-enable later)"
-  done
-  $GRADLEW "${args[@]}" "${tasks[@]}"
+  local primary_tasks=(":features:recorder:test")
+  log "Running Android unit tests: ${primary_tasks[*]}"
+  if ! $GRADLEW "${args[@]}" "${primary_tasks[@]}"; then
+    return 1
+  fi
+  log "Primary Android unit tests passed; executing :SaidIt:test"
+  $GRADLEW "${args[@]}" :SaidIt:test
 }
 
 coverage_and_lint() {
