@@ -1,7 +1,7 @@
 # Echo Project Health Dashboard
 
-**Last Updated**: 2025-10-09 03:02 UTC
-**Status**: 🟢 **STABLE** - Build and unit tests operational
+**Last Updated**: 2025-10-10 03:03 UTC
+**Status**: 🔴 **ISSUES DETECTED** - Check recent nightly health run
 **CI Status**: 🟢 **OPERATIONAL** - SaidIt unit tests pass under Robolectric (sdk 34)
 **Agent Readiness**: 🟢 **READY** - Health check system operational
 
@@ -106,13 +106,13 @@ bash scripts/agent/healthcheck.sh --all --with-android --with-full
 ## 🎯 Known Issues & Workarounds
 
 ### Issue: Robolectric Test Configuration
-**Status**: 🟡 **MINOR** - affects some Android-specific tests  
+**Status**: 🔴 **ISSUES DETECTED** - Check recent nightly health run
 **Impact**: 18/138 SaidIt tests fail due to Android manifest/framework setup  
 **Workaround**: Core functionality tests (120/138) pass, business logic validated  
 **ETA**: Future enhancement - not blocking development  
 
 ### Issue: Android SDK Licenses
-**Status**: 🟡 **ENVIRONMENT** - may require manual acceptance  
+**Status**: 🔴 **ISSUES DETECTED** - Check recent nightly health run
 **Impact**: CI may download additional components, slower first run  
 **Workaround**: Run `yes | sdkmanager --licenses` locally if needed  
 
