@@ -1,0 +1,4 @@
+timestamp,command,median_seconds,all_runs_seconds
+2025-10-19T10:38:30+0200,clean_build,202.174,202.174
+2025-10-19T10:38:44+0200,unit_all,13.927,13.927
+2025-10-19T10:38:49+0200,unit_modules,4.889,4.889

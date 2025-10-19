@@ -1,8 +1,10 @@
+import com.android.build.api.dsl.ManagedVirtualDevice
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt.android)
-    id("kotlin-kapt")
+    alias(libs.plugins.ksp)
     id("com.google.gms.google-services") version "4.4.1" apply false
 }
 
@@ -27,6 +29,8 @@ android {
         versionCode = 15
         versionName = "2.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
+        testInstrumentationRunnerArguments["grantAllPermissions"] = "true"
     }
 
     buildTypes {
@@ -47,17 +51,32 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    testOptions { unitTests.isIncludeAndroidResources = true }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+        animationsDisabled = true
+        managedDevices {
+            devices {
+                maybeCreate<ManagedVirtualDevice>("mediumApi30").apply {
+                    device = "Medium Phone"
+                    apiLevel = 30
+                    systemImageSource = "google-atd"
+                    require64Bit = false
+                }
+            }
+            groups {
+                maybeCreate("ci").apply {
+                    targetDevices.add(devices["mediumApi30"])
+                }
+            }
+        }
+    }
 }
 
-// Kapt configuration to fix CI annotation processing issues
-kapt {
-    correctErrorTypes = true
-    useBuildCache = false  // Disable caching to prevent CI issues
-    arguments {
-        arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
-        arg("dagger.fastInit", "enabled")
-    }
+// KSP configuration to keep Hilt fast-init while suppressing noisy validation in tests
+ksp {
+    arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+    arg("dagger.fastInit", "enabled")
 }
 
 dependencies {
@@ -69,8 +88,7 @@ dependencies {
     implementation(project(":data"))
     implementation(project(":audio"))
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
-    annotationProcessor(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
     
     // Coroutines for modern threading
     implementation(libs.coroutines.core)
@@ -85,7 +103,7 @@ dependencies {
     testImplementation(libs.coroutines.test)
     // Hilt testing for Robolectric/JUnit
     testImplementation(libs.hilt.android.testing)
-    kaptTest(libs.hilt.compiler)
+    kspTest(libs.hilt.compiler)
 
     // Android instrumentation tests
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
@@ -94,4 +112,6 @@ dependencies {
     androidTestImplementation("androidx.test:rules:1.5.0")
     androidTestImplementation("androidx.test:core-ktx:1.5.0")
     androidTestImplementation("androidx.test:core:1.5.0")
+    kspAndroidTest(libs.hilt.compiler)
+    androidTestUtil("androidx.test:orchestrator:1.4.2")
 }

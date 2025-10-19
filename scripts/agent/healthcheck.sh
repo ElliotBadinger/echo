@@ -4,9 +4,9 @@ set -euo pipefail
 # Echo Agent Health Check
 # Tiers:
 #  0 - Environment + SDK + cache sanity
-#  1 - Quick compile (fail-fast)
-#  2 - Core unit tests (fast modules)
-#  3 - Android/Robolectric tests (optional)
+#  1 - Fast feedback (fastTests, instrumentation skipped)
+#  2 - Full suite (fastTests + instrumentation unless disabled)
+#  3 - Managed device instrumentation only (explicit opt-in)
 #  4 - Coverage and lint (optional)
 #
 # Usage examples:
@@ -28,6 +28,8 @@ REQUIRED_SDK_PACKAGES=(
   "platforms;android-33"
   "build-tools;34.0.0"
   "platform-tools"
+  "emulator"
+  "system-images;android-33;aosp_atd;x86_64"
 )
 cd "$ROOT_DIR"
 
@@ -178,9 +180,9 @@ Usage: bash scripts/agent/healthcheck.sh [--tier N | --tier N-M | --all] [--no-c
 
 Tiers:
   0  Environment checks (Java/Kotlin/Gradle), Android SDK + licenses, network sanity, project layout
-  1  Quick compile tasks (fail-fast): :SaidIt:compileDebugKotlin and a small assemble in :domain
-  2  Core unit tests (fast): :domain:test :data:test :core:test
-  3  Android/Robolectric (optional): :features:recorder:test and :SaidIt:test
+  1  Fast feedback task bundle (./gradlew fastTests -PskipInstrumentation=true)
+  2  Full suite (fastTests + managed device unless --with-android is omitted)
+  3  Managed device instrumentation only (explicit, opt-in)
   4  Coverage + lint (optional): jacocoAll, lint where available
 
 Examples:
@@ -238,39 +240,41 @@ check_env() {
   done
 }
 
-quick_compile() {
-  header "Tier 1: Quick compile"
-  local args=("--no-daemon" "--stacktrace" "-q")
-  if [[ "$RESTORE_CACHE" == true ]]; then
-    log "Caches enabled (default Gradle caches)"
-  else
+fast_feedback() {
+  header "Tier 1: Fast feedback"
+  local args=("--no-daemon" "--stacktrace")
+  if [[ "$RESTORE_CACHE" != true ]]; then
     args+=("--no-build-cache")
     warn "Gradle build cache disabled by flag"
+  else
+    log "Using default Gradle caches"
   fi
-  log "Running compile tasks: :SaidIt:compileDebugKotlin and :domain:assemble"
-  $GRADLEW "${args[@]}" :SaidIt:compileDebugKotlin :domain:assemble
+  log "Running ./gradlew fastTests -PskipInstrumentation=true"
+  $GRADLEW "${args[@]}" fastTests -PskipInstrumentation=true
 }
 
-core_unit_tests() {
-  header "Tier 2: Core unit tests (fast)"
-  local args=("--no-daemon" "--stacktrace" "--continue")
-  $GRADLEW "${args[@]}" :domain:test :data:test :core:test
+full_suite() {
+  header "Tier 2: Full suite"
+  local args=("--no-daemon" "--stacktrace")
+  if [[ "$INCLUDE_ANDROID_T3" == true ]]; then
+    log "Including managed device instrumentation"
+  else
+    args+=("-PskipInstrumentation=true")
+    warn "Managed device instrumentation skipped (use --with-android)"
+  fi
+  log "Running ./gradlew fullTests ${args[*]}"
+  $GRADLEW "${args[@]}" fullTests
 }
 
 android_tests() {
-  header "Tier 3: Android/Robolectric tests (optional)"
+  header "Tier 3: Managed device instrumentation"
   if [[ "$INCLUDE_ANDROID_T3" != true ]]; then
     warn "Skipped. Enable with --with-android"
     return 0
   fi
-  local args=("--no-daemon" "--stacktrace" "--continue")
-  local primary_tasks=(":features:recorder:test")
-  log "Running Android unit tests: ${primary_tasks[*]}"
-  if ! $GRADLEW "${args[@]}" "${primary_tasks[@]}"; then
-    return 1
-  fi
-  log "Primary Android unit tests passed; executing :SaidIt:test"
-  $GRADLEW "${args[@]}" :SaidIt:test
+  local args=("--no-daemon" "--stacktrace")
+  log "Running :SaidIt:mediumApi30DebugAndroidTest"
+  $GRADLEW "${args[@]}" :SaidIt:mediumApi30DebugAndroidTest
 }
 
 coverage_and_lint() {
@@ -312,8 +316,8 @@ run_tiers() {
   for tier in $(seq $from $to); do
     case $tier in
       0) check_env || overall_rc=1 ;;
-      1) quick_compile || overall_rc=1 ;;
-      2) core_unit_tests || overall_rc=1 ;;
+      1) fast_feedback || overall_rc=1 ;;
+      2) full_suite || overall_rc=1 ;;
       3) android_tests || overall_rc=1 ;;
       4) coverage_and_lint || overall_rc=1 ;;
     esac
@@ -335,4 +339,3 @@ run_tiers() {
 
 parse_args "$@"
 run_tiers
-

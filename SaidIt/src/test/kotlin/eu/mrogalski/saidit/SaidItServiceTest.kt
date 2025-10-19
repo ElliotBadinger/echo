@@ -4,12 +4,14 @@ import android.app.AlarmManager
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import androidx.test.core.app.ApplicationProvider
 import com.siya.epistemophile.audio.pcm.PcmAudioHelper
 import com.siya.epistemophile.audio.pcm.WavAudioFormat
 import com.siya.epistemophile.audio.pcm.WavFileWriter
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Before
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -34,6 +36,13 @@ class SaidItServiceTest {
 
     @get:Rule val mainDispatcherRule = MainDispatcherRule()
 
+    @Before
+    fun resetPreferences() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val prefs = context.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(SaidIt.AUDIO_MEMORY_ENABLED_KEY, false).commit()
+    }
+
     @Test
     fun enableListening_reportsListeningStateViaCallback() = runTest(mainDispatcherRule.testDispatcher) {
         val controller = Robolectric.buildService(SaidItService::class.java)
@@ -43,11 +52,17 @@ class SaidItServiceTest {
         val memory = AudioMemory(FakeClock())
         service.overrideAudioMemoryForTest(memory)
         memory.allocate(AudioMemory.CHUNK_SIZE.toLong())
-        fillAudioMemory(memory, generatePcmBytes(8_000, 1_600))
 
         service.isTestEnvironment = true
         service.enableListening()
+        advanceUntilIdle()
+        fillAudioMemory(memory, generatePcmBytes(8_000, 1_600))
         service.isTestEnvironment = false
+
+        service.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(SaidIt.AUDIO_MEMORY_ENABLED_KEY, true)
+            .commit()
 
         val captured = mutableListOf<ServiceState>()
         service.getState(object : SaidItService.StateCallback {
@@ -75,6 +90,10 @@ class SaidItServiceTest {
 
     @Test
     fun dumpRecording_persistsPcmBuffersToCache() = runTest(mainDispatcherRule.testDispatcher) {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val prefs = context.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(SaidIt.AUDIO_MEMORY_ENABLED_KEY, false).commit()
+
         val controller = Robolectric.buildService(SaidItService::class.java)
         val service = controller.create().get()
         service.overrideAudioDispatcherForTest(mainDispatcherRule.testDispatcher)
@@ -89,6 +108,7 @@ class SaidItServiceTest {
         service.audioSampleWriterFactory = { _, _, _, file -> FileBackedSampleWriter(file) }
         service.isTestEnvironment = true
         service.enableListening()
+        advanceUntilIdle()
         service.isTestEnvironment = false
 
         val bytesPerSecond = (1f / service.getBytesToSeconds()).toInt()
@@ -124,6 +144,7 @@ class SaidItServiceTest {
         service.audioSampleWriterFactory = { _, _, _, _ -> FailingAudioSampleWriter(failure) }
         service.isTestEnvironment = true
         service.enableListening()
+        advanceUntilIdle()
         service.isTestEnvironment = false
 
         var receivedError: Exception? = null
@@ -140,7 +161,8 @@ class SaidItServiceTest {
         ShadowLooper.idleMainLooper()
 
         assertNotNull(receivedError)
-        assertEquals(failure, receivedError)
+        assertEquals("Error writing to consumer", receivedError?.message)
+        assertEquals(failure, receivedError?.cause)
         controller.destroy()
     }
 

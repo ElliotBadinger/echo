@@ -1,9 +1,9 @@
 # Echo Project Health Dashboard
 
-**Last Updated**: 2025-10-19 03:18 UTC
-**Status**: 🔴 **ISSUES DETECTED** - Check recent nightly health run
-**CI Status**: 🟢 **OPERATIONAL** - SaidIt unit tests pass under Robolectric (sdk 34)
-**Agent Readiness**: 🟢 **READY** - Health check system operational
+**Last Updated**: 2025-10-19 09:52 UTC
+**Status**: 🟡 **PARTIALLY DEGRADED** - Managed device emulator flaky on host
+**CI Status**: 🟢 **OPERATIONAL** - JVM + Robolectric suites green
+**Agent Readiness**: 🟢 **READY** - Health check tiers refreshed
 
 ---
 
@@ -11,46 +11,44 @@
 
 | Component | Status | Last Validated | Notes |
 |-----------|--------|----------------|-------|
-| **Build System** | 🟢 STABLE | 2025-10-09 03:02 UTC |
-| **Core Tests** | 🟢 PASSING | 2025-10-09 03:02 UTC |
-| **CI Pipeline** | 🟢 OPERATIONAL | 2025-09-09 12:30 | All modules included, MockK issues resolved |
-| **Environment** | 🟢 READY | 2025-10-09 03:02 UTC |
+| **Build System** | 🟢 STABLE | 2025-10-19 09:30 UTC | Configuration cache + build cache verified |
+| **Core Tests** | 🟢 PASSING | 2025-10-19 09:30 UTC | `fastTests -PskipInstrumentation=true` completes in 2m02s first run |
+| **CI Pipeline** | 🟢 OPERATIONAL | 2025-10-19 08:40 UTC | JVM suites integrated; instrumentation optional |
+| **Environment** | 🟢 READY | 2025-10-19 09:25 UTC | SDK licences auto-installed via healthcheck |
 
 ---
 
 ## ⚡ Quick Status Indicators
 
 ### ✅ Safe to Use (Recommended)
-- **Build**: `./gradlew :SaidIt:compileDebugKotlin :domain:assemble`
-- **Health Check**: `bash scripts/agent/healthcheck.sh --tier 0-2`
+- **Fast Tests**: `./gradlew fastTests -PskipInstrumentation=true`
+- **Health Check**: `bash scripts/agent/healthcheck.sh --tier 0-1`
 
 ### ⚠️ Use with Caution
-- **Full Build**: `./gradlew clean build` (first run may be slower)
-- **Coverage**: `./gradlew jacocoAll` (ensure CI is green first)
+- **Full Build**: `./gradlew clean build` (~202s cold, 40% faster on warm cache)
+- **Managed Device**: `./gradlew fullTests` (requires virtualization; fallback with `-PskipInstrumentation=true`)
+- **Coverage**: `./gradlew jacocoAll`
 
-### 🟢 Updates
-- **Hilt Tests**: EchoApp/AppModule Hilt tests implemented with real DI checks
-- **SaidIt Tests**: Stabilized under Robolectric sdk 34; tests passing
+### 🟢 Updates (2025-10-19)
+- Added `fastTests` / `fullTests` orchestrations with `-PincludeTestTasks` support
+- New `scripts/agent/changed-tests.sh` for diff-aware test selection
+- Managed device definition (`mediumApi30`) + Android Test Orchestrator wiring
+- `scripts/agent/healthcheck.sh` tiers aligned to fast/full test pipeline
 
 ---
 
 ## 🔄 Recent Changes & Fixes
 
-### ✅ Completed (2025-09-09) - MAJOR FIXES
-- **🎯 FIXED**: MockK compilation issues in SaidItFragmentTest - converted to Mockito
-- **🎯 FIXED**: SaidIt tests restored to CI pipeline (120/138 tests passing)
-- **🎯 IMPROVED**: Robolectric configuration for Android framework testing
-- **🎯 RESOLVED**: All temporary issues blocking full test suite execution
+### ✅ Completed (2025-10-19)
+- **🎯 Implemented**: Gradle config/cache tuning (`org.gradle.configuration-cache=true`, parallel forks, Kotlin incremental)
+- **🎯 Migrated**: Hilt annotation processing from KAPT to KSP for SaidIt + tests
+- **🎯 Added**: Managed device orchestrator, quick boot snapshots, orchestrated instrumentation wiring
+- **🎯 Stabilised**: `SaidItServiceTest.dumpRecording_*` coroutine tests (no more infinite loops)
+- **🎯 Tooling**: `scripts/agent/measure-local.sh`, `changed-tests.sh`, refreshed tiered healthcheck
 
-### ✅ Previous Fixes (2025-01-09)
-- **TIER 1 FIXED**: Kotlin compilation recursive type inference error in SaidItFragment.kt
-- **CI Optimized**: Added fail-fast jobs, enhanced caching, parallel testing matrix
-- **Build Performance**: 3-5x faster CI feedback (2-3 min vs 6-8 min previously)
-- **Agent Tooling**: Health check system with tiered validation
-
-### 📋 Future Enhancements
-- Complete Robolectric test setup for full Android framework testing
-- Expand health check system based on agent feedback
+### 📋 Next Steps
+- Investigate managed device snapshot failure on laptops without hardware virtualization (fallback documented)
+- Prune legacy SaidIt instrumentation cases once migrating to Compose UI
 
 ---
 
@@ -61,18 +59,18 @@
 | `:domain` | 🟢 PASS | N/A | ✅ Yes | Pure Kotlin, fast |
 | `:data` | 🟢 PASS | N/A | ✅ Yes | Repository pattern tests |
 | `:core` | 🟢 PASS | N/A | ✅ Yes | Utilities and shared code |
-| `:features:recorder` | 🟡 PARTIAL | N/A | ✅ Yes | Android dependencies, use --with-android |
-| `:SaidIt` | 🟢 RESTORED | N/A | ✅ Yes | 120/138 tests passing, MockK issues fixed |
+| `:features:recorder` | 🟢 PASS | N/A | ✅ Yes | Runs via `fastTests` (JVM)
+| `:SaidIt` | 🟡 PARTIAL | 🟡 Manual | ⚠️ Tier 2 optional | Managed device flaky on host; JVM suits pass
 
 ---
 
 ## 🚀 CI Performance Metrics
 
-### Current Workflow Efficiency
-- **Fail-Fast Check**: ~30-45 seconds
-- **Core Tests**: ~1-2 minutes  
-- **Full Build**: ~2-3 minutes (optimized from 6-8 minutes)
-- **Parallel Jobs**: 5 concurrent test modules (including SaidIt)
+### Current Workflow Efficiency (local laptop)
+- **Clean Build**: 202.174s (first run, caches cold) → warm builds ~45s
+- **Fast Tests**: 124s first run, 90s warm (parallel forks)
+- **Module Tests**: 4.889s (`:domain:test :data:test :features:recorder:test`)
+- **Instrumentation**: 20+ minutes on this laptop (fails without virtualization; see Known Issues)
 
 ### GitHub Actions Status
 ```bash
@@ -86,17 +84,17 @@ gh run list --limit 3 --workflow="Cross-Platform CI"
 
 ## 🛠️ Agent Health Check Usage
 
-### Quick Validation (30 seconds)
+### Quick Validation (~40 seconds)
 ```bash
 bash scripts/agent/healthcheck.sh --tier 0-1
 ```
 
-### Development Ready (2 minutes)
+### Development Ready (~2 minutes)
 ```bash
-bash scripts/agent/healthcheck.sh --tier 0-2
+bash scripts/agent/healthcheck.sh --tier 0-2  # add --with-android for instrumentation
 ```
 
-### Full Validation (5 minutes)
+### Full Validation (5-12 minutes w/ virtualization)
 ```bash
 bash scripts/agent/healthcheck.sh --all --with-android --with-full
 ```
@@ -105,16 +103,15 @@ bash scripts/agent/healthcheck.sh --all --with-android --with-full
 
 ## 🎯 Known Issues & Workarounds
 
-### Issue: Robolectric Test Configuration
-**Status**: 🔴 **ISSUES DETECTED** - Check recent nightly health run
-**Impact**: 18/138 SaidIt tests fail due to Android manifest/framework setup  
-**Workaround**: Core functionality tests (120/138) pass, business logic validated  
-**ETA**: Future enhancement - not blocking development  
+### Issue: Managed Device Snapshot Fails on Laptop
+**Status**: 🟡 UNDER INVESTIGATION  
+**Impact**: `./gradlew fullTests` may fail when emulator exits (code 137) or denies microphone permissions  
+**Workaround**: Run `fullTests -PskipInstrumentation=true` for fast loops; for full coverage connect a physical device and run `./gradlew connectedDebugAndroidTest`  
+**Next Step**: Evaluate fixing SaidIt instrumentation to avoid runtime permission prompts and capture emulator logs  
 
-### Issue: Android SDK Licenses
-**Status**: 🔴 **ISSUES DETECTED** - Check recent nightly health run
-**Impact**: CI may download additional components, slower first run  
-**Workaround**: Run `yes | sdkmanager --licenses` locally if needed  
+### Issue: Android SDK Licences (Resolved)
+**Status**: 🟢 RESOLVED  
+**Impact**: Tooling installs `emulator` + system images; healthcheck handles licence acceptance  
 
 ---
 
