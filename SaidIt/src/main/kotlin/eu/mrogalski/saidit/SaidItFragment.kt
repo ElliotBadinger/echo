@@ -1,62 +1,39 @@
 package eu.mrogalski.saidit
 
-import android.app.Activity
-import android.app.Notification
-import android.app.PendingIntent
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.content.ServiceConnection
-import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
-import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import androidx.annotation.NonNull
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
-import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.getkeepsafe.taptargetview.TapTarget
+import com.getkeepsafe.taptargetview.TapTargetSequence
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.getkeepsafe.taptargetview.TapTarget
-import com.getkeepsafe.taptargetview.TapTargetSequence
 import com.google.android.material.textview.MaterialTextView
-import eu.mrogalski.android.TimeFormat
 import com.siya.epistemophile.R
-import java.io.File
+import com.siya.epistemophile.features.recorder.RecordingUiState
+import com.siya.epistemophile.features.recorder.RecordingViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import eu.mrogalski.android.TimeFormat
+import javax.inject.Inject
+import kotlinx.coroutines.launch
 
-/**
- * Main fragment for the SaidIt audio recording application.
- * 
- * This fragment manages the UI for audio recording functionality, including:
- * - Recording controls and status display
- * - Service connection management
- * - User interaction handling
- * - File saving and sharing workflows
- * 
- * The fragment communicates with SaidItService for audio processing and
- * implements SaveClipBottomSheet.SaveClipListener for clip saving functionality.
- */
+@AndroidEntryPoint
 class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
 
     companion object {
-        private const val YOUR_NOTIFICATION_CHANNEL_ID = "SaidItServiceChannel"
-        private const val NOTIFICATION_ID = 43
         private const val TOUR_START_DELAY = 500L
-        private const val UI_UPDATE_DELAY = 100L
     }
 
-    @VisibleForTesting
-    internal var echo: SaidItService? = null
+    @Inject
+    lateinit var viewModel: RecordingViewModel
 
     // UI Elements
     private var recordingGroup: View? = null
@@ -72,25 +49,12 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
     @VisibleForTesting
     internal var progressDialogForTest: AlertDialog? = null
 
-    fun setService(service: SaidItService?) {
-        this.echo = service
-        view?.postOnAnimation(updater)
-    }
-
     @VisibleForTesting
     internal val listeningToggleListener = MaterialButtonToggleGroup.OnButtonCheckedListener { _, checkedId, isChecked ->
         if (isChecked) {
             when (checkedId) {
-                R.id.listening_button -> echo?.enableListening()
-                R.id.disabled_button -> echo?.disableListening()
-            }
-        }
-    }
-
-    private val updater: Runnable = Runnable {
-        view?.let { view ->
-            echo?.let { service ->
-                service.getState(serviceStateCallback)
+                R.id.listening_button -> viewModel.toggleListening(true)
+                R.id.disabled_button -> viewModel.toggleListening(false)
             }
         }
     }
@@ -103,7 +67,7 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
         val rootView = inflater.inflate(R.layout.fragment_background_recorder, container, false)
         val activity = requireActivity()
 
-        // Find new UI elements
+        // Find UI elements
         val toolbar: Toolbar = rootView.findViewById(R.id.toolbar)
         recordingGroup = rootView.findViewById(R.id.recording_group)
         listeningGroup = rootView.findViewById(R.id.listening_group)
@@ -115,11 +79,10 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
         val stopRecordingButton: MaterialButton = rootView.findViewById(R.id.rec_stop_button)
         listeningToggleGroup = rootView.findViewById(R.id.listening_toggle_group)
 
-        // Set listeners
         toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.action_help -> {
-                    startActivity(Intent(requireActivity(), HowToActivity::class.java))
+                    startActivity(android.content.Intent(requireActivity(), HowToActivity::class.java))
                     true
                 }
                 else -> false
@@ -127,16 +90,14 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
         }
 
         settingsButton.setOnClickListener {
-            startActivity(Intent(activity, SettingsActivity::class.java))
+            startActivity(android.content.Intent(activity, SettingsActivity::class.java))
         }
 
         recordingsButton.setOnClickListener {
-            startActivity(Intent(activity, RecordingsActivity::class.java))
+            startActivity(android.content.Intent(activity, RecordingsActivity::class.java))
         }
 
-        stopRecordingButton.setOnClickListener {
-            echo?.stopRecording(PromptFileReceiver(activity))
-        }
+        stopRecordingButton.setOnClickListener { viewModel.stopRecording() }
 
         saveClipButton.setOnClickListener {
             val bottomSheet = SaveClipBottomSheet.newInstance(memorizedDuration)
@@ -149,56 +110,57 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
         return rootView
     }
 
-    override fun onSaveClip(fileName: String, durationInSeconds: Float) {
-        echo?.let { service ->
-            val progressDialog = MaterialAlertDialogBuilder(requireActivity())
-                .setTitle("Saving Recording")
-                .setMessage("Please wait...")
-                .setCancelable(false)
-                .create()
-            progressDialog.setOnDismissListener { progressDialogForTest = null }
-            progressDialog.show()
-            progressDialogForTest = progressDialog
-
-            service.dumpRecording(durationInSeconds, PromptFileReceiver(requireActivity(), progressDialog), fileName)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch { viewModel.uiState.collect { renderUi(it) } }
+            }
         }
     }
 
-    @VisibleForTesting
-    internal val serviceStateCallback = object : SaidItService.StateCallback {
-        override fun state(
-            listeningEnabled: Boolean,
-            recording: Boolean,
-            memorized: Float,
-            totalMemory: Float,
-            recorded: Float
-        ) {
-            memorizedDuration = memorized
-            
-            if (isRecording != recording) {
-                isRecording = recording
-                recordingGroup?.visibility = if (recording) View.VISIBLE else View.GONE
-                listeningGroup?.visibility = if (recording) View.GONE else View.VISIBLE
-            }
+    private fun renderUi(state: RecordingUiState) {
+        val recording = state.isRecording
+        if (isRecording != recording) {
+            isRecording = recording
+            recordingGroup?.visibility = if (recording) View.VISIBLE else View.GONE
+            listeningGroup?.visibility = if (recording) View.GONE else View.VISIBLE
+        }
 
-            if (isRecording) {
-                recordingTime?.text = TimeFormat.shortTimer(recorded)
-            } else {
-                historySize?.text = TimeFormat.shortTimer(memorized)
-            }
+        // Update timers from ViewModel state
+        memorizedDuration = state.memorizedSeconds
+        if (recording) {
+            recordingTime?.text = TimeFormat.shortTimer(state.recordedSeconds)
+        } else {
+            historySize?.text = TimeFormat.shortTimer(state.memorizedSeconds)
+        }
 
-            // Update listening toggle state without triggering listener
-            listeningToggleGroup?.removeOnButtonCheckedListener(listeningToggleListener)
-            if (listeningEnabled) {
-                listeningToggleGroup?.check(R.id.listening_button)
-                listeningGroup?.alpha = 1.0f
-            } else {
-                listeningToggleGroup?.check(R.id.disabled_button)
-                listeningGroup?.alpha = 0.5f
-            }
-            listeningToggleGroup?.addOnButtonCheckedListener(listeningToggleListener)
+        // Update listening toggle without bouncing the listener
+        listeningToggleGroup?.removeOnButtonCheckedListener(listeningToggleListener)
+        if (state.isListening) {
+            listeningToggleGroup?.check(R.id.listening_button)
+            listeningGroup?.alpha = 1.0f
+        } else {
+            listeningToggleGroup?.check(R.id.disabled_button)
+            listeningGroup?.alpha = 0.5f
+        }
+        listeningToggleGroup?.addOnButtonCheckedListener(listeningToggleListener)
+    }
 
-            view?.postOnAnimationDelayed(updater, UI_UPDATE_DELAY)
+    override fun onSaveClip(fileName: String, durationInSeconds: Float) {
+        val progressDialog = MaterialAlertDialogBuilder(requireActivity())
+            .setTitle("Saving Recording")
+            .setMessage("Please wait...")
+            .setCancelable(false)
+            .create()
+        progressDialog.setOnDismissListener { progressDialogForTest = null }
+        progressDialog.show()
+        progressDialogForTest = progressDialog
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.saveRecording(durationInSeconds, fileName)
+            if (progressDialog.isShowing) progressDialog.dismiss()
+        }
     }
 
     @VisibleForTesting
@@ -206,16 +168,6 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
 
     @VisibleForTesting
     fun getProgressDialogForTest(): AlertDialog? = progressDialogForTest
-}
-
-    override fun onStart() {
-        super.onStart()
-        val activity = activity as? SaidItActivity
-        activity?.let { saidItActivity ->
-            echo = saidItActivity.getEchoService()
-            view?.postOnAnimation(updater)
-        }
-    }
 
     fun startTour() {
         // A small delay to ensure the UI is fully drawn before starting the tour.
@@ -247,9 +199,5 @@ class SaidItFragment : Fragment(), SaveClipBottomSheet.SaveClipListener {
         )
         sequence.start()
     }
-
-    // --- File Receiver and Notification Logic ---
-    // buildNotificationForFile has been moved to NotifyFileReceiver as a companion object method
-
-    // NotifyFileReceiver and PromptFileReceiver have been moved to separate files as top-level classes
 }
+

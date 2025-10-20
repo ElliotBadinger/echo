@@ -1,6 +1,6 @@
 # Echo Project Health Dashboard
 
-**Last Updated**: 2025-10-19 09:52 UTC
+**Last Updated**: 2025-10-19 18:42 UTC
 **Status**: 🟡 **PARTIALLY DEGRADED** - Managed device emulator flaky on host
 **CI Status**: 🟢 **OPERATIONAL** - JVM + Robolectric suites green
 **Agent Readiness**: 🟢 **READY** - Health check tiers refreshed
@@ -45,6 +45,8 @@
 - **🎯 Added**: Managed device orchestrator, quick boot snapshots, orchestrated instrumentation wiring
 - **🎯 Stabilised**: `SaidItServiceTest.dumpRecording_*` coroutine tests (no more infinite loops)
 - **🎯 Tooling**: `scripts/agent/measure-local.sh`, `changed-tests.sh`, refreshed tiered healthcheck
+- **🎯 Migrated**: Android instrumentation tests to Kotlin (`ExampleInstrumentedTest`, `SaidItFragmentTest`, `AutoSaveTest`, `SaidItServiceAutoSaveTest`); removed Java originals; `assembleAndroidTest` green
+- **🎯 AppId Flip**: applicationId switched to `com.siya.epistemophile`; provider authorities bound to `${applicationId}`; SaidItService prefs now use `BuildConfig.APPLICATION_ID` to avoid legacy package coupling
 
 ### 📋 Next Steps
 - Investigate managed device snapshot failure on laptops without hardware virtualization (fallback documented)

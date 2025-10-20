@@ -43,7 +43,9 @@ class RecordingViewModel @Inject constructor(
                         isListening = state.isListening,
                         isRecording = state.isRecording,
                         canSaveRecording = state.hasUnsavedRecording,
-                        lastSavedFileName = state.lastSavedFileName
+                        lastSavedFileName = state.lastSavedFileName,
+                        memorizedSeconds = state.memorizedSeconds,
+                        recordedSeconds = state.recordedSeconds
                     )
                 }
             }
@@ -96,5 +98,7 @@ data class RecordingUiState(
     val isRecording: Boolean = false,
     val canSaveRecording: Boolean = false,
     val lastSavedFileName: String? = null,
+    val memorizedSeconds: Float = 0f,
+    val recordedSeconds: Float = 0f,
     val error: RecordingError? = null
 )

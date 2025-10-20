@@ -23,7 +23,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "eu.mrogalski.saidit"
+        applicationId = "com.siya.epistemophile"
         minSdk = 30
         targetSdk = 34
         versionCode = 15
@@ -87,8 +87,10 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
     implementation(project(":audio"))
+    implementation(project(":features:recorder"))
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
     
     // Coroutines for modern threading
     implementation(libs.coroutines.core)

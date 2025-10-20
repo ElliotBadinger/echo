@@ -35,7 +35,7 @@ class SaidItActivity : AppCompatActivity() {
     private var mainFragment: SaidItFragment? = null
 
     private val sharedPreferences: SharedPreferences by lazy {
-        getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        getSharedPreferences(SettingsKeys.PREFS_NAME, MODE_PRIVATE)
     }
 
     private val serviceConnection = object : ServiceConnection {
@@ -138,7 +138,7 @@ class SaidItActivity : AppCompatActivity() {
 
         isFragmentSet = true
         val prefs = sharedPreferences
-        val isFirstRun = prefs.getBoolean(KEY_FIRST_RUN, true)
+        val isFirstRun = prefs.getBoolean(SettingsKeys.KEY_FIRST_RUN, true)
 
         mainFragment = SaidItFragment().also { fragment ->
             supportFragmentManager.beginTransaction()
@@ -149,12 +149,12 @@ class SaidItActivity : AppCompatActivity() {
         when {
             isFirstRun -> {
                 howToLauncher.launch(Intent(this, HowToActivity::class.java))
-                prefs.edit().putBoolean(KEY_FIRST_RUN, false).apply()
+                prefs.edit().putBoolean(SettingsKeys.KEY_FIRST_RUN, false).apply()
             }
 
-            prefs.getBoolean(KEY_TOUR_ON_NEXT_LAUNCH, false) -> {
+            prefs.getBoolean(SettingsKeys.KEY_TOUR_ON_NEXT_LAUNCH, false) -> {
                 mainFragment?.startTour()
-                prefs.edit().putBoolean(KEY_TOUR_ON_NEXT_LAUNCH, false).apply()
+                prefs.edit().putBoolean(SettingsKeys.KEY_TOUR_ON_NEXT_LAUNCH, false).apply()
             }
         }
     }
@@ -190,9 +190,7 @@ class SaidItActivity : AppCompatActivity() {
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 5465
-        private const val PREFS_NAME = "eu.mrogalski.saidit"
-        private const val KEY_FIRST_RUN = "is_first_run"
-        private const val KEY_TOUR_ON_NEXT_LAUNCH = "show_tour_on_next_launch"
+        // Keys moved to SettingsKeys for centralization
         private const val MAIN_FRAGMENT_TAG = "main-fragment"
 
         @Volatile

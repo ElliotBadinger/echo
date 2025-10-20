@@ -105,7 +105,7 @@ class SaidItService : Service() {
         super.onCreate()
         Log.d(TAG, "Reading native sample rate")
 
-        val preferences = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+        val preferences = getSharedPreferences(com.siya.epistemophile.BuildConfig.APPLICATION_ID, MODE_PRIVATE)
         sampleRate = preferences.getInt(SaidIt.SAMPLE_RATE_KEY, AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC))
         Log.d(TAG, "Sample rate: $sampleRate")
         fillRate = 2 * sampleRate
@@ -161,7 +161,7 @@ class SaidItService : Service() {
 
         Log.d(TAG, "Starting listening")
         startService(Intent(this, this::class.java))
-        val memorySize = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+        val memorySize = getSharedPreferences(com.siya.epistemophile.BuildConfig.APPLICATION_ID, MODE_PRIVATE)
             .getLong(SaidIt.AUDIO_MEMORY_SIZE_KEY, Runtime.getRuntime().maxMemory() / 4)
 
         audioJob = audioScope.launch {
@@ -263,7 +263,7 @@ class SaidItService : Service() {
             state = STATE_LISTENING
             return
         }
-        getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+        getSharedPreferences(com.siya.epistemophile.BuildConfig.APPLICATION_ID, MODE_PRIVATE)
             .edit().putBoolean(SaidIt.AUDIO_MEMORY_ENABLED_KEY, true).apply()
         innerStartListening()
     }
@@ -273,7 +273,7 @@ class SaidItService : Service() {
             state = STATE_READY
             return
         }
-        getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+        getSharedPreferences(com.siya.epistemophile.BuildConfig.APPLICATION_ID, MODE_PRIVATE)
             .edit().putBoolean(SaidIt.AUDIO_MEMORY_ENABLED_KEY, false).apply()
         innerStopListening()
     }
@@ -442,7 +442,7 @@ class SaidItService : Service() {
     fun getMemorySize(): Long = audioMemory.getAllocatedMemorySize()
 
     fun setMemorySize(memorySize: Long) {
-        val preferences = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+        val preferences = getSharedPreferences(com.siya.epistemophile.BuildConfig.APPLICATION_ID, MODE_PRIVATE)
         preferences.edit().putLong(SaidIt.AUDIO_MEMORY_SIZE_KEY, memorySize).apply()
 
         if (preferences.getBoolean(SaidIt.AUDIO_MEMORY_ENABLED_KEY, true)) {
@@ -460,14 +460,14 @@ class SaidItService : Service() {
     fun setSampleRate(newSampleRate: Int) {
         if (state == STATE_RECORDING) return
         if (state == STATE_READY) {
-            val preferences = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+            val preferences = getSharedPreferences(com.siya.epistemophile.BuildConfig.APPLICATION_ID, MODE_PRIVATE)
             preferences.edit().putInt(SaidIt.SAMPLE_RATE_KEY, newSampleRate).apply()
             sampleRate = newSampleRate
             fillRate = 2 * sampleRate
             return
         }
 
-        val preferences = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+        val preferences = getSharedPreferences(com.siya.epistemophile.BuildConfig.APPLICATION_ID, MODE_PRIVATE)
         preferences.edit().putInt(SaidIt.SAMPLE_RATE_KEY, newSampleRate).apply()
 
         innerStopListening()
@@ -477,7 +477,7 @@ class SaidItService : Service() {
     }
 
     fun getState(stateCallback: StateCallback) {
-        val preferences = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+        val preferences = getSharedPreferences(com.siya.epistemophile.BuildConfig.APPLICATION_ID, MODE_PRIVATE)
         val listeningEnabled = preferences.getBoolean(SaidIt.AUDIO_MEMORY_ENABLED_KEY, true)
         val recording = (state == STATE_RECORDING)
         
