@@ -29,6 +29,11 @@ proguard/
 .idea/
 .vscode/
 
+# Eclipse/ADT metadata (do not track in repo)
+**/.project
+**/.classpath
+**/.settings/
+
 # Python virtual environments (CRITICAL: These create thousands of files)
 docs/automation/scripts/docs-automation-env/
 docs/automation/scripts/venv/
